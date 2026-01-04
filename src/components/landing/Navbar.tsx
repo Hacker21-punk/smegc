@@ -31,10 +31,10 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          <Link to="/dashboard">
+          <Link to="/auth">
             <Button variant="ghost">Login</Button>
           </Link>
-          <Link to="/dashboard">
+          <Link to="/auth">
             <Button>Start Free Trial</Button>
           </Link>
         </div>
@@ -67,10 +67,10 @@ export function Navbar() {
               Contact
             </a>
             <div className="flex flex-col gap-2 pt-4 border-t">
-              <Link to="/dashboard">
+              <Link to="/auth">
                 <Button variant="outline" className="w-full">Login</Button>
               </Link>
-              <Link to="/dashboard">
+              <Link to="/auth">
                 <Button className="w-full">Start Free Trial</Button>
               </Link>
             </div>
