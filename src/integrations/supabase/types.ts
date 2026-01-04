@@ -14,16 +14,279 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      aws_accounts: {
+        Row: {
+          account_alias: string | null
+          account_id: string
+          created_at: string
+          external_id: string
+          id: string
+          last_scan_at: string | null
+          organization_id: string
+          risk_score: number | null
+          role_arn: string | null
+          status: Database["public"]["Enums"]["account_status"]
+          updated_at: string
+        }
+        Insert: {
+          account_alias?: string | null
+          account_id: string
+          created_at?: string
+          external_id?: string
+          id?: string
+          last_scan_at?: string | null
+          organization_id: string
+          risk_score?: number | null
+          role_arn?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+        }
+        Update: {
+          account_alias?: string | null
+          account_id?: string
+          created_at?: string
+          external_id?: string
+          id?: string
+          last_scan_at?: string | null
+          organization_id?: string
+          risk_score?: number | null
+          role_arn?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aws_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          language: string | null
+          organization_id: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          language?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          language?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      risk_score_history: {
+        Row: {
+          aws_account_id: string
+          created_at: string
+          id: string
+          recorded_at: string
+          score: number
+        }
+        Insert: {
+          aws_account_id: string
+          created_at?: string
+          id?: string
+          recorded_at?: string
+          score: number
+        }
+        Update: {
+          aws_account_id?: string
+          created_at?: string
+          id?: string
+          recorded_at?: string
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_score_history_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scan_jobs: {
+        Row: {
+          aws_account_id: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          findings_count: number | null
+          id: string
+          risk_score: number | null
+          services_scanned: Database["public"]["Enums"]["aws_service"][] | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["scan_status"]
+        }
+        Insert: {
+          aws_account_id: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          findings_count?: number | null
+          id?: string
+          risk_score?: number | null
+          services_scanned?: Database["public"]["Enums"]["aws_service"][] | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["scan_status"]
+        }
+        Update: {
+          aws_account_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          findings_count?: number | null
+          id?: string
+          risk_score?: number | null
+          services_scanned?: Database["public"]["Enums"]["aws_service"][] | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["scan_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_jobs_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_findings: {
+        Row: {
+          aws_account_id: string
+          cloudformation_template: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_resolved: boolean | null
+          remediation_steps: string[] | null
+          resolved_at: string | null
+          resource_id: string
+          resource_type: string
+          scan_job_id: string
+          service: Database["public"]["Enums"]["aws_service"]
+          severity: Database["public"]["Enums"]["finding_severity"]
+          title: string
+        }
+        Insert: {
+          aws_account_id: string
+          cloudformation_template?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          remediation_steps?: string[] | null
+          resolved_at?: string | null
+          resource_id: string
+          resource_type: string
+          scan_job_id: string
+          service: Database["public"]["Enums"]["aws_service"]
+          severity: Database["public"]["Enums"]["finding_severity"]
+          title: string
+        }
+        Update: {
+          aws_account_id?: string
+          cloudformation_template?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          remediation_steps?: string[] | null
+          resolved_at?: string | null
+          resource_id?: string
+          resource_type?: string
+          scan_job_id?: string
+          service?: Database["public"]["Enums"]["aws_service"]
+          severity?: Database["public"]["Enums"]["finding_severity"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_findings_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_findings_scan_job_id_fkey"
+            columns: ["scan_job_id"]
+            isOneToOne: false
+            referencedRelation: "scan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_organization_id: { Args: never; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      account_status: "pending" | "connected" | "disconnected" | "error"
+      aws_service:
+        | "security_groups"
+        | "iam"
+        | "s3"
+        | "ec2"
+        | "rds"
+        | "vpc"
+        | "cost"
+      finding_severity: "critical" | "high" | "medium" | "low" | "info"
+      scan_status: "pending" | "running" | "completed" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +413,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_status: ["pending", "connected", "disconnected", "error"],
+      aws_service: [
+        "security_groups",
+        "iam",
+        "s3",
+        "ec2",
+        "rds",
+        "vpc",
+        "cost",
+      ],
+      finding_severity: ["critical", "high", "medium", "low", "info"],
+      scan_status: ["pending", "running", "completed", "failed"],
+    },
   },
 } as const
