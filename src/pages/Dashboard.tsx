@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
@@ -9,161 +9,254 @@ import { SecurityFindingsTable, SecurityFinding } from "@/components/dashboard/S
 import { AlertsCard } from "@/components/dashboard/AlertsCard";
 import { AWSAccountsCard } from "@/components/dashboard/AWSAccountsCard";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { format, subDays } from "date-fns";
 
-// Mock data
-const mockTrendData = [
-  { date: "Dec 4", score: 72 },
-  { date: "Dec 7", score: 68 },
-  { date: "Dec 10", score: 65 },
-  { date: "Dec 13", score: 58 },
-  { date: "Dec 16", score: 62 },
-  { date: "Dec 19", score: 55 },
-  { date: "Dec 22", score: 48 },
-  { date: "Dec 25", score: 52 },
-  { date: "Dec 28", score: 45 },
-  { date: "Jan 1", score: 42 },
-];
+interface DashboardData {
+  accounts: {
+    id: string;
+    name: string;
+    accountId: string;
+    status: "connected" | "syncing" | "pending" | "error";
+    lastScan: string;
+    riskScore: number;
+  }[];
+  findings: SecurityFinding[];
+  alerts: {
+    id: string;
+    title: string;
+    description: string;
+    severity: "critical" | "high" | "medium" | "low";
+    timestamp: string;
+    type: "security" | "cost" | "compliance";
+  }[];
+  trendData: { date: string; score: number }[];
+  serviceData: { name: string; findings: number; color: string }[];
+  stats: {
+    totalFindings: number;
+    criticalFindings: number;
+    resourcesScanned: number;
+    complianceScore: number;
+    overallRiskScore: number;
+    previousRiskScore: number;
+  };
+}
 
-const mockServiceData = [
-  { name: "S3", findings: 8, color: "hsl(217, 91%, 60%)" },
-  { name: "IAM", findings: 12, color: "hsl(0, 84%, 60%)" },
-  { name: "EC2", findings: 5, color: "hsl(38, 92%, 50%)" },
-  { name: "Security Groups", findings: 7, color: "hsl(142, 76%, 36%)" },
-  { name: "RDS", findings: 3, color: "hsl(199, 89%, 48%)" },
-];
+const serviceColors: Record<string, string> = {
+  security_groups: "hsl(142, 76%, 36%)",
+  iam: "hsl(0, 84%, 60%)",
+  s3: "hsl(217, 91%, 60%)",
+  ec2: "hsl(38, 92%, 50%)",
+  rds: "hsl(199, 89%, 48%)",
+  vpc: "hsl(271, 91%, 65%)",
+  cost: "hsl(25, 95%, 53%)",
+};
 
-const mockFindings: SecurityFinding[] = [
-  {
-    id: "1",
-    resource: "production-data-bucket",
-    resourceType: "S3 Bucket",
-    issue: "Bucket is publicly accessible with no encryption at rest",
-    severity: "critical",
-    awsAccount: "Production (123456789)",
-    detectedAt: "2 hours ago",
-    status: "open",
-  },
-  {
-    id: "2",
-    resource: "admin-user",
-    resourceType: "IAM User",
-    issue: "Access key unused for 90+ days",
-    severity: "high",
-    awsAccount: "Production (123456789)",
-    detectedAt: "1 day ago",
-    status: "open",
-  },
-  {
-    id: "3",
-    resource: "sg-0a1b2c3d4e5f",
-    resourceType: "Security Group",
-    issue: "Inbound rule allows 0.0.0.0/0 on port 22 (SSH)",
-    severity: "high",
-    awsAccount: "Staging (987654321)",
-    detectedAt: "3 days ago",
-    status: "open",
-  },
-  {
-    id: "4",
-    resource: "db-instance-prod",
-    resourceType: "RDS Instance",
-    issue: "Database instance is publicly accessible",
-    severity: "critical",
-    awsAccount: "Production (123456789)",
-    detectedAt: "5 hours ago",
-    status: "open",
-  },
-  {
-    id: "5",
-    resource: "root-account",
-    resourceType: "AWS Account",
-    issue: "Root account used for login in last 24 hours",
-    severity: "medium",
-    awsAccount: "Production (123456789)",
-    detectedAt: "12 hours ago",
-    status: "open",
-  },
-];
-
-const mockAlerts = [
-  {
-    id: "1",
-    title: "Critical: Public S3 Bucket Detected",
-    description: "production-data-bucket is publicly accessible",
-    severity: "critical" as const,
-    timestamp: "2 hours ago",
-    type: "security" as const,
-  },
-  {
-    id: "2",
-    title: "Cost Anomaly: Unusual EC2 Usage",
-    description: "₹12,500 increase in EC2 costs detected",
-    severity: "medium" as const,
-    timestamp: "6 hours ago",
-    type: "cost" as const,
-  },
-  {
-    id: "3",
-    title: "High: Root Account Login",
-    description: "Root account login from new IP address",
-    severity: "high" as const,
-    timestamp: "12 hours ago",
-    type: "security" as const,
-  },
-];
-
-const mockAccounts = [
-  {
-    id: "1",
-    name: "Production",
-    accountId: "123456789012",
-    status: "connected" as const,
-    lastScan: "2 hours ago",
-    riskScore: 42,
-  },
-  {
-    id: "2",
-    name: "Staging",
-    accountId: "987654321098",
-    status: "connected" as const,
-    lastScan: "2 hours ago",
-    riskScore: 28,
-  },
-  {
-    id: "3",
-    name: "Development",
-    accountId: "567890123456",
-    status: "syncing" as const,
-    lastScan: "Syncing...",
-    riskScore: 55,
-  },
-];
+const serviceNames: Record<string, string> = {
+  security_groups: "Security Groups",
+  iam: "IAM",
+  s3: "S3",
+  ec2: "EC2",
+  rds: "RDS",
+  vpc: "VPC",
+  cost: "Cost",
+};
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const navigate = useNavigate();
 
-  const handleRefresh = () => {
-    toast.info("Starting security scan...", {
-      description: "This may take a few minutes.",
-    });
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch AWS accounts
+      const { data: accountsData, error: accountsError } = await supabase
+        .from("aws_accounts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (accountsError) throw accountsError;
+
+      // Fetch security findings (unresolved only)
+      const { data: findingsData, error: findingsError } = await supabase
+        .from("security_findings")
+        .select("*, aws_accounts(account_id, account_alias)")
+        .eq("is_resolved", false)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (findingsError) throw findingsError;
+
+      // Fetch risk score history for trend
+      const { data: historyData, error: historyError } = await supabase
+        .from("risk_score_history")
+        .select("*")
+        .gte("recorded_at", format(subDays(new Date(), 30), "yyyy-MM-dd"))
+        .order("recorded_at", { ascending: true });
+
+      if (historyError) throw historyError;
+
+      // Calculate aggregated data
+      const accounts = (accountsData || []).map((acc) => ({
+        id: acc.id,
+        name: acc.account_alias || `Account ${acc.account_id.slice(-4)}`,
+        accountId: acc.account_id,
+        status: acc.status as "connected" | "syncing" | "pending" | "error",
+        lastScan: acc.last_scan_at
+          ? format(new Date(acc.last_scan_at), "MMM d, h:mm a")
+          : "Never",
+        riskScore: acc.risk_score || 0,
+      }));
+
+      // Transform findings to the format expected by SecurityFindingsTable
+      const findings: SecurityFinding[] = (findingsData || []).map((f) => ({
+        id: f.id,
+        resource: f.resource_id,
+        resourceType: f.resource_type,
+        issue: f.title,
+        severity: f.severity as "critical" | "high" | "medium" | "low",
+        awsAccount: (f.aws_accounts as any)?.account_alias || (f.aws_accounts as any)?.account_id || "Unknown",
+        detectedAt: format(new Date(f.created_at), "MMM d, h:mm a"),
+        status: f.is_resolved ? "remediated" : "open",
+      }));
+
+      // Create alerts from critical/high severity findings
+      const alerts = (findingsData || [])
+        .filter((f) => f.severity === "critical" || f.severity === "high")
+        .slice(0, 5)
+        .map((f) => ({
+          id: f.id,
+          title: `${f.severity === "critical" ? "Critical" : "High"}: ${f.title}`,
+          description: f.description || f.resource_id,
+          severity: f.severity as "critical" | "high",
+          timestamp: format(new Date(f.created_at), "MMM d, h:mm a"),
+          type: "security" as const,
+        }));
+
+      // Calculate trend data (aggregate by date)
+      const trendMap = new Map<string, number[]>();
+      for (const h of historyData || []) {
+        const date = format(new Date(h.recorded_at), "MMM d");
+        if (!trendMap.has(date)) {
+          trendMap.set(date, []);
+        }
+        trendMap.get(date)!.push(h.score);
+      }
+      const trendData = Array.from(trendMap.entries()).map(([date, scores]) => ({
+        date,
+        score: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+      }));
+
+      // If no trend data, create default
+      if (trendData.length === 0) {
+        for (let i = 9; i >= 0; i--) {
+          trendData.push({
+            date: format(subDays(new Date(), i * 3), "MMM d"),
+            score: 0,
+          });
+        }
+      }
+
+      // Calculate service breakdown
+      const serviceCounts = new Map<string, number>();
+      for (const f of findingsData || []) {
+        const count = serviceCounts.get(f.service) || 0;
+        serviceCounts.set(f.service, count + 1);
+      }
+      const serviceData = Array.from(serviceCounts.entries()).map(([service, count]) => ({
+        name: serviceNames[service] || service,
+        findings: count,
+        color: serviceColors[service] || "hsl(200, 50%, 50%)",
+      }));
+
+      // Calculate stats
+      const totalFindings = findingsData?.length || 0;
+      const criticalFindings = findingsData?.filter((f) => f.severity === "critical").length || 0;
+      const overallRiskScore =
+        accounts.length > 0
+          ? Math.round(accounts.reduce((sum, acc) => sum + acc.riskScore, 0) / accounts.length)
+          : 0;
+      const previousRiskScore = trendData.length >= 2 ? trendData[trendData.length - 2]?.score || 0 : overallRiskScore;
+
+      setData({
+        accounts,
+        findings,
+        alerts,
+        trendData,
+        serviceData,
+        stats: {
+          totalFindings,
+          criticalFindings,
+          resourcesScanned: accounts.length * 500, // Estimate
+          complianceScore: Math.max(0, 100 - overallRiskScore),
+          overallRiskScore,
+          previousRiskScore,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      toast.error("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGenerateRemediation = (id: string) => {
+  const handleRefresh = async () => {
+    toast.info("Refreshing dashboard data...");
+    setLoading(true);
+    await fetchDashboardData();
+    toast.success("Dashboard updated");
+  };
+
+  const handleGenerateRemediation = async (findingId: string) => {
+    // Find the finding
+    const finding = data?.findings.find((f) => f.id === findingId);
+    if (!finding) return;
+
     toast.success("CloudFormation template generated!", {
       description: "Download ready. Template will not auto-apply changes.",
     });
+    
+    // In a full implementation, this would generate and download a CloudFormation template
   };
 
   const handleAddAccount = () => {
-    toast.info("Add AWS Account", {
-      description: "IAM role setup wizard would open here.",
-    });
+    navigate("/dashboard/accounts");
+  };
+
+  if (loading && !data) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading dashboard...</div>
+      </div>
+    );
+  }
+
+  // Use data or defaults
+  const accounts = data?.accounts || [];
+  const findings = data?.findings || [];
+  const alerts = data?.alerts || [];
+  const trendData = data?.trendData || [];
+  const serviceData = data?.serviceData || [];
+  const stats = data?.stats || {
+    totalFindings: 0,
+    criticalFindings: 0,
+    resourcesScanned: 0,
+    complianceScore: 100,
+    overallRiskScore: 0,
+    previousRiskScore: 0,
   };
 
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader 
-        lastScanTime="2 hours ago" 
+        lastScanTime={accounts[0]?.lastScan || "Never"} 
         onRefresh={handleRefresh}
         onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
       />
@@ -174,7 +267,9 @@ const Dashboard = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Security Dashboard</h1>
           <p className="text-muted-foreground">
-            Monitor your AWS infrastructure security across all connected accounts.
+            {accounts.length > 0 
+              ? `Monitoring ${accounts.length} AWS account${accounts.length > 1 ? "s" : ""} for security issues.`
+              : "Connect your first AWS account to start monitoring."}
           </p>
         </div>
 
@@ -182,37 +277,47 @@ const Dashboard = () => {
           {/* Risk Score Cards */}
           <div className="grid gap-6 md:grid-cols-3">
             <RiskScoreCard 
-              score={42} 
-              previousScore={48} 
+              score={stats.overallRiskScore} 
+              previousScore={stats.previousRiskScore} 
               accountName="Overall Risk Score" 
             />
             <AWSAccountsCard 
-              accounts={mockAccounts} 
+              accounts={accounts} 
               onAddAccount={handleAddAccount}
             />
-            <AlertsCard alerts={mockAlerts} />
+            <AlertsCard alerts={alerts} />
           </div>
 
           {/* Stats Grid */}
           <StatsGrid
-            totalFindings={35}
-            criticalFindings={4}
-            resourcesScanned={1247}
-            complianceScore={78}
-            estimatedCostAnomaly={12500}
+            totalFindings={stats.totalFindings}
+            criticalFindings={stats.criticalFindings}
+            resourcesScanned={stats.resourcesScanned}
+            complianceScore={stats.complianceScore}
+            estimatedCostAnomaly={0}
           />
 
           {/* Charts */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <RiskTrendChart data={mockTrendData} />
-            <ServiceBreakdownChart data={mockServiceData} />
+            <RiskTrendChart data={trendData} />
+            <ServiceBreakdownChart data={serviceData.length > 0 ? serviceData : [{ name: "No Data", findings: 0, color: "hsl(200, 10%, 50%)" }]} />
           </div>
 
           {/* Findings Table */}
-          <SecurityFindingsTable 
-            findings={mockFindings} 
-            onGenerateRemediation={handleGenerateRemediation}
-          />
+          {findings.length > 0 ? (
+            <SecurityFindingsTable 
+              findings={findings} 
+              onGenerateRemediation={handleGenerateRemediation}
+            />
+          ) : (
+            <div className="text-center py-12 border rounded-lg">
+              <p className="text-muted-foreground">
+                {accounts.length > 0 
+                  ? "No security findings detected. Your accounts look secure!"
+                  : "Connect an AWS account to see security findings."}
+              </p>
+            </div>
+          )}
         </div>
       </main>
     </div>

@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Cloud, CheckCircle2, AlertCircle } from "lucide-react";
 
-interface AWSAccount {
+export interface AWSAccount {
   id: string;
   name: string;
   accountId: string;
-  status: "connected" | "error" | "syncing";
+  status: "connected" | "error" | "syncing" | "pending";
   lastScan: string;
   riskScore: number;
 }
@@ -26,6 +26,8 @@ export function AWSAccountsCard({ accounts, onAddAccount }: AWSAccountsCardProps
         return <AlertCircle className="h-4 w-4 text-critical" />;
       case "syncing":
         return <Cloud className="h-4 w-4 text-info animate-pulse" />;
+      case "pending":
+        return <AlertCircle className="h-4 w-4 text-warning" />;
       default:
         return null;
     }

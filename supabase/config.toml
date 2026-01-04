@@ -1,1 +1,7 @@
 project_id = "mpqxaehqsqbtuldyuydt"
+
+[functions.aws-scanner]
+verify_jwt = false
+
+[functions.trigger-scan]
+verify_jwt = true

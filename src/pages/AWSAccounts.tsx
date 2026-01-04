@@ -165,15 +165,55 @@ export default function AWSAccounts() {
       resetDialog();
       fetchAccounts();
 
-      // Trigger initial scan (would call edge function in production)
-      toast.info("Starting initial security scan...", {
-        description: "This may take a few minutes.",
-      });
+      // Trigger initial scan
+      handleTriggerScan(pendingAccountId);
     } catch (error) {
       console.error("Error verifying role:", error);
       toast.error("Failed to verify IAM role");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleTriggerScan = async (accountId: string) => {
+    toast.info("Starting security scan...", {
+      description: "Scanning Security Groups and IAM. This may take a few minutes.",
+    });
+
+    try {
+      const { data, error } = await supabase.functions.invoke("trigger-scan", {
+        body: {
+          aws_account_id: accountId,
+          services: ["security_groups", "iam"],
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.error) {
+        if (data.error.includes("already in progress")) {
+          toast.warning("A scan is already in progress for this account");
+        } else {
+          throw new Error(data.error);
+        }
+        return;
+      }
+
+      toast.success("Scan initiated!", {
+        description: `Scan job ${data.scan_job_id?.slice(0, 8)}... started`,
+      });
+
+      // Refresh accounts after a short delay to show updated status
+      setTimeout(() => {
+        fetchAccounts();
+      }, 5000);
+    } catch (error) {
+      console.error("Error triggering scan:", error);
+      toast.error("Failed to start scan", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   };
 
@@ -479,7 +519,12 @@ export default function AWSAccounts() {
 
                   <div className="flex gap-2">
                     {account.status === "connected" && (
-                      <Button variant="outline" size="sm" className="flex-1 gap-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 gap-1"
+                        onClick={() => handleTriggerScan(account.id)}
+                      >
                         <RefreshCw className="h-3 w-3" />
                         Scan Now
                       </Button>
