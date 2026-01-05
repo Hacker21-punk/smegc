@@ -4,4 +4,4 @@ project_id = "mpqxaehqsqbtuldyuydt"
 verify_jwt = false
 
 [functions.trigger-scan]
-verify_jwt = true
+verify_jwt = false
