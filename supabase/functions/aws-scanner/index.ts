@@ -30,7 +30,21 @@ interface Finding {
 
 // Assume the customer's IAM role
 async function assumeCustomerRole(roleArn: string, externalId: string) {
-  const stsClient = new STSClient({ region: "us-east-1" });
+  const awsAccessKeyId = Deno.env.get("AWS_ACCESS_KEY_ID");
+  const awsSecretAccessKey = Deno.env.get("AWS_SECRET_ACCESS_KEY");
+
+  if (!awsAccessKeyId || !awsSecretAccessKey) {
+    throw new Error("AWS credentials not configured. Please add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY secrets.");
+  }
+
+  // Use explicit credentials to prevent fs.readFile error in Deno runtime
+  const stsClient = new STSClient({
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: awsAccessKeyId,
+      secretAccessKey: awsSecretAccessKey,
+    },
+  });
   
   const command = new AssumeRoleCommand({
     RoleArn: roleArn,
