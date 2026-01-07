@@ -8,6 +8,7 @@ import { ServiceBreakdownChart } from "@/components/dashboard/ServiceBreakdownCh
 import { SecurityFindingsTable, SecurityFinding } from "@/components/dashboard/SecurityFindingsTable";
 import { AlertsCard } from "@/components/dashboard/AlertsCard";
 import { AWSAccountsCard } from "@/components/dashboard/AWSAccountsCard";
+import { RiskScoreBreakdown } from "@/components/dashboard/RiskScoreBreakdown";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -36,11 +37,15 @@ interface DashboardData {
   stats: {
     totalFindings: number;
     criticalFindings: number;
+    highFindings: number;
+    mediumFindings: number;
+    lowFindings: number;
     resourcesScanned: number;
     complianceScore: number;
     overallRiskScore: number;
     previousRiskScore: number;
   };
+  topIssues: Array<{ title: string; severity: string; resource_id: string }>;
 }
 
 const serviceColors: Record<string, string> = {
@@ -83,13 +88,13 @@ const Dashboard = () => {
 
       if (accountsError) throw accountsError;
 
-      // Fetch security findings (unresolved only)
+      // Fetch security findings with full details (unresolved only)
       const { data: findingsData, error: findingsError } = await supabase
         .from("security_findings")
         .select("*, aws_accounts(account_id, account_alias)")
         .eq("is_resolved", false)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (findingsError) throw findingsError;
 
@@ -114,7 +119,7 @@ const Dashboard = () => {
         riskScore: acc.risk_score || 0,
       }));
 
-      // Transform findings to the format expected by SecurityFindingsTable
+      // Transform findings with full details for the dialog
       const findings: SecurityFinding[] = (findingsData || []).map((f) => ({
         id: f.id,
         resource: f.resource_id,
@@ -124,6 +129,13 @@ const Dashboard = () => {
         awsAccount: (f.aws_accounts as any)?.account_alias || (f.aws_accounts as any)?.account_id || "Unknown",
         detectedAt: format(new Date(f.created_at), "MMM d, h:mm a"),
         status: f.is_resolved ? "remediated" : "open",
+        // Extended fields
+        description: f.description,
+        remediation_steps: f.remediation_steps,
+        cloudformation_template: f.cloudformation_template,
+        service: f.service,
+        is_resolved: f.is_resolved,
+        created_at: f.created_at,
       }));
 
       // Create alerts from critical/high severity findings
@@ -137,6 +149,16 @@ const Dashboard = () => {
           severity: f.severity as "critical" | "high",
           timestamp: format(new Date(f.created_at), "MMM d, h:mm a"),
           type: "security" as const,
+        }));
+
+      // Get top priority issues for risk breakdown
+      const topIssues = (findingsData || [])
+        .filter((f) => f.severity === "critical" || f.severity === "high")
+        .slice(0, 5)
+        .map((f) => ({
+          title: f.title,
+          severity: f.severity,
+          resource_id: f.resource_id,
         }));
 
       // Calculate trend data (aggregate by date)
@@ -175,9 +197,13 @@ const Dashboard = () => {
         color: serviceColors[service] || "hsl(200, 50%, 50%)",
       }));
 
-      // Calculate stats
+      // Calculate stats with severity breakdown
       const totalFindings = findingsData?.length || 0;
       const criticalFindings = findingsData?.filter((f) => f.severity === "critical").length || 0;
+      const highFindings = findingsData?.filter((f) => f.severity === "high").length || 0;
+      const mediumFindings = findingsData?.filter((f) => f.severity === "medium").length || 0;
+      const lowFindings = findingsData?.filter((f) => f.severity === "low").length || 0;
+      
       const overallRiskScore =
         accounts.length > 0
           ? Math.round(accounts.reduce((sum, acc) => sum + acc.riskScore, 0) / accounts.length)
@@ -190,9 +216,13 @@ const Dashboard = () => {
         alerts,
         trendData,
         serviceData,
+        topIssues,
         stats: {
           totalFindings,
           criticalFindings,
+          highFindings,
+          mediumFindings,
+          lowFindings,
           resourcesScanned: accounts.length * 500, // Estimate
           complianceScore: Math.max(0, 100 - overallRiskScore),
           overallRiskScore,
@@ -214,16 +244,21 @@ const Dashboard = () => {
     toast.success("Dashboard updated");
   };
 
-  const handleGenerateRemediation = async (findingId: string) => {
-    // Find the finding
-    const finding = data?.findings.find((f) => f.id === findingId);
-    if (!finding) return;
+  const handleMarkResolved = async (findingId: string) => {
+    try {
+      const { error } = await supabase
+        .from("security_findings")
+        .update({ is_resolved: true, resolved_at: new Date().toISOString() })
+        .eq("id", findingId);
 
-    toast.success("CloudFormation template generated!", {
-      description: "Download ready. Template will not auto-apply changes.",
-    });
-    
-    // In a full implementation, this would generate and download a CloudFormation template
+      if (error) throw error;
+
+      toast.success("Finding marked as resolved");
+      await fetchDashboardData();
+    } catch (error) {
+      console.error("Error marking finding as resolved:", error);
+      toast.error("Failed to update finding");
+    }
   };
 
   const handleAddAccount = () => {
@@ -244,9 +279,13 @@ const Dashboard = () => {
   const alerts = data?.alerts || [];
   const trendData = data?.trendData || [];
   const serviceData = data?.serviceData || [];
+  const topIssues = data?.topIssues || [];
   const stats = data?.stats || {
     totalFindings: 0,
     criticalFindings: 0,
+    highFindings: 0,
+    mediumFindings: 0,
+    lowFindings: 0,
     resourcesScanned: 0,
     complianceScore: 100,
     overallRiskScore: 0,
@@ -297,17 +336,30 @@ const Dashboard = () => {
             estimatedCostAnomaly={0}
           />
 
-          {/* Charts */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            <RiskTrendChart data={trendData} />
-            <ServiceBreakdownChart data={serviceData.length > 0 ? serviceData : [{ name: "No Data", findings: 0, color: "hsl(200, 10%, 50%)" }]} />
+          {/* Charts and Risk Breakdown */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <RiskTrendChart data={trendData} />
+            </div>
+            <RiskScoreBreakdown
+              score={stats.overallRiskScore}
+              criticalCount={stats.criticalFindings}
+              highCount={stats.highFindings}
+              mediumCount={stats.mediumFindings}
+              lowCount={stats.lowFindings}
+              topIssues={topIssues}
+            />
           </div>
+
+          {/* Service Breakdown */}
+          <ServiceBreakdownChart data={serviceData.length > 0 ? serviceData : [{ name: "No Data", findings: 0, color: "hsl(200, 10%, 50%)" }]} />
 
           {/* Findings Table */}
           {findings.length > 0 ? (
             <SecurityFindingsTable 
               findings={findings} 
-              onGenerateRemediation={handleGenerateRemediation}
+              onGenerateRemediation={() => {}}
+              onMarkResolved={handleMarkResolved}
             />
           ) : (
             <div className="text-center py-12 border rounded-lg">
