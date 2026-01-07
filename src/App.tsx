@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AWSAccounts from "./pages/AWSAccounts";
+import Findings from "./pages/Findings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AWSAccounts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/findings"
+              element={
+                <ProtectedRoute>
+                  <Findings />
                 </ProtectedRoute>
               }
             />
