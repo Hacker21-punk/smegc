@@ -50,6 +50,12 @@ interface Finding {
   cloudformation_template: string | null;
   aws_account_id: string;
   aws_account_alias: string;
+  // Enhanced analysis fields
+  risk_score_contribution: number | null;
+  impact_assessment: string | null;
+  execution_tag: 'SAFE_AUTOMATABLE' | 'REQUIRES_REVIEW' | 'MANUAL_ONLY' | null;
+  rollback_guidance: string | null;
+  compliance_tags: string[] | null;
 }
 
 const serviceNames: Record<string, string> = {
@@ -86,21 +92,26 @@ const Findings = () => {
 
       if (error) throw error;
 
-      const mappedFindings: Finding[] = (data || []).map((f) => ({
+      const mappedFindings: Finding[] = (data || []).map((f: any) => ({
         id: f.id,
         severity: f.severity as "critical" | "high" | "medium" | "low" | "info",
         title: f.title,
         service: f.service,
         resource_id: f.resource_id,
         resource_type: f.resource_type,
-        risk_score: calculateFindingRiskScore(f.severity),
+        risk_score: f.risk_score_contribution || calculateFindingRiskScore(f.severity),
         is_resolved: f.is_resolved,
         created_at: f.created_at,
         description: f.description,
         remediation_steps: f.remediation_steps,
         cloudformation_template: f.cloudformation_template,
         aws_account_id: f.aws_account_id,
-        aws_account_alias: (f.aws_accounts as any)?.account_alias || (f.aws_accounts as any)?.account_id || "Unknown",
+        aws_account_alias: f.aws_accounts?.account_alias || f.aws_accounts?.account_id || "Unknown",
+        risk_score_contribution: f.risk_score_contribution,
+        impact_assessment: f.impact_assessment,
+        execution_tag: f.execution_tag,
+        rollback_guidance: f.rollback_guidance,
+        compliance_tags: f.compliance_tags,
       }));
 
       setFindings(mappedFindings);
@@ -191,6 +202,11 @@ const Findings = () => {
       cloudformation_template: finding.cloudformation_template,
       is_resolved: finding.is_resolved,
       created_at: finding.created_at,
+      risk_score_contribution: finding.risk_score_contribution,
+      impact_assessment: finding.impact_assessment,
+      execution_tag: finding.execution_tag,
+      rollback_guidance: finding.rollback_guidance,
+      compliance_tags: finding.compliance_tags,
     };
     setSelectedFinding(details);
     setDialogOpen(true);

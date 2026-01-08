@@ -206,14 +206,19 @@ export type Database = {
         Row: {
           aws_account_id: string
           cloudformation_template: string | null
+          compliance_tags: string[] | null
           created_at: string
           description: string | null
+          execution_tag: string | null
           id: string
+          impact_assessment: string | null
           is_resolved: boolean | null
           remediation_steps: string[] | null
           resolved_at: string | null
           resource_id: string
           resource_type: string
+          risk_score_contribution: number | null
+          rollback_guidance: string | null
           scan_job_id: string
           service: Database["public"]["Enums"]["aws_service"]
           severity: Database["public"]["Enums"]["finding_severity"]
@@ -222,14 +227,19 @@ export type Database = {
         Insert: {
           aws_account_id: string
           cloudformation_template?: string | null
+          compliance_tags?: string[] | null
           created_at?: string
           description?: string | null
+          execution_tag?: string | null
           id?: string
+          impact_assessment?: string | null
           is_resolved?: boolean | null
           remediation_steps?: string[] | null
           resolved_at?: string | null
           resource_id: string
           resource_type: string
+          risk_score_contribution?: number | null
+          rollback_guidance?: string | null
           scan_job_id: string
           service: Database["public"]["Enums"]["aws_service"]
           severity: Database["public"]["Enums"]["finding_severity"]
@@ -238,14 +248,19 @@ export type Database = {
         Update: {
           aws_account_id?: string
           cloudformation_template?: string | null
+          compliance_tags?: string[] | null
           created_at?: string
           description?: string | null
+          execution_tag?: string | null
           id?: string
+          impact_assessment?: string | null
           is_resolved?: boolean | null
           remediation_steps?: string[] | null
           resolved_at?: string | null
           resource_id?: string
           resource_type?: string
+          risk_score_contribution?: number | null
+          rollback_guidance?: string | null
           scan_job_id?: string
           service?: Database["public"]["Enums"]["aws_service"]
           severity?: Database["public"]["Enums"]["finding_severity"]
