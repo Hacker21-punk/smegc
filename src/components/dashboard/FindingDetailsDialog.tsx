@@ -8,7 +8,19 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertTriangle, Shield, Info, CheckCircle2, Download, ExternalLink } from "lucide-react";
+import { 
+  AlertTriangle, 
+  Shield, 
+  Info, 
+  CheckCircle2, 
+  Download, 
+  ExternalLink,
+  Gauge,
+  AlertCircle,
+  RotateCcw,
+  FileCheck,
+  Zap
+} from "lucide-react";
 
 export interface FindingDetails {
   id: string;
@@ -23,6 +35,12 @@ export interface FindingDetails {
   cloudformation_template: string | null;
   is_resolved: boolean | null;
   created_at: string;
+  // Enhanced analysis fields
+  risk_score_contribution?: number | null;
+  impact_assessment?: string | null;
+  execution_tag?: 'SAFE_AUTOMATABLE' | 'REQUIRES_REVIEW' | 'MANUAL_ONLY' | null;
+  rollback_guidance?: string | null;
+  compliance_tags?: string[] | null;
 }
 
 interface FindingDetailsDialogProps {
@@ -80,8 +98,34 @@ export function FindingDetailsDialog({
     }
   };
 
+  const getExecutionTagConfig = (tag: string | null | undefined) => {
+    switch (tag) {
+      case "SAFE_AUTOMATABLE":
+        return { 
+          color: "bg-success/20 text-success border-success/30", 
+          label: "Safe to Automate",
+          description: "Low risk, reversible, standard best practice"
+        };
+      case "REQUIRES_REVIEW":
+        return { 
+          color: "bg-warning/20 text-warning border-warning/30", 
+          label: "Requires Review",
+          description: "May affect production or access - review before applying"
+        };
+      case "MANUAL_ONLY":
+        return { 
+          color: "bg-critical/20 text-critical border-critical/30", 
+          label: "Manual Only",
+          description: "High risk or business-critical - apply manually with care"
+        };
+      default:
+        return null;
+    }
+  };
+
   const config = getSeverityConfig(finding.severity);
   const SeverityIcon = config.icon;
+  const executionTagConfig = getExecutionTagConfig(finding.execution_tag);
 
   const handleDownloadTemplate = () => {
     if (!finding.cloudformation_template) return;
@@ -99,7 +143,7 @@ export function FindingDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh]">
+      <DialogContent className="max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <div className="flex items-start gap-3">
             <div className={`p-2 rounded-lg ${config.color}`}>
@@ -107,91 +151,207 @@ export function FindingDetailsDialog({
             </div>
             <div className="flex-1">
               <DialogTitle className="text-lg leading-tight">{finding.title}</DialogTitle>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Badge className={config.color}>{config.label}</Badge>
-                <span className="text-sm text-muted-foreground">{config.description}</span>
+                {finding.risk_score_contribution && (
+                  <Badge variant="outline" className="gap-1">
+                    <Gauge className="h-3 w-3" />
+                    Risk: {finding.risk_score_contribution}/10
+                  </Badge>
+                )}
+                {executionTagConfig && (
+                  <Badge variant="outline" className={executionTagConfig.color}>
+                    <Zap className="h-3 w-3 mr-1" />
+                    {executionTagConfig.label}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh] pr-4">
-          <div className="space-y-6">
-            {/* Resource Details */}
+        <ScrollArea className="max-h-[65vh] pr-4">
+          <div className="space-y-5">
+            {/* 1. Issue Identification - Resource Details */}
             <div>
-              <h4 className="font-semibold mb-2">Resource Details</h4>
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <Info className="h-4 w-4 text-primary" />
+                Issue Identification
+              </h4>
+              <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Resource ID:</span>
-                  <code className="text-sm bg-background px-2 py-0.5 rounded">{finding.resource_id}</code>
+                  <code className="bg-background px-2 py-0.5 rounded font-mono">{finding.resource_id}</code>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Type:</span>
+                  <span className="text-muted-foreground">Resource Type:</span>
                   <span>{finding.resource_type}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Service:</span>
+                  <span className="text-muted-foreground">AWS Service:</span>
                   <span className="capitalize">{finding.service.replace('_', ' ')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Detected:</span>
-                  <span>{new Date(finding.created_at).toLocaleDateString()}</span>
+                  <span>{new Date(finding.created_at).toLocaleString()}</span>
                 </div>
               </div>
             </div>
 
             <Separator />
 
-            {/* What's the Risk? */}
+            {/* 2. Risk Explanation */}
             {finding.description && (
-              <div>
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  What's the Risk?
-                </h4>
-                <p className="text-muted-foreground leading-relaxed">
-                  {finding.description}
-                </p>
-              </div>
-            )}
-
-            <Separator />
-
-            {/* Remediation Steps */}
-            {finding.remediation_steps && finding.remediation_steps.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-3 flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                  How to Fix
-                </h4>
-                <ol className="space-y-3">
-                  {finding.remediation_steps.map((step, index) => (
-                    <li key={index} className="flex gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm flex items-center justify-center font-medium">
-                        {index + 1}
-                      </span>
-                      <span className="text-muted-foreground pt-0.5">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
-
-            {/* CloudFormation Template */}
-            {finding.cloudformation_template && (
               <>
-                <Separator />
                 <div>
-                  <h4 className="font-semibold mb-2">Automated Fix Available</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Download a CloudFormation template that will automatically remediate this issue.
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-warning" />
+                    Risk Explanation
+                  </h4>
+                  <p className="text-muted-foreground leading-relaxed text-sm">
+                    {finding.description}
                   </p>
-                  <Button variant="outline" onClick={handleDownloadTemplate}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download CloudFormation Template
-                  </Button>
                 </div>
+                <Separator />
               </>
+            )}
+
+            {/* 3. Risk Severity Scoring */}
+            {finding.risk_score_contribution && (
+              <>
+                <div>
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <Gauge className="h-4 w-4 text-primary" />
+                    Risk Severity Score
+                  </h4>
+                  <div className="flex items-center gap-4">
+                    <div className="text-3xl font-bold text-primary">
+                      {finding.risk_score_contribution}<span className="text-lg text-muted-foreground">/10</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {config.description}
+                    </div>
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* 4. Security Recommendation (Remediation Steps) */}
+            {finding.remediation_steps && finding.remediation_steps.length > 0 && (
+              <>
+                <div>
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    Security Recommendation
+                  </h4>
+                  <ol className="space-y-3">
+                    {finding.remediation_steps.map((step, index) => (
+                      <li key={index} className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm flex items-center justify-center font-medium">
+                          {index + 1}
+                        </span>
+                        <span className="text-muted-foreground text-sm pt-0.5">{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* 5. Impact & Breakage Assessment */}
+            {finding.impact_assessment && (
+              <>
+                <div>
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-warning" />
+                    Impact & Breakage Assessment
+                  </h4>
+                  <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
+                    <p className="text-sm text-muted-foreground">
+                      {finding.impact_assessment}
+                    </p>
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* 6. Execution Readiness Tag */}
+            {executionTagConfig && (
+              <>
+                <div>
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    Execution Readiness
+                  </h4>
+                  <div className={`rounded-lg p-3 border ${executionTagConfig.color}`}>
+                    <div className="flex items-center gap-2 font-medium mb-1">
+                      {executionTagConfig.label}
+                    </div>
+                    <p className="text-sm opacity-80">
+                      {executionTagConfig.description}
+                    </p>
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* 7. Rollback Guidance */}
+            {finding.rollback_guidance && (
+              <>
+                <div>
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <RotateCcw className="h-4 w-4 text-info" />
+                    Rollback Guidance
+                  </h4>
+                  <div className="bg-info/10 border border-info/20 rounded-lg p-3">
+                    <p className="text-sm text-muted-foreground">
+                      {finding.rollback_guidance}
+                    </p>
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* 8. Compliance Alignment */}
+            {finding.compliance_tags && finding.compliance_tags.length > 0 && (
+              <>
+                <div>
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <FileCheck className="h-4 w-4 text-success" />
+                    Compliance Alignment
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {finding.compliance_tags.map((tag, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Addressing this finding supports compliance with the above frameworks.
+                  </p>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* CloudFormation Template Download */}
+            {finding.cloudformation_template && (
+              <div>
+                <h4 className="font-semibold mb-2">Automated Fix Available</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Download a CloudFormation template that provides guided remediation for this issue.
+                </p>
+                <Button variant="outline" onClick={handleDownloadTemplate}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download CloudFormation Template
+                </Button>
+              </div>
             )}
           </div>
         </ScrollArea>

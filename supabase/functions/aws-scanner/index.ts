@@ -15,6 +15,8 @@ interface ScanRequest {
   services: string[];
 }
 
+type ExecutionTag = 'SAFE_AUTOMATABLE' | 'REQUIRES_REVIEW' | 'MANUAL_ONLY';
+
 interface Finding {
   aws_account_id: string;
   scan_job_id: string;
@@ -26,6 +28,12 @@ interface Finding {
   resource_type: string;
   remediation_steps: string[];
   cloudformation_template?: string;
+  // Enhanced analysis fields
+  risk_score_contribution: number;
+  impact_assessment: string;
+  execution_tag: ExecutionTag;
+  rollback_guidance: string;
+  compliance_tags: string[];
 }
 
 // Assume the customer's IAM role
@@ -37,7 +45,6 @@ async function assumeCustomerRole(roleArn: string, externalId: string) {
     throw new Error("AWS credentials not configured. Please add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY secrets.");
   }
 
-  // Use explicit credentials to prevent fs.readFile error in Deno runtime
   const stsClient = new STSClient({
     region: "us-east-1",
     credentials: {
@@ -74,7 +81,7 @@ async function scanSecurityGroups(
   customerAccountId: string
 ): Promise<Finding[]> {
   const findings: Finding[] = [];
-  const regions = ["us-east-1", "us-west-2", "eu-west-1", "ap-south-1"]; // Scan major regions
+  const regions = ["us-east-1", "us-west-2", "eu-west-1", "ap-south-1"];
   
   for (const region of regions) {
     try {
@@ -91,16 +98,12 @@ async function scanSecurityGroups(
       const response = await ec2Client.send(command);
       
       for (const sg of response.SecurityGroups || []) {
-        // Check inbound rules for dangerous patterns
         for (const rule of sg.IpPermissions || []) {
           const hasOpenIPv4 = rule.IpRanges?.some(r => r.CidrIp === "0.0.0.0/0");
           const hasOpenIPv6 = rule.Ipv6Ranges?.some(r => r.CidrIpv6 === "::/0");
           
           if (hasOpenIPv4 || hasOpenIPv6) {
-            const port = rule.FromPort === rule.ToPort ? `${rule.FromPort}` : `${rule.FromPort}-${rule.ToPort}`;
-            const protocol = rule.IpProtocol === "-1" ? "all traffic" : rule.IpProtocol;
-            
-            // Critical: SSH/RDP open to internet
+            // Critical: SSH open to internet
             if (rule.FromPort === 22 || (rule.FromPort && rule.FromPort <= 22 && rule.ToPort && rule.ToPort >= 22)) {
               findings.push({
                 aws_account_id: awsAccountId,
@@ -108,16 +111,22 @@ async function scanSecurityGroups(
                 service: "security_groups",
                 severity: "critical",
                 title: `SSH (port 22) open to the internet`,
-                description: `Security group "${sg.GroupName}" (${sg.GroupId}) in ${region} allows SSH access from anywhere (0.0.0.0/0). This exposes your servers to brute-force attacks and should be restricted immediately.`,
+                description: `Security group "${sg.GroupName}" (${sg.GroupId}) in ${region} allows SSH access from anywhere (0.0.0.0/0). This exposes your servers to brute-force attacks, credential stuffing, and exploitation of SSH vulnerabilities. Attackers routinely scan the internet for open SSH ports and can compromise servers within minutes of exposure.`,
                 resource_id: sg.GroupId!,
                 resource_type: "Security Group",
                 remediation_steps: [
                   "Go to EC2 Console → Security Groups → Select this security group",
-                  "Edit inbound rules → Remove the 0.0.0.0/0 SSH rule",
-                  "Add a rule allowing SSH only from your trusted IP (e.g., your office IP)",
-                  "Consider using AWS Systems Manager Session Manager instead of SSH",
+                  "Click 'Edit inbound rules' and locate the SSH (port 22) rule with source 0.0.0.0/0",
+                  "Change the source to your specific IP address or CIDR range (e.g., your office IP)",
+                  "If remote access is needed from multiple locations, consider using AWS Systems Manager Session Manager instead",
+                  "Save the changes and verify SSH access still works from your trusted locations",
                 ],
                 cloudformation_template: generateSGRemediationTemplate(sg.GroupId!, 22, region),
+                risk_score_contribution: 10,
+                impact_assessment: "Restricting SSH access may temporarily block legitimate administrators. Ensure you have your current IP address added before removing 0.0.0.0/0. If using dynamic IPs, consider a VPN or bastion host solution.",
+                execution_tag: "REQUIRES_REVIEW",
+                rollback_guidance: "To revert, add a new inbound rule for SSH (port 22) with source 0.0.0.0/0. This is NOT recommended - instead, add specific IP ranges that need access.",
+                compliance_tags: ["ISO27001-A.13.1.1", "SOC2-CC6.1", "DPDP-S8", "GDPR-Art32"],
               });
             }
             
@@ -129,16 +138,22 @@ async function scanSecurityGroups(
                 service: "security_groups",
                 severity: "critical",
                 title: `RDP (port 3389) open to the internet`,
-                description: `Security group "${sg.GroupName}" (${sg.GroupId}) in ${region} allows RDP access from anywhere. Windows servers are at high risk of ransomware attacks.`,
+                description: `Security group "${sg.GroupName}" (${sg.GroupId}) in ${region} allows RDP access from anywhere. Windows servers exposed to the internet are prime targets for ransomware attacks, brute-force password guessing, and exploitation of RDP vulnerabilities (like BlueKeep). This is one of the most common attack vectors for SME compromises.`,
                 resource_id: sg.GroupId!,
                 resource_type: "Security Group",
                 remediation_steps: [
-                  "Immediately restrict RDP access to known IP addresses",
-                  "Enable Network Level Authentication (NLA) on Windows servers",
-                  "Consider using AWS Systems Manager Fleet Manager for remote access",
-                  "Implement a VPN or bastion host for remote administration",
+                  "Immediately restrict RDP access to known IP addresses only",
+                  "Edit the inbound rule to replace 0.0.0.0/0 with your office/VPN IP range",
+                  "Enable Network Level Authentication (NLA) on all Windows servers",
+                  "Consider using AWS Systems Manager Fleet Manager for browser-based Windows access",
+                  "Implement a VPN or AWS Client VPN for remote administration",
                 ],
                 cloudformation_template: generateSGRemediationTemplate(sg.GroupId!, 3389, region),
+                risk_score_contribution: 10,
+                impact_assessment: "Restricting RDP will block all external Windows remote access until trusted IPs are configured. Critical if admins rely on direct RDP - ensure alternative access is set up first.",
+                execution_tag: "REQUIRES_REVIEW",
+                rollback_guidance: "Add an inbound rule for RDP (port 3389) with source 0.0.0.0/0. Strongly discouraged - consider VPN access instead.",
+                compliance_tags: ["ISO27001-A.13.1.1", "SOC2-CC6.1", "DPDP-S8", "GDPR-Art32"],
               });
             }
             
@@ -160,15 +175,22 @@ async function scanSecurityGroups(
                   service: "security_groups",
                   severity: "high",
                   title: `${dbNames[dbPort]} (port ${dbPort}) open to the internet`,
-                  description: `Security group "${sg.GroupName}" (${sg.GroupId}) in ${region} allows ${dbNames[dbPort]} database access from anywhere. Databases should never be directly accessible from the internet.`,
+                  description: `Security group "${sg.GroupName}" (${sg.GroupId}) in ${region} allows ${dbNames[dbPort]} database access from anywhere. Databases should never be directly accessible from the internet. Exposed databases are actively scanned by attackers and can lead to complete data theft, ransomware, or data destruction within hours of exposure.`,
                   resource_id: sg.GroupId!,
                   resource_type: "Security Group",
                   remediation_steps: [
                     "Remove public access to database ports immediately",
-                    "Allow access only from application security groups",
-                    "Use VPC endpoints or AWS PrivateLink for service connectivity",
-                    "Enable encryption in transit (SSL/TLS) for database connections",
+                    "Allow access only from your application security groups",
+                    "Ensure your application servers are in the same VPC or use VPC peering",
+                    "Use VPC endpoints or AWS PrivateLink for cross-VPC connectivity",
+                    "Enable encryption in transit (SSL/TLS) for all database connections",
+                    "Review database users and remove any accounts with weak passwords",
                   ],
+                  risk_score_contribution: 8,
+                  impact_assessment: "Restricting database access should not affect applications if they connect from within the VPC. External tools (like database admin GUIs) will need to connect via bastion host or VPN.",
+                  execution_tag: "REQUIRES_REVIEW",
+                  rollback_guidance: `Add an inbound rule for port ${dbPort} with source 0.0.0.0/0. Never do this in production - use a bastion host for emergency access.`,
+                  compliance_tags: ["ISO27001-A.13.1.3", "SOC2-CC6.6", "DPDP-S8", "GDPR-Art32"],
                 });
               }
             }
@@ -181,15 +203,21 @@ async function scanSecurityGroups(
                 service: "security_groups",
                 severity: "high",
                 title: `All traffic allowed from the internet`,
-                description: `Security group "${sg.GroupName}" (${sg.GroupId}) in ${region} allows ALL inbound traffic from 0.0.0.0/0. This is extremely dangerous and defeats the purpose of having a security group.`,
+                description: `Security group "${sg.GroupName}" (${sg.GroupId}) in ${region} allows ALL inbound traffic from 0.0.0.0/0. This completely defeats the purpose of having a security group and exposes every service on associated instances to the internet. This is equivalent to having no firewall at all.`,
                 resource_id: sg.GroupId!,
                 resource_type: "Security Group",
                 remediation_steps: [
-                  "Review all services running on associated instances",
-                  "Create specific rules for only the required ports",
+                  "Audit all services running on instances using this security group",
+                  "Document which ports are actually needed (e.g., 80, 443 for web servers)",
+                  "Create specific inbound rules for only the required ports",
                   "Remove the 0.0.0.0/0 all-traffic rule",
-                  "Follow the principle of least privilege",
+                  "Test that applications still work with the restricted rules",
                 ],
+                risk_score_contribution: 9,
+                impact_assessment: "Removing this rule may break applications if you haven't added specific rules first. Audit what's running before removing. Consider adding specific rules for known ports before deleting the all-traffic rule.",
+                execution_tag: "MANUAL_ONLY",
+                rollback_guidance: "Add an inbound rule with 'All traffic' protocol and source 0.0.0.0/0. This is a temporary emergency measure only.",
+                compliance_tags: ["ISO27001-A.13.1.1", "SOC2-CC6.1", "DPDP-S8"],
               });
             }
           }
@@ -203,21 +231,25 @@ async function scanSecurityGroups(
             service: "security_groups",
             severity: "medium",
             title: `Default security group has custom rules`,
-            description: `The default security group in VPC ${sg.VpcId} (${region}) has been modified with custom rules. AWS best practice is to keep default security groups empty.`,
+            description: `The default security group in VPC ${sg.VpcId} (${region}) has been modified with custom rules. AWS best practice is to keep default security groups empty. Resources accidentally placed in the default group could have unintended network access.`,
             resource_id: sg.GroupId!,
             resource_type: "Security Group",
             remediation_steps: [
-              "Create dedicated security groups for your workloads",
-              "Migrate resources to use the new security groups",
-              "Remove all custom rules from the default security group",
-              "Keep the default security group as a catch-all with no rules",
+              "Create dedicated security groups for each workload type",
+              "Migrate all resources to use the appropriate dedicated security groups",
+              "Remove all custom inbound and outbound rules from the default security group",
+              "Keep the default security group with no rules as a catch-all fallback",
             ],
+            risk_score_contribution: 4,
+            impact_assessment: "Low immediate impact. This is a best practice recommendation. No service disruption if done correctly with dedicated security groups created first.",
+            execution_tag: "SAFE_AUTOMATABLE",
+            rollback_guidance: "Re-add the removed rules to the default security group. Document what rules existed before cleanup.",
+            compliance_tags: ["ISO27001-A.13.1.1", "SOC2-CC6.1"],
           });
         }
       }
     } catch (err) {
       console.log(`Failed to scan security groups in ${region}:`, err);
-      // Continue with other regions
     }
   }
   
@@ -262,7 +294,6 @@ async function scanIAM(
   accountAlias: string | null
 ): Promise<Finding[]> {
   const findings: Finding[] = [];
-  const accountName = accountAlias || customerAccountId;
   
   try {
     const iamClient = new IAMClient({
@@ -274,7 +305,6 @@ async function scanIAM(
       },
     });
     
-    // List all IAM users
     const listUsersCommand = new ListUsersCommand({});
     const usersResponse = await iamClient.send(listUsersCommand);
     
@@ -285,7 +315,6 @@ async function scanIAM(
       // Check for console access without MFA
       try {
         await iamClient.send(new GetLoginProfileCommand({ UserName: userName }));
-        // User has console access, check for MFA
         const mfaResponse = await iamClient.send(new ListMFADevicesCommand({ UserName: userName }));
         
         if (!mfaResponse.MFADevices || mfaResponse.MFADevices.length === 0) {
@@ -295,16 +324,22 @@ async function scanIAM(
             service: "iam",
             severity: "high",
             title: `IAM user "${userName}" has console access without MFA`,
-            description: `User ${userName} can log into the AWS Console but has no MFA device configured. If their password is compromised, attackers will have full access to their permissions.`,
+            description: `User ${userName} can log into the AWS Console but has no MFA device configured. If their password is compromised through phishing, password reuse, or brute force, attackers will have full access to their AWS permissions. MFA blocks 99.9% of account compromise attempts.`,
             resource_id: userArn,
             resource_type: "IAM User",
             remediation_steps: [
-              `Go to IAM Console → Users → ${userName} → Security credentials`,
-              "Click 'Assign MFA device'",
-              "Choose 'Virtual MFA device' (recommended: Google Authenticator, Authy)",
-              "Scan the QR code and enter two consecutive codes to confirm",
+              `Go to IAM Console → Users → ${userName} → Security credentials tab`,
+              "In the 'Multi-factor authentication (MFA)' section, click 'Assign MFA device'",
+              "Choose 'Authenticator app' (recommended: Google Authenticator, Authy, or Microsoft Authenticator)",
+              "Scan the QR code with your authenticator app",
+              "Enter two consecutive MFA codes to complete setup",
               "Consider enforcing MFA via IAM policy for all console users",
             ],
+            risk_score_contribution: 7,
+            impact_assessment: "Enabling MFA adds a few seconds to each login. No service disruption. Users will need their phone or hardware token when logging in.",
+            execution_tag: "SAFE_AUTOMATABLE",
+            rollback_guidance: `Go to IAM → Users → ${userName} → Security credentials → MFA → Delete. Not recommended as it weakens security.`,
+            compliance_tags: ["ISO27001-A.9.4.2", "SOC2-CC6.1", "DPDP-S8", "GDPR-Art32"],
           });
         }
       } catch {
@@ -315,29 +350,32 @@ async function scanIAM(
       const attachedPoliciesResponse = await iamClient.send(new ListAttachedUserPoliciesCommand({ UserName: userName }));
       
       for (const policy of attachedPoliciesResponse.AttachedPolicies || []) {
-        const dangerousPolicies = [
-          "AdministratorAccess",
-          "PowerUserAccess",
-          "IAMFullAccess",
-        ];
+        const dangerousPolicies = ["AdministratorAccess", "PowerUserAccess", "IAMFullAccess"];
         
         if (dangerousPolicies.includes(policy.PolicyName!)) {
+          const isCritical = policy.PolicyName === "AdministratorAccess";
           findings.push({
             aws_account_id: awsAccountId,
             scan_job_id: scanJobId,
             service: "iam",
-            severity: policy.PolicyName === "AdministratorAccess" ? "critical" : "high",
+            severity: isCritical ? "critical" : "high",
             title: `User "${userName}" has ${policy.PolicyName} attached`,
-            description: `IAM user ${userName} has the ${policy.PolicyName} managed policy attached. This grants excessive permissions and violates the principle of least privilege.`,
+            description: `IAM user ${userName} has the ${policy.PolicyName} managed policy attached. This grants ${isCritical ? 'complete control over all AWS resources' : 'excessive permissions'} and violates the principle of least privilege. If this account is compromised, attackers could delete all data, spin up cryptocurrency miners, or exfiltrate sensitive information.`,
             resource_id: userArn,
             resource_type: "IAM User",
             remediation_steps: [
-              "Audit what this user actually needs access to",
-              "Create a custom policy with only required permissions",
-              `Detach ${policy.PolicyName} from the user`,
-              "Attach the new custom policy instead",
-              "Use IAM Access Analyzer to identify unused permissions",
+              "Audit what this user actually needs access to for their daily work",
+              "Use AWS IAM Access Analyzer to identify unused permissions",
+              "Create a custom policy with only the required permissions",
+              `Go to IAM → Users → ${userName} → Permissions → Detach ${policy.PolicyName}`,
+              "Attach the new least-privilege policy instead",
+              "Consider using IAM Identity Center (SSO) for human users",
             ],
+            risk_score_contribution: isCritical ? 10 : 7,
+            impact_assessment: `User may lose access to some AWS services they were using. Work with the user to identify required permissions before detaching. Have a rollback plan ready.`,
+            execution_tag: "MANUAL_ONLY",
+            rollback_guidance: `Go to IAM → Users → ${userName} → Permissions → Attach policies → Search for ${policy.PolicyName} → Attach. Only do this temporarily for emergency access.`,
+            compliance_tags: ["ISO27001-A.9.2.3", "SOC2-CC6.3", "DPDP-S8", "GDPR-Art32"],
           });
         }
       }
@@ -352,16 +390,21 @@ async function scanIAM(
           service: "iam",
           severity: "low",
           title: `User "${userName}" has inline policies`,
-          description: `IAM user ${userName} has ${inlinePoliciesResponse.PolicyNames.length} inline policy(ies) attached. Inline policies are harder to manage, audit, and reuse compared to managed policies.`,
+          description: `IAM user ${userName} has ${inlinePoliciesResponse.PolicyNames.length} inline policy(ies) attached. Inline policies are harder to manage, audit, and reuse compared to managed policies. They also don't appear in policy simulators and can hide unexpected permissions.`,
           resource_id: userArn,
           resource_type: "IAM User",
           remediation_steps: [
-            "Review the inline policies attached to this user",
-            "Create equivalent customer-managed policies",
-            "Attach the managed policies to the user",
-            "Delete the inline policies",
-            "Use AWS Organizations SCPs for organization-wide guardrails",
+            `Go to IAM → Users → ${userName} → Permissions → Inline policies`,
+            "Review each inline policy and document what it allows",
+            "Create equivalent customer-managed policies with the same permissions",
+            "Attach the managed policies to the user or a group",
+            "Delete the inline policies after confirming the managed policies work",
           ],
+          risk_score_contribution: 2,
+          impact_assessment: "No immediate impact if permissions are replicated correctly to managed policies. Low risk of service disruption.",
+          execution_tag: "SAFE_AUTOMATABLE",
+          rollback_guidance: "Re-create the inline policy with the original JSON. Keep a backup of inline policy documents before deletion.",
+          compliance_tags: ["ISO27001-A.9.2.3", "SOC2-CC6.3"],
         });
       }
       
@@ -379,17 +422,23 @@ async function scanIAM(
             service: "iam",
             severity: keyAge > 180 ? "high" : "medium",
             title: `Access key for "${userName}" is ${keyAge} days old`,
-            description: `Access key ${accessKey.AccessKeyId} was created ${keyAge} days ago. AWS recommends rotating access keys every 90 days to limit the blast radius of compromised credentials.`,
+            description: `Access key ${accessKey.AccessKeyId} was created ${keyAge} days ago. AWS recommends rotating access keys every 90 days to limit exposure if keys are leaked. Old keys may have been shared in emails, code repositories, or scripts, increasing compromise risk over time.`,
             resource_id: userArn,
             resource_type: "IAM Access Key",
             remediation_steps: [
-              "Create a new access key for this user",
-              "Update all applications using the old key",
-              "Test that everything works with the new key",
-              "Deactivate the old access key",
-              "After confirming no issues, delete the old key",
-              "Consider using IAM Roles instead of long-term access keys",
+              `Go to IAM → Users → ${userName} → Security credentials`,
+              "Click 'Create access key' to generate a new key pair",
+              "Update all applications/scripts using the old key with the new credentials",
+              "Test thoroughly to ensure everything works with the new key",
+              "Deactivate (don't delete yet) the old access key",
+              "After 1-2 weeks with no issues, delete the old key",
+              "Consider using IAM Roles instead of long-term access keys where possible",
             ],
+            risk_score_contribution: keyAge > 180 ? 6 : 4,
+            impact_assessment: "Applications using this key will break when the key is deactivated. Plan the rotation carefully and test in non-production first.",
+            execution_tag: "REQUIRES_REVIEW",
+            rollback_guidance: `Go to IAM → Users → ${userName} → Security credentials → Access keys → Make inactive key active again. Keep the old key available until rotation is verified.`,
+            compliance_tags: ["ISO27001-A.9.4.3", "SOC2-CC6.1", "DPDP-S8"],
           });
         }
         
@@ -407,35 +456,44 @@ async function scanIAM(
                 service: "iam",
                 severity: "high",
                 title: `Access key for "${userName}" unused for ${daysSinceUsed} days`,
-                description: `Access key ${accessKey.AccessKeyId} has not been used for ${daysSinceUsed} days. Unused credentials pose a security risk and may indicate a key that was leaked or is no longer needed.`,
+                description: `Access key ${accessKey.AccessKeyId} has not been used for ${daysSinceUsed} days. Unused credentials pose a security risk - they may have been forgotten, leaked, or created for a purpose that no longer exists. If compromised, no one would notice the misuse.`,
                 resource_id: userArn,
                 resource_type: "IAM Access Key",
                 remediation_steps: [
-                  "Verify if this access key is still required",
-                  "Contact the key owner to confirm usage",
+                  "Verify if this access key is still required by any application or script",
+                  "Contact the key owner or check recent activity logs",
                   "If not needed, deactivate the key immediately",
-                  "After 30 days of deactivation with no issues, delete the key",
-                  "Consider implementing automated key rotation",
+                  "Monitor for 30 days to ensure no legitimate usage",
+                  "After confirmation, delete the key permanently",
                 ],
+                risk_score_contribution: 6,
+                impact_assessment: "Low impact if the key is truly unused. Deactivating first (instead of deleting) allows quick recovery if something unexpected breaks.",
+                execution_tag: "SAFE_AUTOMATABLE",
+                rollback_guidance: `Go to IAM → Users → ${userName} → Security credentials → Access keys → Change status to 'Active'. Key must not be deleted for this to work.`,
+                compliance_tags: ["ISO27001-A.9.4.3", "SOC2-CC6.1", "DPDP-S8"],
               });
             }
           } else if (!lastUsedResponse.AccessKeyLastUsed?.LastUsedDate && keyAge > 30) {
-            // Key was never used
             findings.push({
               aws_account_id: awsAccountId,
               scan_job_id: scanJobId,
               service: "iam",
               severity: "medium",
               title: `Access key for "${userName}" was never used`,
-              description: `Access key ${accessKey.AccessKeyId} was created ${keyAge} days ago but has never been used. This could indicate a forgotten key that poses a security risk.`,
+              description: `Access key ${accessKey.AccessKeyId} was created ${keyAge} days ago but has never been used. This could indicate a forgotten key created for testing or development, or credentials that were leaked before being deployed. Unused keys should be removed.`,
               resource_id: userArn,
               resource_type: "IAM Access Key",
               remediation_steps: [
-                "Investigate why this key was created",
-                "If it was created for testing, delete it",
-                "If still needed, use it or delete it",
-                "Consider creating keys only when immediately needed",
+                "Investigate why this key was created (check with the user or team)",
+                "If it was created for testing, delete it immediately",
+                "If still needed for a future project, delete and recreate when actually needed",
+                "Implement a policy to create keys only when immediately required",
               ],
+              risk_score_contribution: 3,
+              impact_assessment: "Very low impact since the key was never used. Safe to delete after brief investigation.",
+              execution_tag: "SAFE_AUTOMATABLE",
+              rollback_guidance: "Cannot restore deleted keys. Create a new access key if needed. This is why investigation before deletion is recommended.",
+              compliance_tags: ["ISO27001-A.9.4.3", "SOC2-CC6.1"],
             });
           }
         } catch (err) {
@@ -453,15 +511,21 @@ async function scanIAM(
             service: "iam",
             severity: "low",
             title: `User "${userName}" has multiple active access keys`,
-            description: `IAM user ${userName} has ${activeKeys.length} active access keys. While sometimes needed for key rotation, having multiple active keys increases the attack surface.`,
+            description: `IAM user ${userName} has ${activeKeys.length} active access keys. While sometimes needed temporarily during key rotation, having multiple active keys long-term increases the attack surface and makes credential management more complex.`,
             resource_id: userArn,
             resource_type: "IAM User",
             remediation_steps: [
               "Review which applications use each access key",
+              "Check the 'Last used' information for each key in IAM Console",
               "Consolidate to a single access key where possible",
-              "Deactivate and delete unused keys",
-              "Implement proper key rotation procedures",
+              "Deactivate and delete the unused key",
+              "Implement proper key rotation procedures for the future",
             ],
+            risk_score_contribution: 2,
+            impact_assessment: "Low immediate risk. Consolidating keys improves manageability. Ensure you know which key each application uses before deleting.",
+            execution_tag: "REQUIRES_REVIEW",
+            rollback_guidance: "Create a new access key to replace deleted ones. Applications will need to be updated with new credentials.",
+            compliance_tags: ["ISO27001-A.9.4.3", "SOC2-CC6.1"],
           });
         }
       }
@@ -479,23 +543,7 @@ function calculateRiskScore(findings: Finding[]): number {
   let score = 0;
   
   for (const finding of findings) {
-    switch (finding.severity) {
-      case "critical":
-        score += 25;
-        break;
-      case "high":
-        score += 15;
-        break;
-      case "medium":
-        score += 8;
-        break;
-      case "low":
-        score += 3;
-        break;
-      case "info":
-        score += 1;
-        break;
-    }
+    score += finding.risk_score_contribution;
   }
 
   // Cap at 100
@@ -503,7 +551,6 @@ function calculateRiskScore(findings: Finding[]): number {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -518,7 +565,6 @@ serve(async (req) => {
 
     console.log(`Starting scan for account ${aws_account_id}, job ${scan_job_id}, services: ${services.join(', ')}`);
 
-    // Get the AWS account details
     const { data: account, error: accountError } = await supabaseClient
       .from('aws_accounts')
       .select('*')
@@ -533,7 +579,6 @@ serve(async (req) => {
       throw new Error("AWS account has no role ARN configured");
     }
 
-    // Update scan job to running
     await supabaseClient
       .from('scan_jobs')
       .update({ 
@@ -542,7 +587,6 @@ serve(async (req) => {
       })
       .eq('id', scan_job_id);
 
-    // Assume the customer's IAM role
     console.log(`Assuming role ${account.role_arn} with external ID ${account.external_id}`);
     const credentials = await assumeCustomerRole(account.role_arn, account.external_id);
     console.log("Successfully assumed customer role");
@@ -550,7 +594,6 @@ serve(async (req) => {
     const allFindings: Finding[] = [];
     const scannedServices: string[] = [];
 
-    // Scan Security Groups
     if (services.includes('security_groups')) {
       console.log('Scanning Security Groups...');
       try {
@@ -560,11 +603,9 @@ serve(async (req) => {
         console.log(`Found ${sgFindings.length} Security Group findings`);
       } catch (err) {
         console.error("Security Groups scan failed:", err);
-        // Continue with other services
       }
     }
 
-    // Scan IAM
     if (services.includes('iam')) {
       console.log('Scanning IAM...');
       try {
@@ -574,18 +615,17 @@ serve(async (req) => {
         console.log(`Found ${iamFindings.length} IAM findings`);
       } catch (err) {
         console.error("IAM scan failed:", err);
-        // Continue
       }
     }
 
-    // Delete previous findings for this account (to avoid duplicates)
+    // Delete previous unresolved findings for this account
     await supabaseClient
       .from('security_findings')
       .delete()
       .eq('aws_account_id', aws_account_id)
       .eq('is_resolved', false);
 
-    // Insert new findings
+    // Insert new findings with enhanced analysis
     if (allFindings.length > 0) {
       const { error: insertError } = await supabaseClient
         .from('security_findings')
@@ -600,6 +640,11 @@ serve(async (req) => {
           resource_type: f.resource_type,
           remediation_steps: f.remediation_steps,
           cloudformation_template: f.cloudformation_template,
+          risk_score_contribution: f.risk_score_contribution,
+          impact_assessment: f.impact_assessment,
+          execution_tag: f.execution_tag,
+          rollback_guidance: f.rollback_guidance,
+          compliance_tags: f.compliance_tags,
         })));
 
       if (insertError) {
@@ -608,10 +653,8 @@ serve(async (req) => {
       }
     }
 
-    // Calculate risk score
     const riskScore = calculateRiskScore(allFindings);
 
-    // Update scan job with results
     await supabaseClient
       .from('scan_jobs')
       .update({
@@ -623,7 +666,6 @@ serve(async (req) => {
       })
       .eq('id', scan_job_id);
 
-    // Update AWS account with latest scan info
     await supabaseClient
       .from('aws_accounts')
       .update({
@@ -632,7 +674,6 @@ serve(async (req) => {
       })
       .eq('id', aws_account_id);
 
-    // Record risk score history
     await supabaseClient
       .from('risk_score_history')
       .insert({
@@ -655,7 +696,6 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Scan error:', errorMessage);
 
-    // Try to update scan job with error
     try {
       const supabaseClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
