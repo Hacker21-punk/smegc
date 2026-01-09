@@ -95,13 +95,18 @@ serve(async (req) => {
       .limit(1);
 
     if (existingScans && existingScans.length > 0) {
-      return new Response(JSON.stringify({ 
-        error: 'A scan is already in progress for this account',
-        scan_job_id: existingScans[0].id,
-      }), {
-        status: 409,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Return 200 so the frontend can handle this gracefully (not treated as a runtime error)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'A scan is already in progress for this account',
+          scan_job_id: existingScans[0].id,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Create a new scan job using service role (bypasses RLS)

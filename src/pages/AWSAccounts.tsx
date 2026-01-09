@@ -188,21 +188,29 @@ export default function AWSAccounts() {
         },
       });
 
+      // Non-2xx responses can surface here
       if (error) {
         throw new Error(error.message);
       }
 
-      if (data?.error) {
-        if (data.error.includes("already in progress")) {
-          toast.warning("A scan is already in progress for this account");
-        } else {
-          throw new Error(data.error);
-        }
+      if (!data) {
+        throw new Error("No response from scan service");
+      }
+
+      // Graceful "already running" response (function returns 200)
+      if (data.success === false && data.scan_job_id) {
+        toast.warning("A scan is already in progress for this account", {
+          description: `Scan job ${String(data.scan_job_id).slice(0, 8)}... is running`,
+        });
         return;
       }
 
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
       toast.success("Scan initiated!", {
-        description: `Scan job ${data.scan_job_id?.slice(0, 8)}... started`,
+        description: `Scan job ${String(data.scan_job_id).slice(0, 8)}... started`,
       });
 
       // Refresh accounts after a short delay to show updated status
