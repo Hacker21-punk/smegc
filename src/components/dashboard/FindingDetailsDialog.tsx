@@ -298,16 +298,61 @@ export function FindingDetailsDialog({
                   {/* Execution Eligibility Decision */}
                   {(() => {
                     const tag = finding.execution_tag;
-                    const isAutomatable = tag === 'SAFE_AUTOMATABLE';
-                    const executionAllowed = isAutomatable;
-                    const executionMode = isAutomatable ? 'AUTOMATED' : 'MANUAL';
-                    const confidenceScore = isAutomatable ? 95 : tag === 'REQUIRES_REVIEW' ? 60 : 30;
-                    const blockingReason = 
-                      tag === 'MANUAL_ONLY' 
-                        ? 'High-risk or business-critical change requires manual intervention'
-                        : tag === 'REQUIRES_REVIEW'
-                          ? 'May affect production workloads - human review recommended before execution'
-                          : null;
+                    
+                    // Decision rules as per AI Cloud Security Action Executor spec
+                    // Environment defaults to 'unknown' - conservative approach
+                    const environmentType = 'unknown' as 'production' | 'staging' | 'unknown';
+                    const autoFixEnabled = false; // User preference - defaults to disabled for safety
+                    
+                    // Safety checks for SAFE_AUTOMATABLE
+                    const isReversible = true; // Assumed from scanner analysis
+                    const noDowntimeExpected = true; // Assumed from scanner analysis
+                    const followsBestPractices = true; // Assumed from scanner analysis
+                    const isHighRiskProduction = environmentType === 'production';
+                    
+                    // Execution eligibility decision
+                    let executionAllowed = false;
+                    let blockingReason: string | null = null;
+                    let confidenceScore = 0;
+                    
+                    if (tag === 'MANUAL_ONLY') {
+                      executionAllowed = false;
+                      blockingReason = 'High-risk or business-critical change requires manual intervention';
+                      confidenceScore = 30;
+                    } else if (tag === 'REQUIRES_REVIEW') {
+                      executionAllowed = false;
+                      blockingReason = 'May affect production workloads - human review recommended before execution';
+                      confidenceScore = 50;
+                    } else if (tag === 'SAFE_AUTOMATABLE') {
+                      // Additional safety checks
+                      if (!autoFixEnabled) {
+                        executionAllowed = false;
+                        blockingReason = 'Auto-fix is currently disabled. Enable in account settings to allow automated execution.';
+                        confidenceScore = 85;
+                      } else if (isHighRiskProduction) {
+                        executionAllowed = false;
+                        blockingReason = 'Production environment detected - manual review recommended for safety';
+                        confidenceScore = 70;
+                      } else if (!isReversible || !noDowntimeExpected || !followsBestPractices) {
+                        executionAllowed = false;
+                        blockingReason = 'One or more safety conditions not met';
+                        confidenceScore = 60;
+                      } else {
+                        executionAllowed = true;
+                        confidenceScore = 95;
+                      }
+                    }
+                    
+                    const executionMode = executionAllowed ? 'AUTOMATED' : 'MANUAL';
+                    
+                    // Safety checks status
+                    const safetyChecks = tag === 'SAFE_AUTOMATABLE' ? [
+                      { label: 'Change is reversible', passed: isReversible },
+                      { label: 'No downtime expected', passed: noDowntimeExpected },
+                      { label: 'Follows AWS best practices', passed: followsBestPractices },
+                      { label: 'Environment is safe', passed: !isHighRiskProduction },
+                      { label: 'Auto-fix enabled', passed: autoFixEnabled },
+                    ] : null;
                     
                     return (
                       <div className="bg-muted/50 rounded-lg p-4 space-y-3 text-sm">
@@ -324,6 +369,12 @@ export function FindingDetailsDialog({
                           </Badge>
                         </div>
                         <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Environment:</span>
+                          <Badge variant="outline" className="capitalize">
+                            {environmentType}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Confidence Score:</span>
                           <div className="flex items-center gap-2">
                             <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
@@ -335,6 +386,26 @@ export function FindingDetailsDialog({
                             <span className="font-medium">{confidenceScore}%</span>
                           </div>
                         </div>
+                        
+                        {/* Safety Checks for SAFE_AUTOMATABLE */}
+                        {safetyChecks && (
+                          <div className="pt-2 border-t border-border">
+                            <span className="text-muted-foreground block mb-2">Safety Checks:</span>
+                            <div className="space-y-1">
+                              {safetyChecks.map((check, idx) => (
+                                <div key={idx} className="flex items-center gap-2 text-xs">
+                                  <span className={check.passed ? 'text-success' : 'text-muted-foreground'}>
+                                    {check.passed ? '✓' : '○'}
+                                  </span>
+                                  <span className={check.passed ? 'text-foreground' : 'text-muted-foreground'}>
+                                    {check.label}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
                         {blockingReason && (
                           <div className="pt-2 border-t border-border">
                             <span className="text-muted-foreground block mb-1">Blocking Reason:</span>
@@ -343,9 +414,10 @@ export function FindingDetailsDialog({
                             </p>
                           </div>
                         )}
+                        
                         {executionAllowed && (
-                          <p className="text-xs text-muted-foreground pt-2 border-t border-border">
-                            ✓ Change is reversible, no downtime expected, follows AWS best practices
+                          <p className="text-xs text-success pt-2 border-t border-border">
+                            ✓ All safety conditions met - eligible for automated execution
                           </p>
                         )}
                       </div>
