@@ -278,15 +278,15 @@ export function FindingDetailsDialog({
               </>
             )}
 
-            {/* 6. Execution Readiness Tag */}
+            {/* 6. Execution Readiness Tag & Eligibility Decision */}
             {executionTagConfig && (
               <>
                 <div>
                   <h4 className="font-semibold mb-2 flex items-center gap-2">
                     <Zap className="h-4 w-4 text-primary" />
-                    Execution Readiness
+                    Execution Readiness & Eligibility
                   </h4>
-                  <div className={`rounded-lg p-3 border ${executionTagConfig.color}`}>
+                  <div className={`rounded-lg p-3 border ${executionTagConfig.color} mb-3`}>
                     <div className="flex items-center gap-2 font-medium mb-1">
                       {executionTagConfig.label}
                     </div>
@@ -294,6 +294,63 @@ export function FindingDetailsDialog({
                       {executionTagConfig.description}
                     </p>
                   </div>
+                  
+                  {/* Execution Eligibility Decision */}
+                  {(() => {
+                    const tag = finding.execution_tag;
+                    const isAutomatable = tag === 'SAFE_AUTOMATABLE';
+                    const executionAllowed = isAutomatable;
+                    const executionMode = isAutomatable ? 'AUTOMATED' : 'MANUAL';
+                    const confidenceScore = isAutomatable ? 95 : tag === 'REQUIRES_REVIEW' ? 60 : 30;
+                    const blockingReason = 
+                      tag === 'MANUAL_ONLY' 
+                        ? 'High-risk or business-critical change requires manual intervention'
+                        : tag === 'REQUIRES_REVIEW'
+                          ? 'May affect production workloads - human review recommended before execution'
+                          : null;
+                    
+                    return (
+                      <div className="bg-muted/50 rounded-lg p-4 space-y-3 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Execution Allowed:</span>
+                          <Badge variant={executionAllowed ? "default" : "secondary"} className={executionAllowed ? "bg-success text-success-foreground" : ""}>
+                            {executionAllowed ? "Yes" : "No"}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Execution Mode:</span>
+                          <Badge variant="outline">
+                            {executionMode}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Confidence Score:</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full ${confidenceScore >= 80 ? 'bg-success' : confidenceScore >= 50 ? 'bg-warning' : 'bg-critical'}`}
+                                style={{ width: `${confidenceScore}%` }}
+                              />
+                            </div>
+                            <span className="font-medium">{confidenceScore}%</span>
+                          </div>
+                        </div>
+                        {blockingReason && (
+                          <div className="pt-2 border-t border-border">
+                            <span className="text-muted-foreground block mb-1">Blocking Reason:</span>
+                            <p className="text-warning-foreground bg-warning/10 rounded p-2 text-xs">
+                              {blockingReason}
+                            </p>
+                          </div>
+                        )}
+                        {executionAllowed && (
+                          <p className="text-xs text-muted-foreground pt-2 border-t border-border">
+                            ✓ Change is reversible, no downtime expected, follows AWS best practices
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <Separator />
               </>
