@@ -19,8 +19,14 @@ import {
   AlertCircle,
   RotateCcw,
   FileCheck,
-  Zap
+  Zap,
+  FileCode,
+  Play,
+  Ban
 } from "lucide-react";
+import { generateExecutionPlan, type ExecutionPlan } from "@/lib/execution-plan-generator";
+import { useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export interface FindingDetails {
   id: string;
@@ -48,6 +54,167 @@ interface FindingDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onMarkResolved?: (id: string) => void;
+}
+
+// Execution Plan Section Component
+function ExecutionPlanSection({ finding }: { finding: FindingDetails }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const plan = generateExecutionPlan({
+    title: finding.title,
+    service: finding.service,
+    resource_id: finding.resource_id,
+    resource_type: finding.resource_type,
+    severity: finding.severity,
+    execution_tag: finding.execution_tag,
+    remediation_steps: finding.remediation_steps,
+    rollback_guidance: finding.rollback_guidance,
+  });
+
+  if (!plan) return null;
+
+  const handleDownloadPlan = () => {
+    const blob = new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `execution-plan-${finding.resource_id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <>
+      <Separator />
+      <div>
+        <h4 className="font-semibold mb-2 flex items-center gap-2">
+          <FileCode className="h-4 w-4 text-primary" />
+          Execution Plan (Dry-Run)
+        </h4>
+        
+        {!plan.is_safe ? (
+          <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
+            <div className="flex items-start gap-2">
+              <Ban className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-warning">Plan Generation Denied</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {plan.denial_reason}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="bg-success/10 border border-success/20 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <Play className="h-4 w-4 text-success" />
+                <span className="text-sm font-medium text-success">Safe Execution Plan Available</span>
+                <Badge variant="outline" className="ml-auto text-xs">
+                  Risk: {plan.estimated_risk}
+                </Badge>
+              </div>
+            </div>
+
+            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full justify-between">
+                  <span>{isOpen ? 'Hide' : 'View'} Execution Plan Details</span>
+                  <FileCode className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3 space-y-4">
+                {/* Pre-checks */}
+                {plan.pre_checks.length > 0 && (
+                  <div>
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                      Pre-Execution Checks
+                    </h5>
+                    <ul className="space-y-1">
+                      {plan.pre_checks.map((check, idx) => (
+                        <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">
+                          <span className="text-primary">•</span>
+                          {check}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Execution Steps */}
+                {plan.execution_steps.length > 0 && (
+                  <div>
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                      Execution Steps
+                    </h5>
+                    <div className="space-y-2">
+                      {plan.execution_steps.map((step) => (
+                        <div key={step.step_order} className="bg-muted/50 rounded p-2 text-xs">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              Step {step.step_order}
+                            </Badge>
+                            <code className="text-primary font-mono text-[10px]">{step.aws_api}</code>
+                          </div>
+                          <p className="text-muted-foreground">{step.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Rollback Steps */}
+                {plan.rollback_steps.length > 0 && (
+                  <div>
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                      <RotateCcw className="h-3 w-3" />
+                      Rollback Steps
+                    </h5>
+                    <div className="space-y-2">
+                      {plan.rollback_steps.map((step) => (
+                        <div key={step.step_order} className="bg-info/10 border border-info/20 rounded p-2 text-xs">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-info/30">
+                              Rollback {step.step_order}
+                            </Badge>
+                            <code className="text-info font-mono text-[10px]">{step.aws_api}</code>
+                          </div>
+                          <p className="text-muted-foreground">{step.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Post-checks */}
+                {plan.post_checks.length > 0 && (
+                  <div>
+                    <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                      Post-Execution Validation
+                    </h5>
+                    <ul className="space-y-1">
+                      {plan.post_checks.map((check, idx) => (
+                        <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">
+                          <CheckCircle2 className="h-3 w-3 text-success mt-0.5 flex-shrink-0" />
+                          {check}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <Button variant="outline" size="sm" onClick={handleDownloadPlan} className="w-full">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Execution Plan (JSON)
+                </Button>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        )}
+      </div>
+    </>
+  );
 }
 
 export function FindingDetailsDialog({ 
@@ -467,6 +634,11 @@ export function FindingDetailsDialog({
                 </div>
                 <Separator />
               </>
+            )}
+
+            {/* 9. Execution Plan (Dry-Run) */}
+            {finding.execution_tag && (
+              <ExecutionPlanSection finding={finding} />
             )}
 
             {/* CloudFormation Template Download */}
