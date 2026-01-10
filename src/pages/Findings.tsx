@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   AlertTriangle, 
   Shield, 
@@ -28,8 +29,11 @@ import {
   FileDown,
   CheckCircle2,
   XCircle,
-  Clock
+  Clock,
+  Zap,
+  List
 } from "lucide-react";
+import { PrioritizedRemediationView } from "@/components/dashboard/PrioritizedRemediationView";
 import { FindingDetailsDialog, FindingDetails } from "@/components/dashboard/FindingDetailsDialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +82,7 @@ const Findings = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedFinding, setSelectedFinding] = useState<FindingDetails | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "prioritized">("list");
 
   useEffect(() => {
     fetchFindings();
@@ -212,6 +217,13 @@ const Findings = () => {
     setDialogOpen(true);
   };
 
+  const handleFindingClickFromPrioritized = (id: string) => {
+    const finding = findings.find(f => f.id === id);
+    if (finding) {
+      handleRowClick(finding);
+    }
+  };
+
   const handleMarkResolved = async (id: string) => {
     try {
       const { error } = await supabase
@@ -324,10 +336,31 @@ const Findings = () => {
           </Card>
         </div>
 
-        {/* Filters and Table */}
-        <Card>
-          <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <CardTitle>All Findings</CardTitle>
+        {/* View Mode Tabs */}
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "prioritized")} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="list" className="gap-2">
+              <List className="h-4 w-4" />
+              All Findings
+            </TabsTrigger>
+            <TabsTrigger value="prioritized" className="gap-2">
+              <Zap className="h-4 w-4" />
+              Prioritized Remediation
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="prioritized">
+            <PrioritizedRemediationView 
+              findings={findings}
+              onFindingClick={handleFindingClickFromPrioritized}
+            />
+          </TabsContent>
+
+          <TabsContent value="list">
+            {/* Filters and Table */}
+            <Card>
+              <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <CardTitle>All Findings</CardTitle>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -486,8 +519,10 @@ const Findings = () => {
                 </Table>
               </div>
             )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
 
       <FindingDetailsDialog
