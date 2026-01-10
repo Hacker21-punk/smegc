@@ -14,7 +14,8 @@ import {
   Shield,
   Info,
   FileDown,
-  ArrowUpRight
+  ArrowUpRight,
+  Play
 } from "lucide-react";
 import { 
   prioritizeFindings, 
@@ -23,8 +24,10 @@ import {
   ExecutionWindow,
   getCategoryConfig,
   getExecutionWindowConfig,
-  FindingForPrioritization
+  FindingForPrioritization,
+  PrioritizedFinding
 } from "@/lib/prioritization-engine";
+import { ExecutionControllerDialog } from "./ExecutionControllerDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -97,6 +100,11 @@ export function PrioritizedRemediationView({ findings, onFindingClick }: Priorit
   const [expandedCategories, setExpandedCategories] = useState<Set<PriorityCategory>>(
     new Set(['P0', 'P1'])
   );
+  const [executionDialogOpen, setExecutionDialogOpen] = useState(false);
+  const [selectedForExecution, setSelectedForExecution] = useState<{
+    finding: Finding;
+    prioritizedItem: PrioritizedFinding;
+  } | null>(null);
 
   // Convert findings to prioritization format
   const findingsForPrioritization: FindingForPrioritization[] = useMemo(() => 
@@ -152,6 +160,12 @@ export function PrioritizedRemediationView({ findings, onFindingClick }: Priorit
       }
       return next;
     });
+  };
+
+  const handleExecuteClick = (finding: Finding, prioritizedItem: PrioritizedFinding, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedForExecution({ finding, prioritizedItem });
+    setExecutionDialogOpen(true);
   };
 
   const handleExportPlan = () => {
@@ -329,8 +343,15 @@ export function PrioritizedRemediationView({ findings, onFindingClick }: Priorit
                                   </div>
                                 </div>
 
-                                {/* Action Arrow */}
-                                <ArrowUpRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                {/* Execute Button */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="flex-shrink-0"
+                                  onClick={(e) => handleExecuteClick(finding, item, e)}
+                                >
+                                  <Play className="h-4 w-4" />
+                                </Button>
                               </div>
                             );
                           })}
@@ -355,6 +376,22 @@ export function PrioritizedRemediationView({ findings, onFindingClick }: Priorit
           </div>
         </CardContent>
       </Card>
+
+      {/* Execution Controller Dialog */}
+      <ExecutionControllerDialog
+        open={executionDialogOpen}
+        onOpenChange={setExecutionDialogOpen}
+        finding={selectedForExecution?.finding ? {
+          id: selectedForExecution.finding.id,
+          title: selectedForExecution.finding.title,
+          severity: selectedForExecution.finding.severity,
+          service: selectedForExecution.finding.service,
+          resource_id: selectedForExecution.finding.resource_id,
+          execution_tag: selectedForExecution.finding.execution_tag,
+        } : null}
+        priorityCategory={selectedForExecution?.prioritizedItem.priority_category || 'P3'}
+        priorityScore={selectedForExecution?.prioritizedItem.priority_score || 0}
+      />
     </div>
   );
 }
