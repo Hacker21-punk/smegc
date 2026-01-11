@@ -22,11 +22,13 @@ import {
   Zap,
   FileCode,
   Play,
-  Ban
+  Ban,
+  Clock
 } from "lucide-react";
 import { generateExecutionPlan, type ExecutionPlan } from "@/lib/execution-plan-generator";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AuditTimelineDialog } from "./AuditTimelineDialog";
 
 export interface FindingDetails {
   id: string;
@@ -223,6 +225,8 @@ export function FindingDetailsDialog({
   onOpenChange,
   onMarkResolved 
 }: FindingDetailsDialogProps) {
+  const [auditTimelineOpen, setAuditTimelineOpen] = useState(false);
+  
   if (!finding) return null;
 
   const getSeverityConfig = (severity: string) => {
@@ -660,16 +664,22 @@ export function FindingDetailsDialog({
         <Separator />
 
         <div className="flex justify-between items-center pt-2">
-          <Button variant="ghost" size="sm" asChild>
-            <a 
-              href={`https://console.aws.amazon.com/`} 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Open AWS Console
-            </a>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <a 
+                href={`https://console.aws.amazon.com/`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open AWS Console
+              </a>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setAuditTimelineOpen(true)}>
+              <Clock className="mr-2 h-4 w-4" />
+              View Audit Log
+            </Button>
+          </div>
           
           {!finding.is_resolved && onMarkResolved && (
             <Button onClick={() => onMarkResolved(finding.id)}>
@@ -679,6 +689,13 @@ export function FindingDetailsDialog({
           )}
         </div>
       </DialogContent>
+      
+      {/* Audit Timeline Dialog */}
+      <AuditTimelineDialog
+        finding={finding}
+        open={auditTimelineOpen}
+        onOpenChange={setAuditTimelineOpen}
+      />
     </Dialog>
   );
 }
