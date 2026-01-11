@@ -33,9 +33,13 @@ import {
   simulateExecution,
   generateManualExecutionGuide,
   getExecutionRules,
+  generatePlanChecksum,
+  validateP0PreExecutionChecks,
   ExecutionResult,
   ExecutionEligibility,
   ExecutionRequest,
+  P0ExecutionRequest,
+  PreExecutionCheck,
 } from "@/lib/execution-controller";
 import { generateExecutionPlan, ExecutionPlan } from "@/lib/execution-plan-generator";
 import { PriorityCategory, getCategoryConfig } from "@/lib/prioritization-engine";
@@ -71,14 +75,16 @@ export function ExecutionControllerDialog({
   const [isExecuting, setIsExecuting] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [showP0Checks, setShowP0Checks] = useState(false);
+  const [planChecksum, setPlanChecksum] = useState<string>('');
 
   const categoryConfig = getCategoryConfig(priorityCategory);
   const executionRules = getExecutionRules(priorityCategory);
 
-  // Generate execution plan
+  // Generate execution plan and checksum
   const executionPlan: ExecutionPlan | null = useMemo(() => {
     if (!finding) return null;
-    return generateExecutionPlan({
+    const plan = generateExecutionPlan({
       title: finding.title,
       severity: finding.severity,
       service: finding.service,
@@ -86,7 +92,30 @@ export function ExecutionControllerDialog({
       resource_type: 'aws-resource',
       execution_tag: finding.execution_tag,
     });
+    if (plan) {
+      setPlanChecksum(generatePlanChecksum(plan));
+    }
+    return plan;
   }, [finding]);
+
+  // Pre-execution checks for P0
+  const p0PreChecks: PreExecutionCheck[] = useMemo(() => {
+    if (!finding || !executionPlan || priorityCategory !== 'P0' || !userApproval || !autoFixEnabled) {
+      return [];
+    }
+    
+    const request: P0ExecutionRequest = {
+      finding_id: finding.id,
+      priority_category: 'P0',
+      execution_plan: executionPlan,
+      environment_type: environmentType,
+      user_approval: true,
+      auto_fix_enabled: true,
+      plan_checksum: planChecksum,
+    };
+    
+    return validateP0PreExecutionChecks(request, planChecksum);
+  }, [finding, executionPlan, priorityCategory, userApproval, autoFixEnabled, environmentType, planChecksum]);
 
   // Validate eligibility
   const eligibility: ExecutionEligibility | null = useMemo(() => {
@@ -172,6 +201,7 @@ export function ExecutionControllerDialog({
     setExecutionResult(null);
     setShowLogs(false);
     setUserApproval(false);
+    setShowP0Checks(false);
   };
 
   if (!finding || !executionPlan) return null;
@@ -356,6 +386,63 @@ export function ExecutionControllerDialog({
               </div>
             )}
 
+            {/* P0 Pre-Execution Checks */}
+            {priorityCategory === 'P0' && userApproval && autoFixEnabled && p0PreChecks.length > 0 && (
+              <Collapsible open={showP0Checks} onOpenChange={setShowP0Checks}>
+                <div className="p-4 border border-primary/30 bg-primary/5 rounded-lg space-y-3">
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between cursor-pointer">
+                      <h4 className="font-medium flex items-center gap-2 text-primary">
+                        {showP0Checks ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        <Zap className="h-4 w-4" />
+                        P0 Pre-Execution Checks
+                      </h4>
+                      <Badge variant="outline" className="border-primary/50 text-primary">
+                        {p0PreChecks.filter(c => c.status === 'passed').length}/{p0PreChecks.length} Passed
+                      </Badge>
+                    </div>
+                  </CollapsibleTrigger>
+
+                  <CollapsibleContent>
+                    <div className="mt-3 space-y-2">
+                      <div className="text-xs text-muted-foreground mb-2">
+                        <strong>Plan Checksum:</strong> <code className="bg-muted px-1 rounded">{planChecksum}</code>
+                      </div>
+                      {p0PreChecks.map((check, index) => (
+                        <div key={index} className="flex items-start gap-2 text-sm p-2 bg-background/50 rounded">
+                          {check.status === 'passed' ? (
+                            <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-critical mt-0.5 flex-shrink-0" />
+                          )}
+                          <div className="flex-1">
+                            <p className={check.status === 'passed' ? '' : 'text-critical font-medium'}>
+                              {check.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{check.message}</p>
+                          </div>
+                        </div>
+                      ))}
+
+                      {p0PreChecks.every(c => c.status === 'passed') && (
+                        <div className="mt-3 p-2 bg-success/10 border border-success/20 rounded text-success text-sm flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4" />
+                          All pre-execution checks passed. Ready for P0 automated execution.
+                        </div>
+                      )}
+
+                      {p0PreChecks.some(c => c.status !== 'passed') && (
+                        <div className="mt-3 p-2 bg-critical/10 border border-critical/20 rounded text-critical text-sm flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          Pre-execution checks failed. Execution will be ABORTED if attempted.
+                        </div>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            )}
+
             {/* Execution Result */}
             {executionResult && (
               <Collapsible open={showLogs} onOpenChange={setShowLogs}>
@@ -380,16 +467,16 @@ export function ExecutionControllerDialog({
                   <CollapsibleContent>
                     <div className="space-y-3 mt-3">
                       {/* Summary */}
-                      <div className="grid grid-cols-3 gap-3 text-sm">
+                      <div className="grid grid-cols-4 gap-3 text-sm">
                         <div className="text-center p-2 bg-muted/50 rounded">
                           <p className="text-lg font-bold">{executionResult.executed_steps.length}</p>
                           <p className="text-xs text-muted-foreground">Steps Executed</p>
                         </div>
                         <div className="text-center p-2 bg-muted/50 rounded">
                           <p className={`text-lg font-bold ${
-                            executionResult.post_execution_validation === 'PASSED' ? 'text-success' : 'text-critical'
+                            executionResult.final_state_validation === 'PASSED' ? 'text-success' : 'text-critical'
                           }`}>
-                            {executionResult.post_execution_validation}
+                            {executionResult.final_state_validation}
                           </p>
                           <p className="text-xs text-muted-foreground">Validation</p>
                         </div>
@@ -401,7 +488,25 @@ export function ExecutionControllerDialog({
                           </p>
                           <p className="text-xs text-muted-foreground">Rollback</p>
                         </div>
+                        <div className="text-center p-2 bg-muted/50 rounded">
+                          <p className="text-xs font-mono text-muted-foreground truncate" title={executionResult.audit_log_id}>
+                            {executionResult.audit_log_id.substring(0, 12)}...
+                          </p>
+                          <p className="text-xs text-muted-foreground">Audit ID</p>
+                        </div>
                       </div>
+
+                      {/* Rollback Status */}
+                      {executionResult.rollback_triggered && (
+                        <div className={`p-2 rounded text-sm flex items-center gap-2 ${
+                          executionResult.rollback_status === 'SUCCESS' 
+                            ? 'bg-success/10 border border-success/20 text-success' 
+                            : 'bg-critical/10 border border-critical/20 text-critical'
+                        }`}>
+                          <RotateCcw className="h-4 w-4" />
+                          Rollback Status: {executionResult.rollback_status}
+                        </div>
+                      )}
 
                       {/* Logs */}
                       <div className="bg-muted/30 rounded-lg p-3 max-h-48 overflow-y-auto">
