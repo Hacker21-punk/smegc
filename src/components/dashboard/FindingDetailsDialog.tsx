@@ -29,6 +29,7 @@ import { generateExecutionPlan, type ExecutionPlan } from "@/lib/execution-plan-
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AuditTimelineDialog } from "./AuditTimelineDialog";
+import { VerificationDialog } from "./VerificationDialog";
 
 export interface FindingDetails {
   id: string;
@@ -226,6 +227,7 @@ export function FindingDetailsDialog({
   onMarkResolved 
 }: FindingDetailsDialogProps) {
   const [auditTimelineOpen, setAuditTimelineOpen] = useState(false);
+  const [verificationOpen, setVerificationOpen] = useState(false);
   
   if (!finding) return null;
 
@@ -679,6 +681,10 @@ export function FindingDetailsDialog({
               <Clock className="mr-2 h-4 w-4" />
               View Audit Log
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setVerificationOpen(true)}>
+              <Shield className="mr-2 h-4 w-4" />
+              Verify Remediation
+            </Button>
           </div>
           
           {!finding.is_resolved && onMarkResolved && (
@@ -695,6 +701,33 @@ export function FindingDetailsDialog({
         finding={finding}
         open={auditTimelineOpen}
         onOpenChange={setAuditTimelineOpen}
+      />
+      
+      {/* Verification Dialog */}
+      <VerificationDialog
+        finding={{
+          id: finding.id,
+          title: finding.title,
+          description: finding.description,
+          severity: finding.severity,
+          resource_id: finding.resource_id,
+          resource_type: finding.resource_type,
+          service: finding.service as any,
+          aws_account_id: finding.aws_account_id,
+          scan_job_id: '',
+          is_resolved: finding.is_resolved,
+          resolved_at: null,
+          created_at: finding.created_at,
+          remediation_steps: finding.remediation_steps,
+          cloudformation_template: finding.cloudformation_template,
+          risk_score_contribution: finding.risk_score_contribution,
+          impact_assessment: finding.impact_assessment,
+          execution_tag: finding.execution_tag,
+          rollback_guidance: finding.rollback_guidance,
+          compliance_tags: finding.compliance_tags,
+        }}
+        open={verificationOpen}
+        onOpenChange={setVerificationOpen}
       />
     </Dialog>
   );
