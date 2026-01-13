@@ -9,6 +9,43 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Authentication helper - validates JWT or service role key
+async function validateAuth(req: Request): Promise<{ valid: boolean; error?: string; userId?: string }> {
+  const authHeader = req.headers.get('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { valid: false, error: 'Missing or invalid Authorization header' };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  // Allow service role key for internal calls (from trigger-scan, scheduled-scan)
+  if (token === serviceRoleKey) {
+    return { valid: true, userId: 'service-role' };
+  }
+
+  // Validate user JWT token
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { valid: false, error: 'Supabase configuration missing' };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } }
+  });
+
+  const { data, error } = await supabase.auth.getUser();
+  
+  if (error || !data.user) {
+    return { valid: false, error: 'Invalid or expired authentication token' };
+  }
+
+  return { valid: true, userId: data.user.id };
+}
+
 interface ScanRequest {
   aws_account_id: string;
   scan_job_id: string;
@@ -556,6 +593,19 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check - require valid authorization
+    const authResult = await validateAuth(req);
+    
+    if (!authResult.valid) {
+      console.error('Unauthorized scan attempt:', authResult.error);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - valid authentication required', details: authResult.error }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Authenticated request from: ${authResult.userId}`);
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
