@@ -12,9 +12,29 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check - require valid authorization
+    const authHeader = req.headers.get('Authorization');
+    const scheduledScanSecret = Deno.env.get('SCHEDULED_SCAN_SECRET');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    // Accept either the dedicated scheduled scan secret or the service role key
+    // This allows both cron jobs (with secret) and internal service calls (with service role)
+    const isValidAuth = authHeader && (
+      authHeader === `Bearer ${scheduledScanSecret}` ||
+      authHeader === `Bearer ${serviceRoleKey}`
+    );
+    
+    if (!isValidAuth) {
+      console.error('Unauthorized scheduled scan attempt - missing or invalid auth');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - valid authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      serviceRoleKey ?? ''
     );
 
     console.log('Starting scheduled scan for all connected accounts...');
