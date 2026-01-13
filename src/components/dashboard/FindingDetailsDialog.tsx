@@ -30,6 +30,7 @@ import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AuditTimelineDialog } from "./AuditTimelineDialog";
 import { VerificationDialog } from "./VerificationDialog";
+import { ChangeImpactPreview } from "./ChangeImpactPreview";
 
 export interface FindingDetails {
   id: string;
@@ -647,18 +648,29 @@ export function FindingDetailsDialog({
               <ExecutionPlanSection finding={finding} />
             )}
 
+            {/* Change Impact Preview - before remediation actions */}
+            {(finding.cloudformation_template || finding.remediation_steps?.length) && (
+              <>
+                <Separator />
+                <ChangeImpactPreview finding={finding} />
+              </>
+            )}
+
             {/* CloudFormation Template Download */}
             {finding.cloudformation_template && (
-              <div>
-                <h4 className="font-semibold mb-2">Automated Fix Available</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Download a CloudFormation template that provides guided remediation for this issue.
-                </p>
-                <Button variant="outline" onClick={handleDownloadTemplate}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download CloudFormation Template
-                </Button>
-              </div>
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2">Automated Fix Available</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Download a CloudFormation template that provides guided remediation for this issue.
+                  </p>
+                  <Button variant="outline" onClick={handleDownloadTemplate}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download CloudFormation Template
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         </ScrollArea>
