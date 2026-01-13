@@ -9,6 +9,7 @@ import { SecurityFindingsTable, SecurityFinding } from "@/components/dashboard/S
 import { AlertsCard } from "@/components/dashboard/AlertsCard";
 import { AWSAccountsCard } from "@/components/dashboard/AWSAccountsCard";
 import { RiskScoreBreakdown } from "@/components/dashboard/RiskScoreBreakdown";
+import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +41,7 @@ interface DashboardData {
     highFindings: number;
     mediumFindings: number;
     lowFindings: number;
+    resolvedFindings: number;
     resourcesScanned: number;
     complianceScore: number;
     overallRiskScore: number;
@@ -97,6 +99,14 @@ const Dashboard = () => {
         .limit(100);
 
       if (findingsError) throw findingsError;
+
+      // Fetch resolved findings count
+      const { count: resolvedCount, error: resolvedError } = await supabase
+        .from("security_findings")
+        .select("*", { count: "exact", head: true })
+        .eq("is_resolved", true);
+
+      if (resolvedError) throw resolvedError;
 
       // Fetch risk score history for trend
       const { data: historyData, error: historyError } = await supabase
@@ -223,6 +233,7 @@ const Dashboard = () => {
           highFindings,
           mediumFindings,
           lowFindings,
+          resolvedFindings: resolvedCount || 0,
           resourcesScanned: accounts.length * 500, // Estimate
           complianceScore: Math.max(0, 100 - overallRiskScore),
           overallRiskScore,
@@ -286,6 +297,7 @@ const Dashboard = () => {
     highFindings: 0,
     mediumFindings: 0,
     lowFindings: 0,
+    resolvedFindings: 0,
     resourcesScanned: 0,
     complianceScore: 100,
     overallRiskScore: 0,
@@ -313,6 +325,19 @@ const Dashboard = () => {
         </div>
 
         <div className="space-y-6">
+          {/* Executive Summary for Decision Makers */}
+          <ExecutiveSummary
+            totalFindings={stats.totalFindings}
+            criticalCount={stats.criticalFindings}
+            highCount={stats.highFindings}
+            mediumCount={stats.mediumFindings}
+            lowCount={stats.lowFindings}
+            resolvedCount={stats.resolvedFindings}
+            overallRiskScore={stats.overallRiskScore}
+            previousRiskScore={stats.previousRiskScore}
+            accountsCount={accounts.length}
+          />
+
           {/* Risk Score Cards */}
           <div className="grid gap-6 md:grid-cols-3">
             <RiskScoreCard 
