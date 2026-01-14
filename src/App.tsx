@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AWSAccounts from "./pages/AWSAccounts";
 import Findings from "./pages/Findings";
+import ComplianceReports from "./pages/ComplianceReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Findings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/reports"
+              element={
+                <ProtectedRoute>
+                  <ComplianceReports />
                 </ProtectedRoute>
               }
             />
