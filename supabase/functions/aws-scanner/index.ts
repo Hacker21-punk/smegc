@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { STSClient, AssumeRoleCommand } from "https://esm.sh/@aws-sdk/client-sts@3.525.0";
 import { EC2Client, DescribeSecurityGroupsCommand } from "https://esm.sh/@aws-sdk/client-ec2@3.525.0";
 import { IAMClient, ListUsersCommand, ListAccessKeysCommand, GetLoginProfileCommand, ListMFADevicesCommand, ListAttachedUserPoliciesCommand, ListUserPoliciesCommand, GetAccessKeyLastUsedCommand } from "https://esm.sh/@aws-sdk/client-iam@3.525.0";
+import { z } from "https://esm.sh/zod@3.22.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -46,11 +47,14 @@ async function validateAuth(req: Request): Promise<{ valid: boolean; error?: str
   return { valid: true, userId: data.user.id };
 }
 
-interface ScanRequest {
-  aws_account_id: string;
-  scan_job_id: string;
-  services: string[];
-}
+// Zod schema for request validation
+const ScanRequestSchema = z.object({
+  aws_account_id: z.string().uuid('Invalid AWS account ID format'),
+  scan_job_id: z.string().uuid('Invalid scan job ID format'),
+  services: z.array(z.enum(['security_groups', 'iam', 's3', 'ec2', 'rds', 'vpc', 'cost']))
+});
+
+type ScanRequest = z.infer<typeof ScanRequestSchema>;
 
 type ExecutionTag = 'SAFE_AUTOMATABLE' | 'REQUIRES_REVIEW' | 'MANUAL_ONLY';
 
@@ -611,7 +615,25 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { aws_account_id, scan_job_id, services }: ScanRequest = await req.json();
+    // Validate request body with zod schema
+    let validatedBody: ScanRequest;
+    try {
+      const rawBody = await req.json();
+      validatedBody = ScanRequestSchema.parse(rawBody);
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        return new Response(JSON.stringify({ 
+          error: 'Invalid request', 
+          details: validationError.errors.map(e => ({ path: e.path.join('.'), message: e.message }))
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      throw validationError;
+    }
+    
+    const { aws_account_id, scan_job_id, services } = validatedBody;
 
     console.log(`Starting scan for account ${aws_account_id}, job ${scan_job_id}, services: ${services.join(', ')}`);
 
