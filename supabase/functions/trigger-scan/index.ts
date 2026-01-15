@@ -1,15 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+import { z } from "https://esm.sh/zod@3.22.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface TriggerScanRequest {
-  aws_account_id: string;
-  services?: string[];
-}
+// Zod schema for request validation
+const TriggerScanSchema = z.object({
+  aws_account_id: z.string().uuid('Invalid AWS account ID format'),
+  services: z.array(z.enum(['security_groups', 'iam', 's3', 'ec2', 'rds', 'vpc', 'cost'])).default(['security_groups', 'iam'])
+});
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -49,7 +51,25 @@ serve(async (req) => {
       });
     }
 
-    const { aws_account_id, services = ['security_groups', 'iam'] }: TriggerScanRequest = await req.json();
+    // Validate request body with zod schema
+    let validatedBody;
+    try {
+      const rawBody = await req.json();
+      validatedBody = TriggerScanSchema.parse(rawBody);
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        return new Response(JSON.stringify({ 
+          error: 'Invalid request', 
+          details: validationError.errors.map(e => ({ path: e.path.join('.'), message: e.message }))
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      throw validationError;
+    }
+    
+    const { aws_account_id, services } = validatedBody;
 
     // Verify user has access to this AWS account (via their organization)
     const { data: profile } = await supabaseClient
