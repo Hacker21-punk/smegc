@@ -20,7 +20,8 @@ serve(async (req) => {
   }
 
   try {
-    // Get auth header to validate user
+    // JWT is now verified by Supabase before the function executes (verify_jwt = true)
+    // We still need the auth header to create an authenticated client
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Missing authorization header' }), {
@@ -42,7 +43,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get current user
+    // Get current user - JWT already validated by Supabase
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {

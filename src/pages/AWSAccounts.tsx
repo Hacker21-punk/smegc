@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +58,11 @@ export default function AWSAccounts() {
   const [currentExternalId, setCurrentExternalId] = useState("");
   const [pendingAccountId, setPendingAccountId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<{ id: string; alias: string | null; accountId: string } | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   useEffect(() => {
     fetchAccounts();
@@ -225,23 +231,33 @@ export default function AWSAccounts() {
     }
   };
 
-  const handleDeleteAccount = async (accountId: string) => {
-    if (!confirm("Are you sure you want to disconnect this AWS account? All scan history will be deleted.")) {
-      return;
-    }
+  const handleDeleteAccount = (account: { id: string; account_alias: string | null; account_id: string }) => {
+    setAccountToDelete({ id: account.id, alias: account.account_alias, accountId: account.account_id });
+    setDeleteConfirmText("");
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmedDelete = async () => {
+    if (!accountToDelete || deleteConfirmText !== "DELETE") return;
 
     try {
       const { error } = await supabase
         .from("aws_accounts")
         .delete()
-        .eq("id", accountId);
+        .eq("id", accountToDelete.id);
 
       if (error) throw error;
       toast.success("AWS account disconnected");
       fetchAccounts();
     } catch (error) {
-      console.error("Error deleting account:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error deleting account:", error);
+      }
       toast.error("Failed to disconnect account");
+    } finally {
+      setDeleteDialogOpen(false);
+      setAccountToDelete(null);
+      setDeleteConfirmText("");
     }
   };
 
@@ -541,7 +557,7 @@ export default function AWSAccounts() {
                       variant="outline" 
                       size="sm" 
                       className="text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteAccount(account.id)}
+                      onClick={() => handleDeleteAccount(account)}
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -552,6 +568,55 @@ export default function AWSAccounts() {
           </div>
         )}
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete AWS Account?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                You are about to disconnect <strong>{accountToDelete?.alias || accountToDelete?.accountId}</strong>.
+                This will permanently delete all scan history and security findings associated with this account.
+              </p>
+              <p className="text-destructive font-medium">
+                This action cannot be undone.
+              </p>
+              <div className="pt-2">
+                <Label htmlFor="delete-confirm" className="text-sm font-medium">
+                  Type <code className="bg-muted px-1 py-0.5 rounded">DELETE</code> to confirm:
+                </Label>
+                <Input
+                  id="delete-confirm"
+                  className="mt-2"
+                  placeholder="Type DELETE"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                  autoComplete="off"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setAccountToDelete(null);
+              setDeleteConfirmText("");
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteConfirmText !== "DELETE"}
+              onClick={handleConfirmedDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
