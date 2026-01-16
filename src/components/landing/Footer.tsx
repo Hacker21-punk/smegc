@@ -1,12 +1,47 @@
 import { Logo } from "@/components/ui/Logo";
 import { Link } from "react-router-dom";
+import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import { cn } from "@/lib/utils";
 
 export function Footer() {
+  const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
+
+  const footerLinks = {
+    product: [
+      { label: "Features", href: "#features" },
+      { label: "Pricing", href: "#pricing" },
+      { label: "Integrations", href: "#" },
+      { label: "API Documentation", href: "#" },
+    ],
+    compliance: [
+      { label: "IT Act 2000", href: "#" },
+      { label: "GST Compliance", href: "#" },
+      { label: "Bank Audit", href: "#" },
+      { label: "MeitY Guidelines", href: "#" },
+    ],
+    legal: [
+      { label: "Privacy Policy", href: "#" },
+      { label: "Terms of Service", href: "#" },
+      { label: "Security", href: "#" },
+    ],
+  };
+
   return (
-    <footer className="border-t bg-muted/30">
-      <div className="container py-12">
+    <footer ref={ref} className="border-t bg-muted/30 relative overflow-hidden">
+      {/* Subtle gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+
+      <div className="container py-12 relative">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
+          {/* Company Info */}
+          <div
+            className={cn(
+              "transition-all duration-500",
+              isIntersecting
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
+            )}
+          >
             <Logo className="mb-4" />
             <p className="text-sm text-muted-foreground mb-4">
               Affordable AWS security monitoring designed for Indian SMEs.
@@ -16,44 +51,97 @@ export function Footer() {
             </p>
           </div>
 
-          <div>
+          {/* Product Links */}
+          <div
+            className={cn(
+              "transition-all duration-500 delay-100",
+              isIntersecting
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
+            )}
+          >
             <h4 className="font-semibold mb-4">Product</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#features" className="hover:text-foreground">Features</a></li>
-              <li><a href="#pricing" className="hover:text-foreground">Pricing</a></li>
-              <li><a href="#" className="hover:text-foreground">Integrations</a></li>
-              <li><a href="#" className="hover:text-foreground">API Documentation</a></li>
+              {footerLinks.product.map((link, index) => (
+                <li key={index}>
+                  <a
+                    href={link.href}
+                    className="hover:text-foreground transition-colors link-underline"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
-          <div>
+          {/* Compliance Links */}
+          <div
+            className={cn(
+              "transition-all duration-500 delay-200",
+              isIntersecting
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
+            )}
+          >
             <h4 className="font-semibold mb-4">Compliance</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-foreground">IT Act 2000</a></li>
-              <li><a href="#" className="hover:text-foreground">GST Compliance</a></li>
-              <li><a href="#" className="hover:text-foreground">Bank Audit</a></li>
-              <li><a href="#" className="hover:text-foreground">MeitY Guidelines</a></li>
+              {footerLinks.compliance.map((link, index) => (
+                <li key={index}>
+                  <a
+                    href={link.href}
+                    className="hover:text-foreground transition-colors link-underline"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
-          <div>
+          {/* Contact Info */}
+          <div
+            className={cn(
+              "transition-all duration-500 delay-300",
+              isIntersecting
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
+            )}
+          >
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>support@smecloudguard.in</li>
-              <li>+91 98765 43210</li>
+              <li className="hover:text-foreground transition-colors">
+                support@smecloudguard.in
+              </li>
+              <li className="hover:text-foreground transition-colors">
+                +91 98765 43210
+              </li>
               <li>Mumbai, Maharashtra, India</li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div
+          className={cn(
+            "mt-12 pt-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4 transition-all duration-500 delay-400",
+            isIntersecting
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-4"
+          )}
+        >
           <p className="text-sm text-muted-foreground">
-            © 2024 SME Cloud Guard. All rights reserved.
+            © {new Date().getFullYear()} SME Cloud Guard. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-muted-foreground">
-            <Link to="#" className="hover:text-foreground">Privacy Policy</Link>
-            <Link to="#" className="hover:text-foreground">Terms of Service</Link>
-            <Link to="#" className="hover:text-foreground">Security</Link>
+            {footerLinks.legal.map((link, index) => (
+              <Link
+                key={index}
+                to={link.href}
+                className="hover:text-foreground transition-colors link-underline"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

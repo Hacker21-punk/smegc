@@ -81,25 +81,55 @@ export default {
   		},
   		keyframes: {
   			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
+  				from: { height: '0', opacity: '0' },
+  				to: { height: 'var(--radix-accordion-content-height)', opacity: '1' }
   			},
   			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
+  				from: { height: 'var(--radix-accordion-content-height)', opacity: '1' },
+  				to: { height: '0', opacity: '0' }
+  			},
+  			'fade-in': {
+  				from: { opacity: '0', transform: 'translateY(10px)' },
+  				to: { opacity: '1', transform: 'translateY(0)' }
+  			},
+  			'fade-out': {
+  				from: { opacity: '1', transform: 'translateY(0)' },
+  				to: { opacity: '0', transform: 'translateY(10px)' }
+  			},
+  			'scale-in': {
+  				from: { opacity: '0', transform: 'scale(0.95)' },
+  				to: { opacity: '1', transform: 'scale(1)' }
+  			},
+  			'slide-in-right': {
+  				from: { transform: 'translateX(100%)', opacity: '0' },
+  				to: { transform: 'translateX(0)', opacity: '1' }
+  			},
+  			'slide-in-left': {
+  				from: { transform: 'translateX(-100%)', opacity: '0' },
+  				to: { transform: 'translateX(0)', opacity: '1' }
+  			},
+  			'bounce-subtle': {
+  				'0%, 100%': { transform: 'translateY(0)' },
+  				'50%': { transform: 'translateY(-5px)' }
+  			},
+  			'pulse-ring': {
+  				'0%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 hsl(var(--primary) / 0.5)' },
+  				'70%': { transform: 'scale(1)', boxShadow: '0 0 0 10px hsl(var(--primary) / 0)' },
+  				'100%': { transform: 'scale(0.95)', boxShadow: '0 0 0 0 hsl(var(--primary) / 0)' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'fade-in': 'fade-in 0.4s ease-out',
+  			'fade-out': 'fade-out 0.3s ease-out',
+  			'scale-in': 'scale-in 0.3s ease-out',
+  			'slide-in-right': 'slide-in-right 0.4s ease-out',
+  			'slide-in-left': 'slide-in-left 0.4s ease-out',
+  			'bounce-subtle': 'bounce-subtle 2s ease-in-out infinite',
+  			'pulse-ring': 'pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+  			'enter': 'fade-in 0.4s ease-out, scale-in 0.3s ease-out',
+  			'exit': 'fade-out 0.3s ease-out'
   		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',
