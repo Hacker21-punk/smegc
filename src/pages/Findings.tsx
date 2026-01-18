@@ -21,6 +21,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   AlertTriangle, 
   Shield, 
@@ -31,7 +36,9 @@ import {
   XCircle,
   Clock,
   Zap,
-  List
+  List,
+  Lock,
+  HelpCircle
 } from "lucide-react";
 import { PrioritizedRemediationView } from "@/components/dashboard/PrioritizedRemediationView";
 import { FindingDetailsDialog, FindingDetails } from "@/components/dashboard/FindingDetailsDialog";
@@ -54,7 +61,6 @@ interface Finding {
   cloudformation_template: string | null;
   aws_account_id: string;
   aws_account_alias: string;
-  // Enhanced analysis fields
   risk_score_contribution: number | null;
   impact_assessment: string | null;
   execution_tag: 'SAFE_AUTOMATABLE' | 'REQUIRES_REVIEW' | 'MANUAL_ONLY' | null;
@@ -78,11 +84,10 @@ const Findings = () => {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [severityFilter, setSeverityFilter] = useState<string>("all");
-  const [serviceFilter, setServiceFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("open");
   const [selectedFinding, setSelectedFinding] = useState<FindingDetails | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "prioritized">("list");
+  const [viewMode, setViewMode] = useState<"prioritized" | "active" | "resolved">("prioritized");
 
   useEffect(() => {
     fetchFindings();
@@ -168,30 +173,33 @@ const Findings = () => {
     };
   };
 
-  // Get unique services for filter
-  const uniqueServices = [...new Set(findings.map(f => f.service))];
+  // Separate active and resolved findings
+  const activeFindings = findings.filter(f => !f.is_resolved);
+  const resolvedFindings = findings.filter(f => f.is_resolved);
 
-  // Filter findings
-  const filteredFindings = findings.filter((finding) => {
-    const matchesSearch = 
-      finding.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      finding.resource_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      finding.aws_account_alias.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter findings based on current view
+  const getFilteredFindings = () => {
+    const baseFindings = viewMode === "resolved" ? resolvedFindings : activeFindings;
     
-    const matchesSeverity = severityFilter === "all" || finding.severity === severityFilter;
-    const matchesService = serviceFilter === "all" || finding.service === serviceFilter;
-    const matchesStatus = 
-      statusFilter === "all" || 
-      (statusFilter === "open" && !finding.is_resolved) ||
-      (statusFilter === "fixed" && finding.is_resolved);
-    
-    return matchesSearch && matchesSeverity && matchesService && matchesStatus;
-  });
+    return baseFindings.filter((finding) => {
+      const matchesSearch = 
+        finding.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        finding.resource_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        finding.aws_account_alias.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesSeverity = severityFilter === "all" || finding.severity === severityFilter;
+      
+      return matchesSearch && matchesSeverity;
+    });
+  };
 
-  // Counts for stats
-  const openCount = findings.filter(f => !f.is_resolved).length;
-  const fixedCount = findings.filter(f => f.is_resolved).length;
-  const criticalCount = findings.filter(f => f.severity === "critical" && !f.is_resolved).length;
+  const filteredFindings = getFilteredFindings();
+
+  // Counts
+  const openCount = activeFindings.length;
+  const fixedCount = resolvedFindings.length;
+  const criticalCount = activeFindings.filter(f => f.severity === "critical").length;
+  const p0Count = activeFindings.filter(f => f.severity === "critical" || f.severity === "high").length;
 
   const handleRowClick = (finding: Finding) => {
     const details: FindingDetails = {
@@ -244,13 +252,12 @@ const Findings = () => {
 
   const handleExport = () => {
     const csvContent = [
-      ["Severity", "Title", "Service", "Resource", "Risk Score", "Status", "Detected At", "Account"].join(","),
+      ["Severity", "Title", "Service", "Resource", "Status", "Detected At", "Account"].join(","),
       ...filteredFindings.map(f => [
         f.severity,
         `"${f.title.replace(/"/g, '""')}"`,
         serviceNames[f.service] || f.service,
         f.resource_id,
-        f.risk_score,
         f.is_resolved ? "FIXED" : "OPEN",
         format(new Date(f.created_at), "yyyy-MM-dd HH:mm"),
         f.aws_account_alias
@@ -288,46 +295,74 @@ const Findings = () => {
           </p>
         </div>
 
-        {/* Stats Summary */}
+        {/* Trust Banner */}
+        <div className="mb-6 p-3 rounded-lg bg-success/5 border border-success/10 flex items-center gap-3">
+          <Lock className="h-4 w-4 text-success flex-shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium text-success">Read-only access</span> — We provide remediation guidance, but you apply changes manually.
+          </p>
+        </div>
+
+        {/* Summary Cards */}
         <div className="grid gap-4 md:grid-cols-4 mb-6">
-          <Card>
+          <Card className={openCount > 0 ? "border-warning/20" : ""}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Findings</p>
-                  <p className="text-2xl font-bold">{findings.length}</p>
+                  <p className="text-sm text-muted-foreground">Active Issues</p>
+                  <p className="text-2xl font-bold">{openCount}</p>
                 </div>
-                <Shield className="h-8 w-8 text-muted-foreground" />
+                <Shield className={`h-8 w-8 ${openCount > 0 ? 'text-warning' : 'text-success'}`} />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className={criticalCount > 0 ? "border-critical/20" : ""}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Open Issues</p>
-                  <p className="text-2xl font-bold text-critical">{openCount}</p>
-                </div>
-                <XCircle className="h-8 w-8 text-critical" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Critical Open</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm text-muted-foreground">Critical (P0)</p>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Highest priority issues that could allow unauthorized access. Fix immediately.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <p className="text-2xl font-bold text-critical">{criticalCount}</p>
                 </div>
-                <AlertTriangle className="h-8 w-8 text-critical" />
+                <AlertTriangle className={`h-8 w-8 ${criticalCount > 0 ? 'text-critical' : 'text-muted-foreground'}`} />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className={p0Count > 0 ? "border-warning/20" : ""}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Fixed</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm text-muted-foreground">High Priority</p>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Critical and high severity issues that should be addressed soon.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <p className="text-2xl font-bold">{p0Count}</p>
+                </div>
+                <XCircle className={`h-8 w-8 ${p0Count > 0 ? 'text-warning' : 'text-muted-foreground'}`} />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-success/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Resolved</p>
                   <p className="text-2xl font-bold text-success">{fixedCount}</p>
                 </div>
                 <CheckCircle2 className="h-8 w-8 text-success" />
@@ -336,189 +371,239 @@ const Findings = () => {
           </Card>
         </div>
 
-        {/* View Mode Tabs */}
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "prioritized")} className="w-full">
+        {/* View Mode Tabs - Prioritized is now default */}
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as typeof viewMode)} className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="list" className="gap-2">
-              <List className="h-4 w-4" />
-              All Findings
-            </TabsTrigger>
             <TabsTrigger value="prioritized" className="gap-2">
               <Zap className="h-4 w-4" />
               Prioritized Remediation
             </TabsTrigger>
+            <TabsTrigger value="active" className="gap-2">
+              <List className="h-4 w-4" />
+              Active ({openCount})
+            </TabsTrigger>
+            <TabsTrigger value="resolved" className="gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              Resolved ({fixedCount})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="prioritized">
-            <PrioritizedRemediationView 
-              findings={findings}
-              onFindingClick={handleFindingClickFromPrioritized}
-            />
+            {loading ? (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  Loading findings...
+                </CardContent>
+              </Card>
+            ) : activeFindings.length === 0 ? (
+              <Card className="bg-success/5 border-success/20">
+                <CardContent className="py-12 text-center">
+                  <CheckCircle2 className="h-12 w-12 mx-auto text-success mb-4" />
+                  <h3 className="text-lg font-semibold text-success mb-2">All Clear!</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    No active security issues found. Your AWS environment is looking secure. 
+                    We'll continue monitoring and alert you if anything changes.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <PrioritizedRemediationView 
+                findings={activeFindings}
+                onFindingClick={handleFindingClickFromPrioritized}
+              />
+            )}
           </TabsContent>
 
-          <TabsContent value="list">
-            {/* Filters and Table */}
+          <TabsContent value="active">
             <Card>
               <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <CardTitle>All Findings</CardTitle>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 w-[180px]"
-                />
-              </div>
-              <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Severity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Severity</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={serviceFilter} onValueChange={setServiceFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Service" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Services</SelectItem>
-                  {uniqueServices.map(service => (
-                    <SelectItem key={service} value={service}>
-                      {serviceNames[service] || service}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="fixed">Fixed</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm" onClick={handleExport}>
-                <FileDown className="mr-2 h-4 w-4" />
-                Export CSV
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-12 text-muted-foreground">
-                Loading findings...
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">Severity</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead className="w-[120px]">Service</TableHead>
-                      <TableHead>Resource</TableHead>
-                      <TableHead className="w-[100px] text-center">Risk Score</TableHead>
-                      <TableHead className="w-[100px]">Status</TableHead>
-                      <TableHead className="w-[140px]">Detected At</TableHead>
-                      <TableHead className="w-[100px]">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredFindings.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                          {findings.length === 0 
-                            ? "No security findings yet. Run a scan to detect issues."
-                            : "No findings match your filters."}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredFindings.map((finding) => {
-                        const severityConfig = getSeverityConfig(finding.severity);
-                        const statusConfig = getStatusConfig(finding.is_resolved);
-                        const SeverityIcon = severityConfig.icon;
-                        const StatusIcon = statusConfig.icon;
+                <CardTitle>Active Findings</CardTitle>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8 w-[180px]"
+                    />
+                  </div>
+                  <Select value={severityFilter} onValueChange={setSeverityFilter}>
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue placeholder="Severity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Severity</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={handleExport}>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Export
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Loading findings...
+                  </div>
+                ) : filteredFindings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Shield className="h-12 w-12 mx-auto text-success mb-4" />
+                    <h3 className="font-semibold mb-2">No Active Findings</h3>
+                    <p className="text-muted-foreground">
+                      {findings.length === 0 
+                        ? "Run a security scan to detect issues in your AWS accounts."
+                        : "No findings match your current filters."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[100px]">Severity</TableHead>
+                          <TableHead>Issue</TableHead>
+                          <TableHead className="w-[120px]">Service</TableHead>
+                          <TableHead>Resource</TableHead>
+                          <TableHead className="w-[140px]">Detected</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredFindings.map((finding) => {
+                          const severityConfig = getSeverityConfig(finding.severity);
+                          const SeverityIcon = severityConfig.icon;
 
-                        return (
-                          <TableRow 
-                            key={finding.id}
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => handleRowClick(finding)}
-                          >
-                            <TableCell>
-                              <Badge className={`${severityConfig.color} flex items-center gap-1 w-fit`}>
-                                <SeverityIcon className="h-3 w-3" />
-                                {finding.severity.toUpperCase()}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <p className="font-medium line-clamp-1">{finding.title}</p>
-                              {finding.description && (
-                                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                  {finding.description}
-                                </p>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm">
-                                {serviceNames[finding.service] || finding.service}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                                {finding.resource_id}
-                              </code>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <span className={`font-bold ${
-                                finding.risk_score >= 10 ? "text-critical" :
-                                finding.risk_score >= 5 ? "text-warning" :
-                                "text-info"
-                              }`}>
-                                {finding.risk_score}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={`${statusConfig.color} flex items-center gap-1 w-fit`}>
-                                <StatusIcon className="h-3 w-3" />
-                                {statusConfig.label}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                                <Clock className="h-3 w-3" />
-                                {format(new Date(finding.created_at), "MMM d, HH:mm")}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRowClick(finding);
-                                }}
-                              >
-                                View details
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                          return (
+                            <TableRow 
+                              key={finding.id}
+                              className="cursor-pointer hover:bg-muted/50"
+                              onClick={() => handleRowClick(finding)}
+                            >
+                              <TableCell>
+                                <Badge className={`${severityConfig.color} flex items-center gap-1 w-fit`}>
+                                  <SeverityIcon className="h-3 w-3" />
+                                  {finding.severity.toUpperCase()}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <p className="font-medium line-clamp-1">{finding.title}</p>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm">
+                                  {serviceNames[finding.service] || finding.service}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                                  {finding.resource_id}
+                                </code>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1 text-muted-foreground text-sm">
+                                  <Clock className="h-3 w-3" />
+                                  {format(new Date(finding.created_at), "MMM d, HH:mm")}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="resolved">
+            <Card>
+              <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <CardTitle>Resolved Findings</CardTitle>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8 w-[180px]"
+                    />
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleExport}>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Export
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {resolvedFindings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Info className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="font-semibold mb-2">No Resolved Findings Yet</h3>
+                    <p className="text-muted-foreground">
+                      Findings you mark as fixed will appear here for your records.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[100px]">Severity</TableHead>
+                          <TableHead>Issue</TableHead>
+                          <TableHead className="w-[120px]">Service</TableHead>
+                          <TableHead>Resource</TableHead>
+                          <TableHead className="w-[140px]">Resolved</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {resolvedFindings.map((finding) => {
+                          const severityConfig = getSeverityConfig(finding.severity);
+                          const SeverityIcon = severityConfig.icon;
+
+                          return (
+                            <TableRow 
+                              key={finding.id}
+                              className="cursor-pointer hover:bg-muted/50 opacity-75"
+                              onClick={() => handleRowClick(finding)}
+                            >
+                              <TableCell>
+                                <Badge variant="outline" className="flex items-center gap-1 w-fit text-muted-foreground">
+                                  <SeverityIcon className="h-3 w-3" />
+                                  {finding.severity.toUpperCase()}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <p className="font-medium line-clamp-1">{finding.title}</p>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm">
+                                  {serviceNames[finding.service] || finding.service}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                                  {finding.resource_id}
+                                </code>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Fixed
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
