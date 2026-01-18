@@ -2,18 +2,29 @@ import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
-import { StatsGrid } from "@/components/dashboard/StatsGrid";
-import { RiskTrendChart } from "@/components/dashboard/RiskTrendChart";
-import { ServiceBreakdownChart } from "@/components/dashboard/ServiceBreakdownChart";
-import { SecurityFindingsTable, SecurityFinding } from "@/components/dashboard/SecurityFindingsTable";
-import { AlertsCard } from "@/components/dashboard/AlertsCard";
-import { AWSAccountsCard } from "@/components/dashboard/AWSAccountsCard";
-import { RiskScoreBreakdown } from "@/components/dashboard/RiskScoreBreakdown";
-import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Shield, 
+  AlertTriangle, 
+  Clock, 
+  FileCheck, 
+  ArrowRight,
+  CheckCircle2,
+  XCircle,
+  Lock
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface DashboardData {
   accounts: {
@@ -24,51 +35,17 @@ interface DashboardData {
     lastScan: string;
     riskScore: number;
   }[];
-  findings: SecurityFinding[];
-  alerts: {
-    id: string;
-    title: string;
-    description: string;
-    severity: "critical" | "high" | "medium" | "low";
-    timestamp: string;
-    type: "security" | "cost" | "compliance";
-  }[];
-  trendData: { date: string; score: number }[];
-  serviceData: { name: string; findings: number; color: string }[];
   stats: {
     totalFindings: number;
     criticalFindings: number;
     highFindings: number;
-    mediumFindings: number;
-    lowFindings: number;
     resolvedFindings: number;
-    resourcesScanned: number;
     complianceScore: number;
     overallRiskScore: number;
     previousRiskScore: number;
+    lastScanTime: string | null;
   };
-  topIssues: Array<{ title: string; severity: string; resource_id: string }>;
 }
-
-const serviceColors: Record<string, string> = {
-  security_groups: "hsl(142, 76%, 36%)",
-  iam: "hsl(0, 84%, 60%)",
-  s3: "hsl(217, 91%, 60%)",
-  ec2: "hsl(38, 92%, 50%)",
-  rds: "hsl(199, 89%, 48%)",
-  vpc: "hsl(271, 91%, 65%)",
-  cost: "hsl(25, 95%, 53%)",
-};
-
-const serviceNames: Record<string, string> = {
-  security_groups: "Security Groups",
-  iam: "IAM",
-  s3: "S3",
-  ec2: "EC2",
-  rds: "RDS",
-  vpc: "VPC",
-  cost: "Cost",
-};
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -90,13 +67,11 @@ const Dashboard = () => {
 
       if (accountsError) throw accountsError;
 
-      // Fetch security findings with full details (unresolved only)
+      // Fetch active security findings
       const { data: findingsData, error: findingsError } = await supabase
         .from("security_findings")
-        .select("*, aws_accounts(account_id, account_alias)")
-        .eq("is_resolved", false)
-        .order("created_at", { ascending: false })
-        .limit(100);
+        .select("id, severity, is_resolved, created_at")
+        .eq("is_resolved", false);
 
       if (findingsError) throw findingsError;
 
@@ -108,14 +83,14 @@ const Dashboard = () => {
 
       if (resolvedError) throw resolvedError;
 
-      // Fetch risk score history for trend
-      const { data: historyData, error: historyError } = await supabase
-        .from("risk_score_history")
-        .select("*")
-        .gte("recorded_at", format(subDays(new Date(), 30), "yyyy-MM-dd"))
-        .order("recorded_at", { ascending: true });
-
-      if (historyError) throw historyError;
+      // Get last scan time
+      const { data: lastScan, error: scanError } = await supabase
+        .from("scan_jobs")
+        .select("completed_at")
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       // Calculate aggregated data
       const accounts = (accountsData || []).map((acc) => ({
@@ -129,115 +104,26 @@ const Dashboard = () => {
         riskScore: acc.risk_score || 0,
       }));
 
-      // Transform findings with full details for the dialog
-      const findings: SecurityFinding[] = (findingsData || []).map((f) => ({
-        id: f.id,
-        resource: f.resource_id,
-        resourceType: f.resource_type,
-        issue: f.title,
-        severity: f.severity as "critical" | "high" | "medium" | "low",
-        awsAccount: (f.aws_accounts as any)?.account_alias || (f.aws_accounts as any)?.account_id || "Unknown",
-        detectedAt: format(new Date(f.created_at), "MMM d, h:mm a"),
-        status: f.is_resolved ? "remediated" : "open",
-        // Extended fields
-        description: f.description,
-        remediation_steps: f.remediation_steps,
-        cloudformation_template: f.cloudformation_template,
-        service: f.service,
-        is_resolved: f.is_resolved,
-        created_at: f.created_at,
-      }));
-
-      // Create alerts from critical/high severity findings
-      const alerts = (findingsData || [])
-        .filter((f) => f.severity === "critical" || f.severity === "high")
-        .slice(0, 5)
-        .map((f) => ({
-          id: f.id,
-          title: `${f.severity === "critical" ? "Critical" : "High"}: ${f.title}`,
-          description: f.description || f.resource_id,
-          severity: f.severity as "critical" | "high",
-          timestamp: format(new Date(f.created_at), "MMM d, h:mm a"),
-          type: "security" as const,
-        }));
-
-      // Get top priority issues for risk breakdown
-      const topIssues = (findingsData || [])
-        .filter((f) => f.severity === "critical" || f.severity === "high")
-        .slice(0, 5)
-        .map((f) => ({
-          title: f.title,
-          severity: f.severity,
-          resource_id: f.resource_id,
-        }));
-
-      // Calculate trend data (aggregate by date)
-      const trendMap = new Map<string, number[]>();
-      for (const h of historyData || []) {
-        const date = format(new Date(h.recorded_at), "MMM d");
-        if (!trendMap.has(date)) {
-          trendMap.set(date, []);
-        }
-        trendMap.get(date)!.push(h.score);
-      }
-      const trendData = Array.from(trendMap.entries()).map(([date, scores]) => ({
-        date,
-        score: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
-      }));
-
-      // If no trend data, create default
-      if (trendData.length === 0) {
-        for (let i = 9; i >= 0; i--) {
-          trendData.push({
-            date: format(subDays(new Date(), i * 3), "MMM d"),
-            score: 0,
-          });
-        }
-      }
-
-      // Calculate service breakdown
-      const serviceCounts = new Map<string, number>();
-      for (const f of findingsData || []) {
-        const count = serviceCounts.get(f.service) || 0;
-        serviceCounts.set(f.service, count + 1);
-      }
-      const serviceData = Array.from(serviceCounts.entries()).map(([service, count]) => ({
-        name: serviceNames[service] || service,
-        findings: count,
-        color: serviceColors[service] || "hsl(200, 50%, 50%)",
-      }));
-
-      // Calculate stats with severity breakdown
       const totalFindings = findingsData?.length || 0;
       const criticalFindings = findingsData?.filter((f) => f.severity === "critical").length || 0;
       const highFindings = findingsData?.filter((f) => f.severity === "high").length || 0;
-      const mediumFindings = findingsData?.filter((f) => f.severity === "medium").length || 0;
-      const lowFindings = findingsData?.filter((f) => f.severity === "low").length || 0;
-      
+
       const overallRiskScore =
         accounts.length > 0
           ? Math.round(accounts.reduce((sum, acc) => sum + acc.riskScore, 0) / accounts.length)
           : 0;
-      const previousRiskScore = trendData.length >= 2 ? trendData[trendData.length - 2]?.score || 0 : overallRiskScore;
 
       setData({
         accounts,
-        findings,
-        alerts,
-        trendData,
-        serviceData,
-        topIssues,
         stats: {
           totalFindings,
           criticalFindings,
           highFindings,
-          mediumFindings,
-          lowFindings,
           resolvedFindings: resolvedCount || 0,
-          resourcesScanned: accounts.length * 500, // Estimate
           complianceScore: Math.max(0, 100 - overallRiskScore),
           overallRiskScore,
-          previousRiskScore,
+          previousRiskScore: overallRiskScore, // Simplified
+          lastScanTime: lastScan?.completed_at || null,
         },
       });
     } catch (error) {
@@ -249,65 +135,32 @@ const Dashboard = () => {
   };
 
   const handleRefresh = async () => {
-    toast.info("Refreshing dashboard data...");
+    toast.info("Refreshing dashboard...");
     setLoading(true);
     await fetchDashboardData();
     toast.success("Dashboard updated");
   };
 
-  const handleMarkResolved = async (findingId: string) => {
-    try {
-      const { error } = await supabase
-        .from("security_findings")
-        .update({ is_resolved: true, resolved_at: new Date().toISOString() })
-        .eq("id", findingId);
-
-      if (error) throw error;
-
-      toast.success("Finding marked as resolved");
-      await fetchDashboardData();
-    } catch (error) {
-      console.error("Error marking finding as resolved:", error);
-      toast.error("Failed to update finding");
-    }
-  };
-
-  const handleAddAccount = () => {
-    navigate("/dashboard/accounts");
-  };
-
-  if (loading && !data) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading dashboard...</div>
-      </div>
-    );
-  }
-
-  // Use data or defaults
-  const accounts = data?.accounts || [];
-  const findings = data?.findings || [];
-  const alerts = data?.alerts || [];
-  const trendData = data?.trendData || [];
-  const serviceData = data?.serviceData || [];
-  const topIssues = data?.topIssues || [];
   const stats = data?.stats || {
     totalFindings: 0,
     criticalFindings: 0,
     highFindings: 0,
-    mediumFindings: 0,
-    lowFindings: 0,
     resolvedFindings: 0,
-    resourcesScanned: 0,
     complianceScore: 100,
     overallRiskScore: 0,
     previousRiskScore: 0,
+    lastScanTime: null,
   };
+
+  const accounts = data?.accounts || [];
+  const lastScanDisplay = stats.lastScanTime 
+    ? format(new Date(stats.lastScanTime), "MMM d, h:mm a")
+    : "Never";
 
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader 
-        lastScanTime={accounts[0]?.lastScan || "Never"} 
+        lastScanTime={lastScanDisplay} 
         onRefresh={handleRefresh}
         onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
       />
@@ -324,78 +177,277 @@ const Dashboard = () => {
           </p>
         </div>
 
-        <div className="space-y-6">
-          {/* Executive Summary for Decision Makers */}
-          <ExecutiveSummary
-            totalFindings={stats.totalFindings}
-            criticalCount={stats.criticalFindings}
-            highCount={stats.highFindings}
-            mediumCount={stats.mediumFindings}
-            lowCount={stats.lowFindings}
-            resolvedCount={stats.resolvedFindings}
-            overallRiskScore={stats.overallRiskScore}
-            previousRiskScore={stats.previousRiskScore}
-            accountsCount={accounts.length}
-          />
-
-          {/* Risk Score Cards */}
-          <div className="grid gap-6 md:grid-cols-3">
-            <RiskScoreCard 
-              score={stats.overallRiskScore} 
-              previousScore={stats.previousRiskScore} 
-              accountName="Overall Risk Score" 
-            />
-            <AWSAccountsCard 
-              accounts={accounts} 
-              onAddAccount={handleAddAccount}
-            />
-            <AlertsCard alerts={alerts} />
+        {/* Trust Banner */}
+        <div className="mb-6 p-4 rounded-lg bg-success/5 border border-success/10 flex items-center gap-3">
+          <Lock className="h-5 w-5 text-success" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-success">Read-Only Security Monitoring</p>
+            <p className="text-xs text-muted-foreground">We never modify your AWS resources. You stay in control.</p>
           </div>
-
-          {/* Stats Grid */}
-          <StatsGrid
-            totalFindings={stats.totalFindings}
-            criticalFindings={stats.criticalFindings}
-            resourcesScanned={stats.resourcesScanned}
-            complianceScore={stats.complianceScore}
-            estimatedCostAnomaly={0}
-          />
-
-          {/* Charts and Risk Breakdown */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <RiskTrendChart data={trendData} />
-            </div>
-            <RiskScoreBreakdown
-              score={stats.overallRiskScore}
-              criticalCount={stats.criticalFindings}
-              highCount={stats.highFindings}
-              mediumCount={stats.mediumFindings}
-              lowCount={stats.lowFindings}
-              topIssues={topIssues}
-            />
-          </div>
-
-          {/* Service Breakdown */}
-          <ServiceBreakdownChart data={serviceData.length > 0 ? serviceData : [{ name: "No Data", findings: 0, color: "hsl(200, 10%, 50%)" }]} />
-
-          {/* Findings Table */}
-          {findings.length > 0 ? (
-            <SecurityFindingsTable 
-              findings={findings} 
-              onGenerateRemediation={() => {}}
-              onMarkResolved={handleMarkResolved}
-            />
-          ) : (
-            <div className="text-center py-12 border rounded-lg">
-              <p className="text-muted-foreground">
-                {accounts.length > 0 
-                  ? "No security findings detected. Your accounts look secure!"
-                  : "Connect an AWS account to see security findings."}
-              </p>
-            </div>
-          )}
         </div>
+
+        {loading ? (
+          <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="pt-6">
+                    <Skeleton className="h-4 w-24 mb-3" />
+                    <Skeleton className="h-8 w-16 mb-2" />
+                    <Skeleton className="h-3 w-32" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* High-Value Metrics Only */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {/* Overall Risk Score */}
+              <Card className="relative overflow-hidden">
+                <div className={`absolute top-0 left-0 w-1 h-full ${
+                  stats.overallRiskScore >= 70 ? 'bg-critical' : 
+                  stats.overallRiskScore >= 40 ? 'bg-warning' : 'bg-success'
+                }`} />
+                <CardContent className="pt-6">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-help">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-muted-foreground">Overall Risk Score</p>
+                          <Shield className={`h-5 w-5 ${
+                            stats.overallRiskScore >= 70 ? 'text-critical' : 
+                            stats.overallRiskScore >= 40 ? 'text-warning' : 'text-success'
+                          }`} />
+                        </div>
+                        <p className="text-3xl font-bold">{stats.overallRiskScore}/100</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {stats.overallRiskScore >= 70 ? 'High risk - needs attention' : 
+                           stats.overallRiskScore >= 40 ? 'Moderate risk' : 'Low risk - good posture'}
+                        </p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">Combined risk score across all your AWS accounts. Lower is better.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </CardContent>
+              </Card>
+
+              {/* Active Findings */}
+              <Card className="relative overflow-hidden">
+                <div className={`absolute top-0 left-0 w-1 h-full ${stats.totalFindings > 0 ? 'bg-warning' : 'bg-success'}`} />
+                <CardContent className="pt-6">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div 
+                        className="cursor-pointer hover:bg-muted/50 -m-6 p-6 transition-colors"
+                        onClick={() => navigate("/dashboard/findings")}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-muted-foreground">Active Findings</p>
+                          <XCircle className={`h-5 w-5 ${stats.totalFindings > 0 ? 'text-warning' : 'text-success'}`} />
+                        </div>
+                        <p className="text-3xl font-bold">{stats.totalFindings}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {stats.totalFindings > 0 ? 'Issues needing review' : 'No open issues'}
+                        </p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">Security issues found in your AWS accounts that haven't been resolved yet.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </CardContent>
+              </Card>
+
+              {/* Critical (P0) Findings */}
+              <Card className="relative overflow-hidden">
+                <div className={`absolute top-0 left-0 w-1 h-full ${stats.criticalFindings > 0 ? 'bg-critical' : 'bg-success'}`} />
+                <CardContent className="pt-6">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div 
+                        className="cursor-pointer hover:bg-muted/50 -m-6 p-6 transition-colors"
+                        onClick={() => navigate("/dashboard/findings")}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-muted-foreground">Critical (P0)</p>
+                          <AlertTriangle className={`h-5 w-5 ${stats.criticalFindings > 0 ? 'text-critical' : 'text-success'}`} />
+                        </div>
+                        <p className="text-3xl font-bold">{stats.criticalFindings}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {stats.criticalFindings > 0 ? 'Urgent - fix immediately' : 'No critical issues'}
+                        </p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">Critical issues that could allow unauthorized access to your systems.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </CardContent>
+              </Card>
+
+              {/* Compliance Coverage */}
+              <Card className="relative overflow-hidden">
+                <div className={`absolute top-0 left-0 w-1 h-full ${
+                  stats.complianceScore >= 80 ? 'bg-success' : 
+                  stats.complianceScore >= 50 ? 'bg-warning' : 'bg-critical'
+                }`} />
+                <CardContent className="pt-6">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div 
+                        className="cursor-pointer hover:bg-muted/50 -m-6 p-6 transition-colors"
+                        onClick={() => navigate("/dashboard/reports")}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-muted-foreground">Compliance Coverage</p>
+                          <FileCheck className={`h-5 w-5 ${
+                            stats.complianceScore >= 80 ? 'text-success' : 
+                            stats.complianceScore >= 50 ? 'text-warning' : 'text-critical'
+                          }`} />
+                        </div>
+                        <p className="text-3xl font-bold">{stats.complianceScore}%</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {stats.complianceScore >= 80 ? 'Good coverage' : 
+                           stats.complianceScore >= 50 ? 'Needs improvement' : 'Low coverage'}
+                        </p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">How well your security posture aligns with compliance frameworks.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Last Scan Info */}
+            <Card>
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">Last Security Scan</p>
+                      <p className="text-xs text-muted-foreground">{lastScanDisplay}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {stats.resolvedFindings > 0 && (
+                      <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        {stats.resolvedFindings} Fixed
+                      </Badge>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate("/dashboard/findings")}
+                    >
+                      View All Findings
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            {accounts.length === 0 && (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center">
+                  <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Get Started</h3>
+                  <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                    Connect your AWS account to start monitoring for security issues. 
+                    We use read-only access and never modify your resources.
+                  </p>
+                  <Button onClick={() => navigate("/dashboard/accounts")}>
+                    Connect AWS Account
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Summary for accounts with findings */}
+            {accounts.length > 0 && stats.totalFindings > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-warning" />
+                    Recommended Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {stats.criticalFindings > 0 && (
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-critical/5 border border-critical/10">
+                        <div className="flex items-center gap-3">
+                          <AlertTriangle className="h-5 w-5 text-critical" />
+                          <div>
+                            <p className="font-medium text-critical">
+                              {stats.criticalFindings} critical issue{stats.criticalFindings > 1 ? 's' : ''} need immediate attention
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              These could allow unauthorized access to your business systems
+                            </p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => navigate("/dashboard/findings")}
+                        >
+                          Review Now
+                        </Button>
+                      </div>
+                    )}
+                    {stats.highFindings > 0 && (
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-warning/5 border border-warning/10">
+                        <div className="flex items-center gap-3">
+                          <Shield className="h-5 w-5 text-warning" />
+                          <div>
+                            <p className="font-medium text-warning">
+                              {stats.highFindings} high-priority issue{stats.highFindings > 1 ? 's' : ''} should be addressed soon
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              May expose sensitive data if not addressed
+                            </p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate("/dashboard/findings")}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* All secure message */}
+            {accounts.length > 0 && stats.totalFindings === 0 && (
+              <Card className="bg-success/5 border-success/20">
+                <CardContent className="py-8 text-center">
+                  <CheckCircle2 className="h-12 w-12 mx-auto text-success mb-4" />
+                  <h3 className="text-lg font-semibold text-success mb-2">All Clear!</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    No security issues detected across your AWS accounts. 
+                    We'll continue monitoring and alert you if anything changes.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );

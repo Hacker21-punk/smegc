@@ -1,39 +1,25 @@
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   Shield,
   Cloud,
   FileText,
   Settings,
-  Bell,
   HelpCircle,
-  MessageSquare,
-  IndianRupee,
+  Lock,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavItem {
   icon: React.ReactNode;
   label: string;
   href: string;
-  badge?: string;
+  badge?: number;
 }
-
-const navItems: NavItem[] = [
-  { icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard", href: "/dashboard" },
-  { icon: <Shield className="h-5 w-5" />, label: "Security Findings", href: "/dashboard/findings", badge: "12" },
-  { icon: <Cloud className="h-5 w-5" />, label: "AWS Accounts", href: "/dashboard/accounts" },
-  { icon: <FileText className="h-5 w-5" />, label: "Compliance Reports", href: "/dashboard/reports" },
-  { icon: <Bell className="h-5 w-5" />, label: "Alert Settings", href: "/dashboard/alerts" },
-  { icon: <IndianRupee className="h-5 w-5" />, label: "Billing", href: "/dashboard/billing" },
-  { icon: <MessageSquare className="h-5 w-5" />, label: "WhatsApp Bot", href: "/dashboard/whatsapp" },
-];
-
-const bottomNavItems: NavItem[] = [
-  { icon: <Settings className="h-5 w-5" />, label: "Settings", href: "/dashboard/settings" },
-  { icon: <HelpCircle className="h-5 w-5" />, label: "Help & Support", href: "/dashboard/help" },
-];
 
 interface DashboardSidebarProps {
   isOpen?: boolean;
@@ -42,6 +28,68 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarProps) {
   const location = useLocation();
+  const [activeFindings, setActiveFindings] = useState(0);
+
+  // Fetch active findings count
+  useEffect(() => {
+    const fetchActiveFindings = async () => {
+      const { count, error } = await supabase
+        .from("security_findings")
+        .select("*", { count: "exact", head: true })
+        .eq("is_resolved", false);
+
+      if (!error && count !== null) {
+        setActiveFindings(count);
+      }
+    };
+
+    fetchActiveFindings();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel("findings-count")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "security_findings" },
+        () => {
+          fetchActiveFindings();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const navItems: NavItem[] = [
+    { 
+      icon: <LayoutDashboard className="h-5 w-5" />, 
+      label: "Dashboard", 
+      href: "/dashboard" 
+    },
+    { 
+      icon: <Shield className="h-5 w-5" />, 
+      label: "Security Findings", 
+      href: "/dashboard/findings", 
+      badge: activeFindings > 0 ? activeFindings : undefined
+    },
+    { 
+      icon: <Cloud className="h-5 w-5" />, 
+      label: "AWS Accounts", 
+      href: "/dashboard/accounts" 
+    },
+    { 
+      icon: <FileText className="h-5 w-5" />, 
+      label: "Compliance Reports", 
+      href: "/dashboard/reports" 
+    },
+  ];
+
+  const bottomNavItems: NavItem[] = [
+    { icon: <Settings className="h-5 w-5" />, label: "Settings", href: "/dashboard/settings" },
+    { icon: <HelpCircle className="h-5 w-5" />, label: "Help & Support", href: "/dashboard/help" },
+  ];
 
   return (
     <aside
@@ -52,40 +100,70 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       )}
     >
       <nav className="flex flex-col h-full p-4">
+        {/* Trust Signal */}
+        <div className="mb-4 p-3 rounded-lg bg-success/5 border border-success/10">
+          <div className="flex items-center gap-2 text-success">
+            <Lock className="h-4 w-4" />
+            <span className="text-xs font-medium">Read-Only Access</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            We never modify your AWS resources
+          </p>
+        </div>
+
         <div className="flex-1 space-y-1">
-          {navItems.map((item) => (
-            <Link key={item.href} to={item.href} onClick={onClose}>
-              <Button
-                variant={location.pathname === item.href ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start gap-3",
-                  location.pathname === item.href && "bg-sidebar-accent text-sidebar-accent-foreground"
-                )}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-                    {item.badge}
-                  </span>
-                )}
-              </Button>
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.href || 
+              (item.href !== "/dashboard" && location.pathname.startsWith(item.href));
+            
+            return (
+              <Link key={item.href} to={item.href} onClick={onClose}>
+                <Button
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start gap-3 transition-all",
+                    isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                  )}
+                >
+                  {item.icon}
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs animate-pulse"
+                    >
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+            );
+          })}
         </div>
 
         <div className="border-t pt-4 space-y-1">
-          {bottomNavItems.map((item) => (
-            <Link key={item.href} to={item.href} onClick={onClose}>
-              <Button
-                variant={location.pathname === item.href ? "secondary" : "ghost"}
-                className="w-full justify-start gap-3 text-sidebar-foreground"
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </Button>
-            </Link>
-          ))}
+          {bottomNavItems.map((item) => {
+            const isActive = location.pathname === item.href;
+            
+            return (
+              <Link key={item.href} to={item.href} onClick={onClose}>
+                <Button
+                  variant={isActive ? "secondary" : "ghost"}
+                  className="w-full justify-start gap-3 text-sidebar-foreground"
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </Button>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Footer Trust Message */}
+        <div className="mt-4 pt-4 border-t">
+          <p className="text-[10px] text-center text-muted-foreground">
+            You stay in control of your infrastructure
+          </p>
         </div>
       </nav>
     </aside>
