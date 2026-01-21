@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const plans = [
   {
     name: "Starter",
-    price: "₹1,999",
+    price: "₹999",
     period: "/month",
     description: "Perfect for small businesses getting started with AWS security.",
     features: [
@@ -29,7 +29,7 @@ const plans = [
   },
   {
     name: "Growth",
-    price: "₹4,999",
+    price: "₹2,499",
     period: "/month",
     description: "For growing businesses with multiple AWS accounts.",
     features: [
@@ -46,7 +46,7 @@ const plans = [
   },
   {
     name: "Enterprise",
-    price: "₹14,999",
+    price: "₹7,499",
     period: "/month",
     description: "For organizations with complex AWS infrastructure.",
     features: [
