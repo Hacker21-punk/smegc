@@ -10,21 +10,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Authentication helper - validates service role key for internal calls
-// JWT is now verified by Supabase before the function executes (verify_jwt = true)
-// This function checks for service role key for internal service-to-service calls
-function validateServiceRole(req: Request): { isServiceRole: boolean } {
+// Authentication helper - validates service role key or JWT for authorization
+// verify_jwt = false in config, so we validate JWTs in code using getClaims()
+async function validateAuth(req: Request): Promise<{ isServiceRole: boolean; userId?: string }> {
   const authHeader = req.headers.get('Authorization');
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { isServiceRole: false };
+    throw new Error('Missing authorization header');
   }
 
   const token = authHeader.replace('Bearer ', '');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   
   // Check if this is an internal service-to-service call
-  return { isServiceRole: token === serviceRoleKey };
+  if (token === serviceRoleKey) {
+    return { isServiceRole: true };
+  }
+
+  // Validate JWT using getClaims for user requests
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+  if (claimsError || !claimsData?.claims) {
+    throw new Error('Invalid JWT');
+  }
+
+  return { isServiceRole: false, userId: claimsData.claims.sub as string };
 }
 
 // Zod schema for request validation
@@ -577,12 +592,19 @@ serve(async (req) => {
   }
 
   try {
-    // Authentication is now handled by Supabase (verify_jwt = true)
-    // JWT is validated before function execution for user requests
-    // Service role key is used for internal service-to-service calls
-    const { isServiceRole } = validateServiceRole(req);
+    // Validate authentication using getClaims or service role key
+    let authResult;
+    try {
+      authResult = await validateAuth(req);
+    } catch (authError) {
+      console.error('Authentication failed:', authError);
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
-    console.log(`Authenticated request - service role: ${isServiceRole}`);
+    console.log(`Authenticated request - service role: ${authResult.isServiceRole}`);
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
