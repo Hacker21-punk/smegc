@@ -12,6 +12,8 @@ import Dashboard from "./pages/Dashboard";
 import AWSAccounts from "./pages/AWSAccounts";
 import Findings from "./pages/Findings";
 import ComplianceReports from "./pages/ComplianceReports";
+import Settings from "./pages/Settings";
+import HelpSupport from "./pages/HelpSupport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,10 +67,18 @@ const App = () => (
                 }
               />
               <Route
-                path="/dashboard/*"
+                path="/dashboard/settings"
                 element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/help"
+                element={
+                  <ProtectedRoute>
+                    <HelpSupport />
                   </ProtectedRoute>
                 }
               />
