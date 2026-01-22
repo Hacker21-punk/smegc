@@ -13,54 +13,61 @@ import { cn } from "@/lib/utils";
 
 const plans = [
   {
-    name: "Starter",
-    price: "₹999",
+    name: "Free",
+    price: "₹0",
     period: "/month",
-    description: "Perfect for small businesses getting started with AWS security.",
+    description: "Get started with basic security insights.",
     features: [
-      "1 AWS Account",
-      "Daily security scans",
-      "Email alerts",
-      "Basic compliance reports",
-      "5 team members",
-      "7-day data retention",
+      "5 findings per month",
+      "Basic dashboard",
     ],
     highlighted: false,
+    badge: "🆓",
   },
   {
-    name: "Growth",
-    price: "₹2,499",
+    name: "Starter",
+    price: "₹499",
     period: "/month",
-    description: "For growing businesses with multiple AWS accounts.",
+    yearlyNote: "~₹6K/year",
+    description: "Everything you need to secure your AWS account.",
     features: [
-      "Up to 5 AWS Accounts",
-      "Hourly security scans",
-      "WhatsApp + Email alerts",
-      "Full compliance reports (IT Act, GST)",
-      "15 team members",
-      "30-day data retention",
-      "WhatsApp bot access",
+      "Unlimited findings",
+      "Plain English explanations",
+      "Slack alerts",
       "Priority support",
     ],
     highlighted: true,
+    badge: "💎",
+  },
+  {
+    name: "Growth",
+    price: "₹1,499",
+    period: "/month",
+    yearlyNote: "~₹18K/year",
+    description: "For teams managing multiple AWS accounts.",
+    features: [
+      "Everything in Starter",
+      "Multi-account scanning",
+      "Auto-remediation",
+      "Compliance reports",
+    ],
+    highlighted: false,
+    badge: "🚀",
   },
   {
     name: "Enterprise",
-    price: "₹7,499",
-    period: "/month",
-    description: "For organizations with complex AWS infrastructure.",
+    price: "Custom",
+    period: "",
+    description: "For large organizations with custom requirements.",
     features: [
-      "Unlimited AWS Accounts",
-      "Real-time security scans",
-      "All alert channels",
-      "Custom compliance reports",
-      "Unlimited team members",
-      "1-year data retention",
+      "Everything in Growth",
       "Dedicated account manager",
       "Custom integrations",
       "SLA guarantee",
+      "On-premise deployment option",
     ],
     highlighted: false,
+    badge: "🏢",
   },
 ];
 
@@ -90,7 +97,7 @@ export function PricingSection() {
           </p>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3 items-start">
+        <div className="grid gap-6 lg:grid-cols-4 items-start">
           {plans.map((plan, index) => (
             <Card
               key={index}
@@ -114,12 +121,16 @@ export function PricingSection() {
                 </div>
               )}
               <CardHeader className="text-center pb-2 pt-8">
+                <div className="text-2xl mb-2">{plan.badge}</div>
                 <CardTitle className="text-xl">{plan.name}</CardTitle>
                 <div className="mt-4 group">
-                  <span className="text-5xl font-bold transition-all group-hover:text-primary">
+                  <span className="text-4xl font-bold transition-all group-hover:text-primary">
                     {plan.price}
                   </span>
                   <span className="text-muted-foreground">{plan.period}</span>
+                  {plan.yearlyNote && (
+                    <p className="text-xs text-muted-foreground mt-1">{plan.yearlyNote}</p>
+                  )}
                 </div>
                 <CardDescription className="mt-2">
                   {plan.description}
@@ -145,7 +156,7 @@ export function PricingSection() {
                     </li>
                   ))}
                 </ul>
-                <Link to="/dashboard">
+                <Link to={plan.name === "Enterprise" ? "#contact" : "/dashboard"}>
                   <Button
                     className={cn(
                       "w-full transition-all",
@@ -155,7 +166,7 @@ export function PricingSection() {
                     )}
                     variant={plan.highlighted ? "default" : "outline"}
                   >
-                    Get Started
+                    {plan.name === "Enterprise" ? "Contact Sales" : plan.name === "Free" ? "Start Free" : "Get Started"}
                   </Button>
                 </Link>
               </CardContent>
