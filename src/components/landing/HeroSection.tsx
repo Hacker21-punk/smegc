@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Shield, ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { Shield, ArrowRight, Eye, Lock, UserCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-security.jpg";
 import { cn } from "@/lib/utils";
@@ -8,11 +8,10 @@ import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 export function HeroSection() {
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
 
-  const features = [
-    "Automated daily AWS security scans",
-    "WhatsApp & Email alerts in Hindi/English",
-    "Compliance reports for IT Act, GST, Bank audits",
-    "One-click CloudFormation remediation",
+  const trustBadges = [
+    { icon: Eye, text: "Read-Only Access" },
+    { icon: Lock, text: "No Auto-Changes" },
+    { icon: UserCheck, text: "You Stay in Control" },
   ];
 
   return (
@@ -40,18 +39,17 @@ export function HeroSection() {
 
       <div className="container relative">
         <div className="max-w-3xl">
-          {/* Badge */}
+          {/* Trust Badge */}
           <div
             className={cn(
-              "mb-6 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary border border-primary/20 transition-all duration-700",
+              "mb-6 inline-flex items-center gap-2 rounded-full bg-success/10 px-4 py-2 text-sm font-medium text-success border border-success/20 transition-all duration-700",
               isIntersecting
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-4"
             )}
           >
-            <Sparkles className="h-4 w-4 animate-pulse" />
-            <span>Made for Indian SMEs</span>
             <Shield className="h-4 w-4" />
+            <span>Zero-Write AWS Security Platform</span>
           </div>
 
           {/* Headline */}
@@ -63,36 +61,34 @@ export function HeroSection() {
                 : "opacity-0 translate-y-4"
             )}
           >
-            AWS Security Monitoring
+            Secure Your AWS
             <span className="block mt-2 bg-gradient-to-r from-primary via-info to-primary bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
-              You Can Actually Afford
+              Without Giving Up Control
             </span>
           </h1>
 
-          {/* Description */}
+          {/* Subheading */}
           <p
             className={cn(
-              "mb-8 max-w-2xl text-lg text-muted-foreground sm:text-xl transition-all duration-700 delay-200",
+              "mb-8 max-w-2xl text-lg text-muted-foreground sm:text-xl leading-relaxed transition-all duration-700 delay-200",
               isIntersecting
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-4"
             )}
           >
-            Protect your AWS infrastructure with automated security scans,
-            instant WhatsApp alerts, and compliance reports—all priced in Rupees
-            for Indian businesses.
+            SME Cloud Guard continuously scans your AWS environment, explains security risks in plain English, guides you to fix them safely, verifies the fixes, and provides audit-ready evidence — all with read-only access.
           </p>
 
           {/* CTA Buttons */}
           <div
             className={cn(
-              "mb-12 flex flex-col items-start gap-4 sm:flex-row transition-all duration-700 delay-300",
+              "mb-10 flex flex-col items-start gap-4 sm:flex-row transition-all duration-700 delay-300",
               isIntersecting
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 translate-y-4"
             )}
           >
-            <Link to="/dashboard">
+            <Link to="/auth">
               <Button
                 size="lg"
                 className="gap-2 group shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all hover:scale-105"
@@ -101,39 +97,41 @@ export function HeroSection() {
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="group hover:bg-primary/5 transition-all"
-            >
-              <span className="relative">
-                Watch Demo
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
-              </span>
-            </Button>
+            <Link to="#how-it-works">
+              <Button
+                variant="outline"
+                size="lg"
+                className="group hover:bg-primary/5 transition-all"
+              >
+                <span className="relative">
+                  See How It Works
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
+                </span>
+              </Button>
+            </Link>
           </div>
 
-          {/* Feature List */}
-          <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex items-center gap-3 text-muted-foreground group transition-all duration-500",
-                  isIntersecting
-                    ? "opacity-100 translate-x-0"
-                    : "opacity-0 -translate-x-4"
-                )}
-                style={{ transitionDelay: `${400 + index * 100}ms` }}
-              >
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-success/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
+          {/* Trust Badges */}
+          <div
+            className={cn(
+              "flex flex-wrap gap-4 transition-all duration-700 delay-400",
+              isIntersecting
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4"
+            )}
+          >
+            {trustBadges.map((badge, index) => {
+              const Icon = badge.icon;
+              return (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 bg-card/50 backdrop-blur-sm rounded-full px-4 py-2 border border-border/50"
+                >
+                  <Icon className="h-4 w-4 text-success" />
+                  <span className="text-sm font-medium">{badge.text}</span>
                 </div>
-                <span className="group-hover:text-foreground transition-colors">
-                  {feature}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

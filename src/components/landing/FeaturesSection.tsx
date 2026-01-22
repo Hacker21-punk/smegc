@@ -1,11 +1,9 @@
 import {
-  Shield,
-  Bell,
+  Search,
+  ListOrdered,
   FileText,
-  Cloud,
-  Lock,
-  MessageSquare,
-  Zap,
+  CheckCircle,
+  ClipboardList,
   IndianRupee,
 } from "lucide-react";
 import {
@@ -20,68 +18,52 @@ import { cn } from "@/lib/utils";
 
 const features = [
   {
-    icon: Shield,
-    title: "Comprehensive AWS Scans",
+    icon: Search,
+    title: "Continuous AWS Scanning",
     description:
-      "Daily automated scans of Security Groups, IAM, S3, EC2, RDS, and VPCs to detect misconfigurations.",
+      "Read-only security scans of your AWS infrastructure. Security Groups, IAM, S3, EC2, RDS, and VPCs.",
     color: "text-primary",
     bgColor: "bg-primary/10",
   },
   {
-    icon: Bell,
-    title: "WhatsApp & Email Alerts",
+    icon: ListOrdered,
+    title: "Risk Prioritization",
     description:
-      "Get instant alerts for critical security issues on WhatsApp in Hindi or English.",
+      "Findings ranked by severity (P0–P3) so you know exactly what to fix first.",
     color: "text-warning",
     bgColor: "bg-warning/10",
   },
   {
     icon: FileText,
-    title: "Compliance Reports",
+    title: "Clear Remediation Guidance",
     description:
-      "Generate PDF reports aligned with Indian IT Act, GST, bank audits, and MeitY requirements.",
+      "Step-by-step instructions and CloudFormation templates. No automatic changes — you apply fixes.",
     color: "text-success",
     bgColor: "bg-success/10",
   },
   {
-    icon: Cloud,
-    title: "Multi-Account Support",
+    icon: CheckCircle,
+    title: "Post-Remediation Verification",
     description:
-      "Connect and monitor multiple AWS accounts with secure IAM role assumption.",
+      "After you fix an issue, we verify it's resolved and update your security status.",
     color: "text-info",
     bgColor: "bg-info/10",
   },
   {
-    icon: Zap,
-    title: "One-Click Remediation",
+    icon: ClipboardList,
+    title: "Audit & Compliance Evidence",
     description:
-      "Generate CloudFormation templates to fix issues without auto-applying changes.",
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-  },
-  {
-    icon: MessageSquare,
-    title: "WhatsApp Bot",
-    description:
-      "Ask questions like 'What is my risk score?' and get instant responses.",
-    color: "text-success",
-    bgColor: "bg-success/10",
-  },
-  {
-    icon: Lock,
-    title: "Secure Data Handling",
-    description:
-      "End-to-end encryption, audit logs, and data residency in India.",
-    color: "text-critical",
-    bgColor: "bg-critical/10",
+      "Generate reports for ISO 27001, SOC 2, and DPDP Act readiness. Perfect for client reviews.",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
   },
   {
     icon: IndianRupee,
-    title: "Rupee-Based Pricing",
+    title: "Built for Indian SMEs",
     description:
-      "Affordable pricing in INR designed specifically for Indian SMEs.",
-    color: "text-primary",
-    bgColor: "bg-primary/10",
+      "Affordable pricing in INR, designed for growing Indian businesses on AWS.",
+    color: "text-success",
+    bgColor: "bg-success/10",
   },
 ];
 
@@ -89,11 +71,7 @@ export function FeaturesSection() {
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
 
   return (
-    <section ref={ref} className="py-20 lg:py-32 bg-muted/30 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-info/5 rounded-full blur-3xl" />
-
+    <section id="features" ref={ref} className="py-20 lg:py-32 relative overflow-hidden">
       <div className="container relative">
         <div
           className={cn(
@@ -104,23 +82,21 @@ export function FeaturesSection() {
           )}
         >
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-            Enterprise Security,{" "}
-            <span className="text-primary">SME Budget</span>
+            Core <span className="text-primary">Features</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            All the features you need to secure your AWS infrastructure without
-            the enterprise price tag.
+            Everything you need to secure your AWS infrastructure — without the enterprise price tag or complexity.
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <Card
                 key={index}
                 className={cn(
-                  "border-0 bg-card shadow-sm transition-all duration-500 group hover:shadow-xl hover:-translate-y-2 hover:border-primary/20 card-interactive",
+                  "border bg-card shadow-sm transition-all duration-500 group hover:shadow-xl hover:-translate-y-2",
                   isIntersecting
                     ? "opacity-100 translate-y-0"
                     : "opacity-0 translate-y-8"

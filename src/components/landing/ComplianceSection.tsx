@@ -1,60 +1,41 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, CheckCircle2, Shield, Lock, Globe, FileCheck } from "lucide-react";
+import { FileText, CheckCircle2, Shield, AlertCircle } from "lucide-react";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { cn } from "@/lib/utils";
 
 const complianceFrameworks = [
   {
-    title: "IT Act 2000",
-    icon: Shield,
-    description:
-      "Information Technology Act compliance for data protection and cybersecurity requirements.",
+    title: "ISO 27001",
+    description: "Information security management system compliance evidence.",
     checks: [
-      "Data encryption standards",
-      "Audit trail maintenance",
-      "Incident response procedures",
+      "Access control documentation",
+      "Security policy mapping",
+      "Risk assessment records",
     ],
     color: "text-primary",
     bgColor: "bg-primary/10",
   },
   {
-    title: "GST Compliance",
-    icon: FileCheck,
-    description:
-      "Goods and Services Tax regulations for digital record-keeping and data integrity.",
+    title: "SOC 2",
+    description: "Service organization control readiness documentation.",
     checks: [
-      "Invoice data protection",
-      "Financial record integrity",
-      "Secure data transmission",
-    ],
-    color: "text-success",
-    bgColor: "bg-success/10",
-  },
-  {
-    title: "Bank Audit Requirements",
-    icon: Lock,
-    description:
-      "RBI guidelines and banking sector audit standards for cloud infrastructure.",
-    checks: [
-      "Access control verification",
-      "Transaction security",
-      "Business continuity",
-    ],
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-  },
-  {
-    title: "MeitY Guidelines",
-    icon: Globe,
-    description:
-      "Ministry of Electronics and IT cloud security recommendations.",
-    checks: [
-      "Data localization",
-      "Vendor risk management",
-      "Security certifications",
+      "Security monitoring evidence",
+      "Change management logs",
+      "Incident response records",
     ],
     color: "text-info",
     bgColor: "bg-info/10",
+  },
+  {
+    title: "DPDP Act",
+    description: "Digital Personal Data Protection Act compliance support.",
+    checks: [
+      "Data protection controls",
+      "Encryption verification",
+      "Access audit trails",
+    ],
+    color: "text-success",
+    bgColor: "bg-success/10",
   },
 ];
 
@@ -65,12 +46,8 @@ export function ComplianceSection() {
     <section
       id="compliance"
       ref={ref}
-      className="py-20 lg:py-32 bg-muted/30 relative overflow-hidden"
+      className="py-20 lg:py-32 relative overflow-hidden"
     >
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-info/5 rounded-full blur-3xl" />
-
       <div className="container relative">
         <div
           className={cn(
@@ -82,79 +59,77 @@ export function ComplianceSection() {
         >
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary mb-4 border border-primary/20">
             <FileText className="h-4 w-4" />
-            <span>Indian Regulatory Compliance</span>
+            <span>Compliance Evidence</span>
           </div>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-            Built for <span className="text-primary">Indian Business</span>{" "}
-            Requirements
+            Prepare for <span className="text-primary">Audits</span> with Confidence
           </h2>
           <p className="text-lg text-muted-foreground">
-            Generate compliance-ready reports aligned with Indian regulatory
-            frameworks and bank audit expectations.
+            Generate compliance evidence mapped to popular frameworks. Perfect for client reviews and audit preparation.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {complianceFrameworks.map((framework, index) => {
-            const Icon = framework.icon;
-            return (
-              <Card
-                key={index}
-                className={cn(
-                  "bg-card group transition-all duration-500 hover:shadow-xl hover:-translate-y-1 card-interactive",
-                  isIntersecting
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-8"
-                )}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "h-12 w-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
-                        framework.bgColor,
-                        framework.color
-                      )}
+        {/* Disclaimer */}
+        <div
+          className={cn(
+            "max-w-2xl mx-auto mb-12 bg-warning/5 border border-warning/20 rounded-xl p-4 flex items-start gap-3 transition-all duration-700",
+            isIntersecting
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-8"
+          )}
+        >
+          <AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Important:</span> SME Cloud Guard provides compliance evidence and helps prepare for audits. We do not provide official certifications. Work with accredited auditors for formal compliance certification.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {complianceFrameworks.map((framework, index) => (
+            <Card
+              key={index}
+              className={cn(
+                "bg-card group transition-all duration-500 hover:shadow-xl hover:-translate-y-1",
+                isIntersecting
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-8"
+              )}
+              style={{ transitionDelay: `${index * 100}ms` }}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      "h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110",
+                      framework.bgColor,
+                      framework.color
+                    )}
+                  >
+                    <Shield className="h-5 w-5" />
+                  </div>
+                  <span className="group-hover:text-primary transition-colors">
+                    {framework.title}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4 text-sm">
+                  {framework.description}
+                </p>
+                <ul className="space-y-2">
+                  {framework.checks.map((check, checkIndex) => (
+                    <li
+                      key={checkIndex}
+                      className="flex items-center gap-2 text-sm"
                     >
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <span className="group-hover:text-primary transition-colors">
-                      {framework.title}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    {framework.description}
-                  </p>
-                  <ul className="space-y-2">
-                    {framework.checks.map((check, checkIndex) => (
-                      <li
-                        key={checkIndex}
-                        className={cn(
-                          "flex items-center gap-3 text-sm transition-all duration-300",
-                          isIntersecting
-                            ? "opacity-100 translate-x-0"
-                            : "opacity-0 -translate-x-4"
-                        )}
-                        style={{
-                          transitionDelay: `${index * 100 + checkIndex * 75}ms`,
-                        }}
-                      >
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-success/10 flex items-center justify-center">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                        </div>
-                        <span className="group-hover:text-foreground text-muted-foreground transition-colors">
-                          {check}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            );
-          })}
+                      <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                      <span className="text-muted-foreground">{check}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </section>
