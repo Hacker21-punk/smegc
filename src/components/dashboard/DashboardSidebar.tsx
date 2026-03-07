@@ -10,6 +10,7 @@ import {
   Settings,
   HelpCircle,
   Lock,
+  Globe,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,6 +84,11 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       icon: <FileText className="h-5 w-5" />, 
       label: "Compliance Reports", 
       href: "/dashboard/reports" 
+    },
+    {
+      icon: <Globe className="h-5 w-5" />,
+      label: "Asset Inventory",
+      href: "/dashboard/assets"
     },
   ];
 

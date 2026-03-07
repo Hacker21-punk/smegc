@@ -27,6 +27,7 @@ export type Database = {
           role_arn: string | null
           status: Database["public"]["Enums"]["account_status"]
           updated_at: string
+          write_access_enabled: boolean
         }
         Insert: {
           account_alias?: string | null
@@ -40,6 +41,7 @@ export type Database = {
           role_arn?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
+          write_access_enabled?: boolean
         }
         Update: {
           account_alias?: string | null
@@ -53,10 +55,80 @@ export type Database = {
           role_arn?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
+          write_access_enabled?: boolean
         }
         Relationships: [
           {
             foreignKeyName: "aws_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cloud_assets: {
+        Row: {
+          cloud_account_id: string | null
+          created_at: string
+          id: string
+          last_seen_at: string | null
+          metadata: Json | null
+          organization_id: string
+          provider: Database["public"]["Enums"]["cloud_provider"]
+          region: string | null
+          resource_id: string
+          resource_name: string | null
+          resource_type: Database["public"]["Enums"]["cloud_resource_type"]
+          risk_score: number | null
+          status: Database["public"]["Enums"]["asset_status"]
+          tags: Json | null
+          updated_at: string
+        }
+        Insert: {
+          cloud_account_id?: string | null
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json | null
+          organization_id: string
+          provider: Database["public"]["Enums"]["cloud_provider"]
+          region?: string | null
+          resource_id: string
+          resource_name?: string | null
+          resource_type?: Database["public"]["Enums"]["cloud_resource_type"]
+          risk_score?: number | null
+          status?: Database["public"]["Enums"]["asset_status"]
+          tags?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          cloud_account_id?: string | null
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          provider?: Database["public"]["Enums"]["cloud_provider"]
+          region?: string | null
+          resource_id?: string
+          resource_name?: string | null
+          resource_type?: Database["public"]["Enums"]["cloud_resource_type"]
+          risk_score?: number | null
+          status?: Database["public"]["Enums"]["asset_status"]
+          tags?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cloud_assets_cloud_account_id_fkey"
+            columns: ["cloud_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cloud_assets_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -292,6 +364,7 @@ export type Database = {
     }
     Enums: {
       account_status: "pending" | "connected" | "disconnected" | "error"
+      asset_status: "active" | "inactive" | "unknown" | "deleted"
       aws_service:
         | "security_groups"
         | "iam"
@@ -300,6 +373,17 @@ export type Database = {
         | "rds"
         | "vpc"
         | "cost"
+      cloud_provider: "aws" | "azure" | "gcp"
+      cloud_resource_type:
+        | "compute"
+        | "container"
+        | "serverless"
+        | "storage"
+        | "database"
+        | "identity"
+        | "networking"
+        | "security"
+        | "other"
       finding_severity: "critical" | "high" | "medium" | "low" | "info"
       scan_status: "pending" | "running" | "completed" | "failed"
     }
@@ -430,6 +514,7 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["pending", "connected", "disconnected", "error"],
+      asset_status: ["active", "inactive", "unknown", "deleted"],
       aws_service: [
         "security_groups",
         "iam",
@@ -438,6 +523,18 @@ export const Constants = {
         "rds",
         "vpc",
         "cost",
+      ],
+      cloud_provider: ["aws", "azure", "gcp"],
+      cloud_resource_type: [
+        "compute",
+        "container",
+        "serverless",
+        "storage",
+        "database",
+        "identity",
+        "networking",
+        "security",
+        "other",
       ],
       finding_severity: ["critical", "high", "medium", "low", "info"],
       scan_status: ["pending", "running", "completed", "failed"],
