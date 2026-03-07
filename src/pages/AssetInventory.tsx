@@ -163,7 +163,7 @@ export default function AssetInventory() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} lastScanTime="" onRefresh={fetchAssets} />
       <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="md:ml-64 pt-16">
