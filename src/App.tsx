@@ -14,6 +14,7 @@ import Findings from "./pages/Findings";
 import ComplianceReports from "./pages/ComplianceReports";
 import Settings from "./pages/Settings";
 import HelpSupport from "./pages/HelpSupport";
+import AssetInventory from "./pages/AssetInventory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <HelpSupport />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/assets"
+                element={
+                  <ProtectedRoute>
+                    <AssetInventory />
                   </ProtectedRoute>
                 }
               />
