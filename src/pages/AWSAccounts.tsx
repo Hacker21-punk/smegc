@@ -50,6 +50,7 @@ export default function AWSAccounts() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [accounts, setAccounts] = useState<AWSAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pipelineRunning, setPipelineRunning] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [step, setStep] = useState<"input" | "setup" | "verify">("input");
 
