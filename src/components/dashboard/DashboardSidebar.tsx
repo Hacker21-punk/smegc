@@ -82,7 +82,8 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       label: "Cloud Integrations",
       items: [
         { icon: <Cloud className="h-4 w-4" />, label: "AWS Accounts", href: "/dashboard/accounts" },
-        { icon: <Cloud className="h-4 w-4" />, label: "Azure & GCP", href: "/dashboard/cloud-accounts" },
+        { icon: <Cloud className="h-4 w-4" />, label: "Azure Accounts", href: "/dashboard/azure-accounts" },
+        { icon: <Cloud className="h-4 w-4" />, label: "GCP Projects", href: "/dashboard/gcp-accounts" },
       ],
     },
     {
