@@ -44,6 +44,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <NotificationProvider>
             <PageTransition>
               <Routes>
                 <Route path="/" element={<Index />} />
