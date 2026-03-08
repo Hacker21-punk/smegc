@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AWSAccounts from "./pages/AWSAccounts";
+import CloudAccounts from "./pages/CloudAccounts";
 import Findings from "./pages/Findings";
 import ComplianceReports from "./pages/ComplianceReports";
 import Settings from "./pages/Settings";
