@@ -104,13 +104,13 @@ export async function createPolicy(policy: {
   description?: string;
   policy_type: string;
   scope?: string;
-  enforcement_mode?: string;
+  enforcement_mode?: "advisory" | "autopilot";
   severity?: string;
   aws_account_id?: string;
 }): Promise<SecurityPolicy> {
   const { data, error } = await supabase
     .from("security_policies")
-    .insert(policy)
+    .insert([policy])
     .select()
     .single();
   if (error) throw error;
