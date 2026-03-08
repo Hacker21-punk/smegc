@@ -12,6 +12,9 @@ import {
   Lock,
   Globe,
   Route,
+  Zap,
+  GitCompareArrows,
+  Radar,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
