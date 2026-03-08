@@ -15,6 +15,12 @@ import {
   Zap,
   GitCompareArrows,
   Radar,
+  Crosshair,
+  Layers,
+  Container,
+  Fingerprint,
+  Globe2,
+  Activity,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
