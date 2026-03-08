@@ -29,6 +29,7 @@ import KubernetesSecurity from "./pages/KubernetesSecurity";
 import ZeroTrustAccess from "./pages/ZeroTrustAccess";
 import SaasSecurity from "./pages/SaasSecurity";
 import SecurityEvents from "./pages/SecurityEvents";
+import RuntimeSecurity from "./pages/RuntimeSecurity";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
