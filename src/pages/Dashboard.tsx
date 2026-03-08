@@ -448,8 +448,25 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Breach Cost Prediction */}
+            {accounts.length > 0 && (
+              <BreachCostWidget
+                securityScore={stats.complianceScore}
+                totalFindings={stats.totalFindings}
+                criticalFindings={stats.criticalFindings}
+              />
+            )}
           </div>
         )}
+
+        {/* AI Security Copilot */}
+        <SecurityCopilot context={{
+          securityScore: stats.complianceScore,
+          totalFindings: stats.totalFindings,
+          criticalFindings: stats.criticalFindings,
+          accountCount: accounts.length,
+        }} />
       </main>
     </div>
   );
