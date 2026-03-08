@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { SecurityCopilot } from "@/components/dashboard/SecurityCopilot";
+import { BreachCostWidget } from "@/components/dashboard/BreachCostWidget";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
