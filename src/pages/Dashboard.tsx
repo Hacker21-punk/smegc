@@ -396,9 +396,16 @@ const Dashboard = () => {
               </Card>
             )}
 
-            {/* Breach Cost */}
+            {/* Autopilot Enforcement Panel */}
             {accounts.length > 0 && (
               <div className="animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+                <AutopilotEnforcementPanel />
+              </div>
+            )}
+
+            {/* Breach Cost */}
+            {accounts.length > 0 && (
+              <div className="animate-fade-in-up" style={{ animationDelay: "0.55s" }}>
                 <BreachCostWidget
                   securityScore={stats.complianceScore}
                   totalFindings={stats.totalFindings}
