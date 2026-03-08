@@ -44,7 +44,7 @@
   75% { transform: rotate(3deg); }
 }
 
-
+@keyframes float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   33% { transform: translateY(-8px) rotate(1deg); }
   66% { transform: translateY(-4px) rotate(-0.5deg); }
