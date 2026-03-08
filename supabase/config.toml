@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.multi-cloud-discovery]
 verify_jwt = false
+
+[functions.kubernetes-scanner]
+verify_jwt = false
