@@ -14,6 +14,153 @@ export type Database = {
   }
   public: {
     Tables: {
+      attack_path_steps: {
+        Row: {
+          attack_path_id: string
+          created_at: string
+          description: string | null
+          edge_id: string | null
+          id: string
+          metadata: Json | null
+          node_id: string
+          step_order: number
+          technique: string | null
+        }
+        Insert: {
+          attack_path_id: string
+          created_at?: string
+          description?: string | null
+          edge_id?: string | null
+          id?: string
+          metadata?: Json | null
+          node_id: string
+          step_order: number
+          technique?: string | null
+        }
+        Update: {
+          attack_path_id?: string
+          created_at?: string
+          description?: string | null
+          edge_id?: string | null
+          id?: string
+          metadata?: Json | null
+          node_id?: string
+          step_order?: number
+          technique?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attack_path_steps_attack_path_id_fkey"
+            columns: ["attack_path_id"]
+            isOneToOne: false
+            referencedRelation: "attack_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attack_path_steps_edge_id_fkey"
+            columns: ["edge_id"]
+            isOneToOne: false
+            referencedRelation: "security_graph_edges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attack_path_steps_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "security_graph_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attack_paths: {
+        Row: {
+          aws_account_id: string | null
+          blast_radius: number
+          created_at: string
+          description: string | null
+          detected_at: string
+          entry_point_node_id: string | null
+          id: string
+          metadata: Json | null
+          mitigated_at: string | null
+          organization_id: string
+          path_length: number
+          risk_score: number
+          severity: Database["public"]["Enums"]["attack_path_severity"]
+          status: Database["public"]["Enums"]["attack_path_status"]
+          target_node_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          aws_account_id?: string | null
+          blast_radius?: number
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          entry_point_node_id?: string | null
+          id?: string
+          metadata?: Json | null
+          mitigated_at?: string | null
+          organization_id: string
+          path_length?: number
+          risk_score?: number
+          severity: Database["public"]["Enums"]["attack_path_severity"]
+          status?: Database["public"]["Enums"]["attack_path_status"]
+          target_node_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          aws_account_id?: string | null
+          blast_radius?: number
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          entry_point_node_id?: string | null
+          id?: string
+          metadata?: Json | null
+          mitigated_at?: string | null
+          organization_id?: string
+          path_length?: number
+          risk_score?: number
+          severity?: Database["public"]["Enums"]["attack_path_severity"]
+          status?: Database["public"]["Enums"]["attack_path_status"]
+          target_node_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attack_paths_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attack_paths_entry_point_node_id_fkey"
+            columns: ["entry_point_node_id"]
+            isOneToOne: false
+            referencedRelation: "security_graph_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attack_paths_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attack_paths_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "security_graph_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aws_accounts: {
         Row: {
           account_alias: string | null
@@ -195,6 +342,98 @@ export type Database = {
           },
         ]
       }
+      remediation_actions: {
+        Row: {
+          action_type: string
+          attack_path_id: string | null
+          aws_account_id: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          execution_plan: Json | null
+          finding_id: string | null
+          id: string
+          initiated_by: string | null
+          mode: Database["public"]["Enums"]["remediation_mode"]
+          organization_id: string
+          priority: number | null
+          result: Json | null
+          rollback_plan: Json | null
+          status: Database["public"]["Enums"]["remediation_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          attack_path_id?: string | null
+          aws_account_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          execution_plan?: Json | null
+          finding_id?: string | null
+          id?: string
+          initiated_by?: string | null
+          mode?: Database["public"]["Enums"]["remediation_mode"]
+          organization_id: string
+          priority?: number | null
+          result?: Json | null
+          rollback_plan?: Json | null
+          status?: Database["public"]["Enums"]["remediation_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          attack_path_id?: string | null
+          aws_account_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          execution_plan?: Json | null
+          finding_id?: string | null
+          id?: string
+          initiated_by?: string | null
+          mode?: Database["public"]["Enums"]["remediation_mode"]
+          organization_id?: string
+          priority?: number | null
+          result?: Json | null
+          rollback_plan?: Json | null
+          status?: Database["public"]["Enums"]["remediation_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remediation_actions_attack_path_id_fkey"
+            columns: ["attack_path_id"]
+            isOneToOne: false
+            referencedRelation: "attack_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remediation_actions_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remediation_actions_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "security_findings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remediation_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       risk_score_history: {
         Row: {
           aws_account_id: string
@@ -355,6 +594,133 @@ export type Database = {
           },
         ]
       }
+      security_graph_edges: {
+        Row: {
+          created_at: string
+          edge_type: Database["public"]["Enums"]["graph_edge_type"]
+          id: string
+          is_risky: boolean
+          metadata: Json | null
+          organization_id: string
+          source_node_id: string
+          target_node_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string
+          edge_type: Database["public"]["Enums"]["graph_edge_type"]
+          id?: string
+          is_risky?: boolean
+          metadata?: Json | null
+          organization_id: string
+          source_node_id: string
+          target_node_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string
+          edge_type?: Database["public"]["Enums"]["graph_edge_type"]
+          id?: string
+          is_risky?: boolean
+          metadata?: Json | null
+          organization_id?: string
+          source_node_id?: string
+          target_node_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_graph_edges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_graph_edges_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "security_graph_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_graph_edges_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "security_graph_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_graph_nodes: {
+        Row: {
+          aws_account_id: string | null
+          created_at: string
+          id: string
+          is_public: boolean
+          is_sensitive: boolean
+          metadata: Json | null
+          node_type: Database["public"]["Enums"]["graph_node_type"]
+          organization_id: string
+          provider: string
+          region: string | null
+          resource_arn: string | null
+          resource_id: string
+          resource_name: string | null
+          risk_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          aws_account_id?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          is_sensitive?: boolean
+          metadata?: Json | null
+          node_type: Database["public"]["Enums"]["graph_node_type"]
+          organization_id: string
+          provider?: string
+          region?: string | null
+          resource_arn?: string | null
+          resource_id: string
+          resource_name?: string | null
+          risk_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          aws_account_id?: string | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          is_sensitive?: boolean
+          metadata?: Json | null
+          node_type?: Database["public"]["Enums"]["graph_node_type"]
+          organization_id?: string
+          provider?: string
+          region?: string | null
+          resource_arn?: string | null
+          resource_id?: string
+          resource_name?: string | null
+          risk_score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_graph_nodes_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_graph_nodes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -365,6 +731,8 @@ export type Database = {
     Enums: {
       account_status: "pending" | "connected" | "disconnected" | "error"
       asset_status: "active" | "inactive" | "unknown" | "deleted"
+      attack_path_severity: "critical" | "high" | "medium" | "low"
+      attack_path_status: "active" | "mitigated" | "accepted" | "false_positive"
       aws_service:
         | "security_groups"
         | "iam"
@@ -385,6 +753,46 @@ export type Database = {
         | "security"
         | "other"
       finding_severity: "critical" | "high" | "medium" | "low" | "info"
+      graph_edge_type:
+        | "has_permission"
+        | "can_assume_role"
+        | "trusts"
+        | "network_access"
+        | "attached_to"
+        | "member_of"
+        | "exposes"
+        | "encrypts"
+        | "routes_to"
+        | "contains"
+      graph_node_type:
+        | "iam_user"
+        | "iam_role"
+        | "iam_group"
+        | "iam_policy"
+        | "ec2_instance"
+        | "s3_bucket"
+        | "rds_instance"
+        | "security_group"
+        | "vpc"
+        | "subnet"
+        | "lambda_function"
+        | "ecs_cluster"
+        | "eks_cluster"
+        | "internet_gateway"
+        | "nat_gateway"
+        | "load_balancer"
+        | "kms_key"
+        | "secrets_manager"
+        | "external_internet"
+      remediation_mode: "read_only" | "write"
+      remediation_status:
+        | "recommended"
+        | "approved"
+        | "in_progress"
+        | "completed"
+        | "failed"
+        | "rolled_back"
+        | "skipped"
       scan_status: "pending" | "running" | "completed" | "failed"
     }
     CompositeTypes: {
@@ -515,6 +923,8 @@ export const Constants = {
     Enums: {
       account_status: ["pending", "connected", "disconnected", "error"],
       asset_status: ["active", "inactive", "unknown", "deleted"],
+      attack_path_severity: ["critical", "high", "medium", "low"],
+      attack_path_status: ["active", "mitigated", "accepted", "false_positive"],
       aws_service: [
         "security_groups",
         "iam",
@@ -537,6 +947,49 @@ export const Constants = {
         "other",
       ],
       finding_severity: ["critical", "high", "medium", "low", "info"],
+      graph_edge_type: [
+        "has_permission",
+        "can_assume_role",
+        "trusts",
+        "network_access",
+        "attached_to",
+        "member_of",
+        "exposes",
+        "encrypts",
+        "routes_to",
+        "contains",
+      ],
+      graph_node_type: [
+        "iam_user",
+        "iam_role",
+        "iam_group",
+        "iam_policy",
+        "ec2_instance",
+        "s3_bucket",
+        "rds_instance",
+        "security_group",
+        "vpc",
+        "subnet",
+        "lambda_function",
+        "ecs_cluster",
+        "eks_cluster",
+        "internet_gateway",
+        "nat_gateway",
+        "load_balancer",
+        "kms_key",
+        "secrets_manager",
+        "external_internet",
+      ],
+      remediation_mode: ["read_only", "write"],
+      remediation_status: [
+        "recommended",
+        "approved",
+        "in_progress",
+        "completed",
+        "failed",
+        "rolled_back",
+        "skipped",
+      ],
       scan_status: ["pending", "running", "completed", "failed"],
     },
   },
