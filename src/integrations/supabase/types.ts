@@ -346,6 +346,82 @@ export type Database = {
           },
         ]
       }
+      incident_responses: {
+        Row: {
+          action_mode: string
+          action_type: string
+          alert_id: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          execution_details: Json | null
+          id: string
+          initiated_by: string | null
+          organization_id: string
+          result: Json | null
+          started_at: string | null
+          status: string
+          threat_detection_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_mode?: string
+          action_type: string
+          alert_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          execution_details?: Json | null
+          id?: string
+          initiated_by?: string | null
+          organization_id: string
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          threat_detection_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_mode?: string
+          action_type?: string
+          alert_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          execution_details?: Json | null
+          id?: string
+          initiated_by?: string | null
+          organization_id?: string
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          threat_detection_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_responses_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "security_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_responses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_responses_threat_detection_id_fkey"
+            columns: ["threat_detection_id"]
+            isOneToOne: false
+            referencedRelation: "threat_detections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kubernetes_clusters: {
         Row: {
           aws_account_id: string | null
@@ -914,6 +990,91 @@ export type Database = {
           },
         ]
       }
+      runtime_events: {
+        Row: {
+          actor: string | null
+          aws_account_id: string | null
+          cloud_account_id: string | null
+          created_at: string
+          event_source: string
+          event_type: string
+          id: string
+          is_suspicious: boolean
+          metadata: Json | null
+          organization_id: string
+          processed_at: string | null
+          provider: string
+          raw_event: Json | null
+          region: string | null
+          severity: string
+          source_ip: string | null
+          target_resource: string | null
+          target_resource_type: string | null
+        }
+        Insert: {
+          actor?: string | null
+          aws_account_id?: string | null
+          cloud_account_id?: string | null
+          created_at?: string
+          event_source?: string
+          event_type: string
+          id?: string
+          is_suspicious?: boolean
+          metadata?: Json | null
+          organization_id: string
+          processed_at?: string | null
+          provider?: string
+          raw_event?: Json | null
+          region?: string | null
+          severity?: string
+          source_ip?: string | null
+          target_resource?: string | null
+          target_resource_type?: string | null
+        }
+        Update: {
+          actor?: string | null
+          aws_account_id?: string | null
+          cloud_account_id?: string | null
+          created_at?: string
+          event_source?: string
+          event_type?: string
+          id?: string
+          is_suspicious?: boolean
+          metadata?: Json | null
+          organization_id?: string
+          processed_at?: string | null
+          provider?: string
+          raw_event?: Json | null
+          region?: string | null
+          severity?: string
+          source_ip?: string | null
+          target_resource?: string | null
+          target_resource_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "runtime_events_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "runtime_events_cloud_account_id_fkey"
+            columns: ["cloud_account_id"]
+            isOneToOne: false
+            referencedRelation: "cloud_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "runtime_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_jobs: {
         Row: {
           aws_account_id: string
@@ -957,6 +1118,72 @@ export type Database = {
             columns: ["aws_account_id"]
             isOneToOne: false
             referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          alert_type: string
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          resolved_at: string | null
+          severity: string
+          status: string
+          threat_detection_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          alert_type: string
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          threat_detection_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          alert_type?: string
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          threat_detection_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_alerts_threat_detection_id_fkey"
+            columns: ["threat_detection_id"]
+            isOneToOne: false
+            referencedRelation: "threat_detections"
             referencedColumns: ["id"]
           },
         ]
@@ -1234,6 +1461,87 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      threat_detections: {
+        Row: {
+          actor: string | null
+          affected_resources: Json | null
+          attack_pattern: Json | null
+          confidence_score: number | null
+          created_at: string
+          description: string | null
+          detected_at: string
+          id: string
+          is_resolved: boolean | null
+          metadata: Json | null
+          mitre_technique: string | null
+          organization_id: string
+          resolved_at: string | null
+          runtime_event_id: string | null
+          severity: string
+          source_ip: string | null
+          threat_category: string
+          threat_type: string
+          updated_at: string
+        }
+        Insert: {
+          actor?: string | null
+          affected_resources?: Json | null
+          attack_pattern?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          mitre_technique?: string | null
+          organization_id: string
+          resolved_at?: string | null
+          runtime_event_id?: string | null
+          severity?: string
+          source_ip?: string | null
+          threat_category?: string
+          threat_type: string
+          updated_at?: string
+        }
+        Update: {
+          actor?: string | null
+          affected_resources?: Json | null
+          attack_pattern?: Json | null
+          confidence_score?: number | null
+          created_at?: string
+          description?: string | null
+          detected_at?: string
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          mitre_technique?: string | null
+          organization_id?: string
+          resolved_at?: string | null
+          runtime_event_id?: string | null
+          severity?: string
+          source_ip?: string | null
+          threat_category?: string
+          threat_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threat_detections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "threat_detections_runtime_event_id_fkey"
+            columns: ["runtime_event_id"]
+            isOneToOne: false
+            referencedRelation: "runtime_events"
             referencedColumns: ["id"]
           },
         ]
