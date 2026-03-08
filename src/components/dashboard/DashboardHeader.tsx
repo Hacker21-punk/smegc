@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { RefreshCw, User, Menu, LogOut, Bell } from "lucide-react";
+import { NotificationDropdown } from "@/components/dashboard/NotificationDropdown";
+import { RefreshCw, User, Menu, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,10 +69,7 @@ export function DashboardHeader({ lastScanTime, onRefresh, onMenuToggle }: Dashb
             </span>
           </div>
 
-          <Button variant="ghost" size="icon" className="relative h-9 w-9">
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-critical rounded-full" />
-          </Button>
+          <NotificationDropdown />
 
           <ThemeToggle />
 
