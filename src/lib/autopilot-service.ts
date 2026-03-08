@@ -136,7 +136,7 @@ export async function updateEnforcementMode(policyId: string, mode: "advisory" |
 }
 
 // ── Fetch Violations ──
-export async function fetchViolations(organizationId: string, status?: string): Promise<PolicyViolation[]> {
+export async function fetchViolations(organizationId: string, status?: "open" | "remediating" | "resolved" | "accepted" | "suppressed"): Promise<PolicyViolation[]> {
   let query = supabase
     .from("policy_violations")
     .select("*, security_policies(*)")
