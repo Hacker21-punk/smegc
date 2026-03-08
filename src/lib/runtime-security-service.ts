@@ -52,7 +52,10 @@ async function invokeFunction(action: string, extra: Record<string, any> = {}) {
     body: { action, ...extra },
   });
 
-  if (error) throw error;
+  if (error) {
+    console.error("Runtime function error:", error);
+    throw error;
+  }
   return data;
 }
 

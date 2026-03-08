@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface NormalizedEvent {
@@ -126,36 +126,45 @@ const AUTOPILOT_ACTIONS: Record<string, { action_type: string; description: stri
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify auth
+    // Verify auth using getClaims
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const userId = claimsData.claims.sub;
+
+    // Use service role client for data operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("organization_id")
-      .eq("id", user.id)
+      .eq("id", userId)
       .single();
 
     if (!profile?.organization_id) {
@@ -231,7 +240,7 @@ async function handleIngestEvents(supabase: any, orgId: string, body: any) {
   });
 }
 
-async function handleRunDetection(supabase: any, orgId: string) {
+async function runDetectionLogic(supabase: any, orgId: string) {
   // Get unprocessed events
   const { data: events, error } = await supabase
     .from("runtime_events")
@@ -243,9 +252,7 @@ async function handleRunDetection(supabase: any, orgId: string) {
 
   if (error) throw error;
   if (!events || events.length === 0) {
-    return new Response(JSON.stringify({ success: true, threats: 0, alerts: 0, responses: 0 }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return { success: true, processed: 0, threats: 0, alerts: 0, responses: 0 };
   }
 
   let threatCount = 0;
@@ -351,14 +358,20 @@ async function handleRunDetection(supabase: any, orgId: string) {
     .update({ processed_at: new Date().toISOString() })
     .in("id", processedIds);
 
-  return new Response(JSON.stringify({
+  return {
     success: true,
     processed: events.length,
     threats: threatCount,
     alerts: alertCount,
     responses: responseCount,
-  }), {
+  };
+}
+
+async function handleRunDetection(supabase: any, orgId: string) {
+  const result = await runDetectionLogic(supabase, orgId);
+  return new Response(JSON.stringify(result), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
   });
 }
 
@@ -477,14 +490,13 @@ async function handleSimulateEvents(supabase: any, orgId: string) {
 
   if (error) throw error;
 
-  // Now run detection
-  const detectionResult = await handleRunDetection(supabase, orgId);
-  const detectionBody = await detectionResult.json();
+  // Now run detection inline (not via Response)
+  const detectionData = await runDetectionLogic(supabase, orgId);
 
   return new Response(JSON.stringify({
     success: true,
     events_simulated: data.length,
-    ...detectionBody,
+    ...detectionData,
   }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
