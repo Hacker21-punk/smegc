@@ -304,6 +304,155 @@ export type Database = {
         }
         Relationships: []
       }
+      policy_enforcement_actions: {
+        Row: {
+          action_type: string
+          completed_at: string | null
+          created_at: string
+          enforcement_mode: Database["public"]["Enums"]["enforcement_mode"]
+          execution_details: Json | null
+          id: string
+          initiated_by: string | null
+          organization_id: string
+          policy_id: string
+          result: Json | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["enforcement_action_status"]
+          violation_id: string
+        }
+        Insert: {
+          action_type: string
+          completed_at?: string | null
+          created_at?: string
+          enforcement_mode: Database["public"]["Enums"]["enforcement_mode"]
+          execution_details?: Json | null
+          id?: string
+          initiated_by?: string | null
+          organization_id: string
+          policy_id: string
+          result?: Json | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["enforcement_action_status"]
+          violation_id: string
+        }
+        Update: {
+          action_type?: string
+          completed_at?: string | null
+          created_at?: string
+          enforcement_mode?: Database["public"]["Enums"]["enforcement_mode"]
+          execution_details?: Json | null
+          id?: string
+          initiated_by?: string | null
+          organization_id?: string
+          policy_id?: string
+          result?: Json | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["enforcement_action_status"]
+          violation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_enforcement_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_enforcement_actions_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "security_policies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_enforcement_actions_violation_id_fkey"
+            columns: ["violation_id"]
+            isOneToOne: false
+            referencedRelation: "policy_violations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policy_violations: {
+        Row: {
+          aws_account_id: string | null
+          created_at: string
+          detected_at: string
+          id: string
+          organization_id: string
+          policy_id: string
+          region: string | null
+          resolved_at: string | null
+          resource_arn: string | null
+          resource_id: string
+          resource_name: string | null
+          resource_type: string
+          severity: string
+          status: Database["public"]["Enums"]["violation_status"]
+          updated_at: string
+          violation_details: Json | null
+        }
+        Insert: {
+          aws_account_id?: string | null
+          created_at?: string
+          detected_at?: string
+          id?: string
+          organization_id: string
+          policy_id: string
+          region?: string | null
+          resolved_at?: string | null
+          resource_arn?: string | null
+          resource_id: string
+          resource_name?: string | null
+          resource_type: string
+          severity?: string
+          status?: Database["public"]["Enums"]["violation_status"]
+          updated_at?: string
+          violation_details?: Json | null
+        }
+        Update: {
+          aws_account_id?: string | null
+          created_at?: string
+          detected_at?: string
+          id?: string
+          organization_id?: string
+          policy_id?: string
+          region?: string | null
+          resolved_at?: string | null
+          resource_arn?: string | null
+          resource_id?: string
+          resource_name?: string | null
+          resource_type?: string
+          severity?: string
+          status?: Database["public"]["Enums"]["violation_status"]
+          updated_at?: string
+          violation_details?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policy_violations_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_violations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policy_violations_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "security_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -721,6 +870,75 @@ export type Database = {
           },
         ]
       }
+      security_policies: {
+        Row: {
+          asset_filter: Json | null
+          aws_account_id: string | null
+          created_at: string
+          description: string | null
+          enforcement_mode: Database["public"]["Enums"]["enforcement_mode"]
+          evaluation_criteria: Json | null
+          id: string
+          is_enabled: boolean
+          name: string
+          organization_id: string
+          policy_type: Database["public"]["Enums"]["policy_type"]
+          remediation_template: Json | null
+          scope: Database["public"]["Enums"]["policy_scope"]
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          asset_filter?: Json | null
+          aws_account_id?: string | null
+          created_at?: string
+          description?: string | null
+          enforcement_mode?: Database["public"]["Enums"]["enforcement_mode"]
+          evaluation_criteria?: Json | null
+          id?: string
+          is_enabled?: boolean
+          name: string
+          organization_id: string
+          policy_type: Database["public"]["Enums"]["policy_type"]
+          remediation_template?: Json | null
+          scope?: Database["public"]["Enums"]["policy_scope"]
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          asset_filter?: Json | null
+          aws_account_id?: string | null
+          created_at?: string
+          description?: string | null
+          enforcement_mode?: Database["public"]["Enums"]["enforcement_mode"]
+          evaluation_criteria?: Json | null
+          id?: string
+          is_enabled?: boolean
+          name?: string
+          organization_id?: string
+          policy_type?: Database["public"]["Enums"]["policy_type"]
+          remediation_template?: Json | null
+          scope?: Database["public"]["Enums"]["policy_scope"]
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_policies_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -752,6 +970,13 @@ export type Database = {
         | "networking"
         | "security"
         | "other"
+      enforcement_action_status:
+        | "pending"
+        | "executing"
+        | "completed"
+        | "failed"
+        | "rolled_back"
+      enforcement_mode: "advisory" | "autopilot"
       finding_severity: "critical" | "high" | "medium" | "low" | "info"
       graph_edge_type:
         | "has_permission"
@@ -784,6 +1009,17 @@ export type Database = {
         | "kms_key"
         | "secrets_manager"
         | "external_internet"
+      policy_scope: "global" | "account" | "asset"
+      policy_type:
+        | "no_public_storage"
+        | "admin_mfa_required"
+        | "encryption_required"
+        | "backup_required"
+        | "no_open_ssh"
+        | "no_public_databases"
+        | "logging_required"
+        | "credential_rotation"
+        | "custom"
       remediation_mode: "read_only" | "write"
       remediation_status:
         | "recommended"
@@ -794,6 +1030,12 @@ export type Database = {
         | "rolled_back"
         | "skipped"
       scan_status: "pending" | "running" | "completed" | "failed"
+      violation_status:
+        | "open"
+        | "remediating"
+        | "resolved"
+        | "accepted"
+        | "suppressed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -946,6 +1188,14 @@ export const Constants = {
         "security",
         "other",
       ],
+      enforcement_action_status: [
+        "pending",
+        "executing",
+        "completed",
+        "failed",
+        "rolled_back",
+      ],
+      enforcement_mode: ["advisory", "autopilot"],
       finding_severity: ["critical", "high", "medium", "low", "info"],
       graph_edge_type: [
         "has_permission",
@@ -980,6 +1230,18 @@ export const Constants = {
         "secrets_manager",
         "external_internet",
       ],
+      policy_scope: ["global", "account", "asset"],
+      policy_type: [
+        "no_public_storage",
+        "admin_mfa_required",
+        "encryption_required",
+        "backup_required",
+        "no_open_ssh",
+        "no_public_databases",
+        "logging_required",
+        "credential_rotation",
+        "custom",
+      ],
       remediation_mode: ["read_only", "write"],
       remediation_status: [
         "recommended",
@@ -991,6 +1253,13 @@ export const Constants = {
         "skipped",
       ],
       scan_status: ["pending", "running", "completed", "failed"],
+      violation_status: [
+        "open",
+        "remediating",
+        "resolved",
+        "accepted",
+        "suppressed",
+      ],
     },
   },
 } as const
