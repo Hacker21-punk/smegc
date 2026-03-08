@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.kubernetes-scanner]
 verify_jwt = false
+
+[functions.runtime-threat-detector]
+verify_jwt = false
