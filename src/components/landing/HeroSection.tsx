@@ -49,7 +49,7 @@ export function HeroSection() {
             )}
           >
             <Shield className="h-4 w-4" />
-            <span>Zero-Write AWS Security Platform</span>
+            <span>Autonomous Multi-Cloud Cybersecurity</span>
           </div>
 
           {/* Headline */}
