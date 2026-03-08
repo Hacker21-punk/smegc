@@ -9,9 +9,9 @@ export function HeroSection() {
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
 
   const trustBadges = [
-    { icon: Eye, text: "Read-Only Access" },
-    { icon: Lock, text: "No Auto-Changes" },
-    { icon: UserCheck, text: "You Stay in Control" },
+    { icon: Eye, text: "Multi-Cloud Security" },
+    { icon: Lock, text: "Autonomous Protection" },
+    { icon: UserCheck, text: "Built for SMEs" },
   ];
 
   return (
