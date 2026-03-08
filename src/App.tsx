@@ -15,6 +15,7 @@ import ComplianceReports from "./pages/ComplianceReports";
 import Settings from "./pages/Settings";
 import HelpSupport from "./pages/HelpSupport";
 import AssetInventory from "./pages/AssetInventory";
+import AttackPaths from "./pages/AttackPaths";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
