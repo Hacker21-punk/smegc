@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PageTransition } from "@/components/PageTransition";
@@ -55,6 +55,7 @@ const App = () => (
                 <Route path="/dashboard/accounts" element={<ProtectedRoute><AWSAccounts /></ProtectedRoute>} />
                 <Route path="/dashboard/azure-accounts" element={<ProtectedRoute><AzureAccounts /></ProtectedRoute>} />
                 <Route path="/dashboard/gcp-accounts" element={<ProtectedRoute><GCPAccounts /></ProtectedRoute>} />
+                <Route path="/dashboard/cloud-accounts" element={<Navigate to="/dashboard/azure-accounts" replace />} />
                 <Route path="/dashboard/findings" element={<ProtectedRoute><Findings /></ProtectedRoute>} />
                 <Route path="/dashboard/reports" element={<ProtectedRoute><ComplianceReports /></ProtectedRoute>} />
                 <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
