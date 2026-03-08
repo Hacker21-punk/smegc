@@ -15,6 +15,12 @@ import {
   Zap,
   GitCompareArrows,
   Radar,
+  Crosshair,
+  Layers,
+  Container,
+  Fingerprint,
+  Globe2,
+  Activity,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -113,6 +119,36 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       icon: <Radar className="h-5 w-5" />,
       label: "Threat Intelligence",
       href: "/dashboard/threats"
+    },
+    {
+      icon: <Crosshair className="h-5 w-5" />,
+      label: "Breach Simulation",
+      href: "/dashboard/simulations"
+    },
+    {
+      icon: <Layers className="h-5 w-5" />,
+      label: "Digital Twin",
+      href: "/dashboard/digital-twin"
+    },
+    {
+      icon: <Container className="h-5 w-5" />,
+      label: "Kubernetes Security",
+      href: "/dashboard/kubernetes"
+    },
+    {
+      icon: <Fingerprint className="h-5 w-5" />,
+      label: "Zero Trust Access",
+      href: "/dashboard/zero-trust"
+    },
+    {
+      icon: <Globe2 className="h-5 w-5" />,
+      label: "SaaS Security",
+      href: "/dashboard/saas-security"
+    },
+    {
+      icon: <Activity className="h-5 w-5" />,
+      label: "Security Events",
+      href: "/dashboard/events"
     },
   ];
 
