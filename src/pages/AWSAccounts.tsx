@@ -584,15 +584,31 @@ export default function AWSAccounts() {
 
                   <div className="flex gap-2">
                     {account.status === "connected" && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1 gap-1"
-                        onClick={() => handleTriggerScan(account.id)}
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                        Scan Now
-                      </Button>
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1 gap-1"
+                          onClick={() => handleTriggerScan(account.id)}
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          Scan
+                        </Button>
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="flex-1 gap-1"
+                          disabled={pipelineRunning === account.id}
+                          onClick={() => handleRunPipeline(account)}
+                        >
+                          {pipelineRunning === account.id ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Zap className="h-3 w-3" />
+                          )}
+                          {pipelineRunning === account.id ? "Running..." : "Full Pipeline"}
+                        </Button>
+                      </>
                     )}
                     <Button 
                       variant="outline" 
