@@ -1,4 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type PolicyType = Database["public"]["Enums"]["policy_type"];
+type EnforcementMode = Database["public"]["Enums"]["enforcement_mode"];
+type ViolationStatus = Database["public"]["Enums"]["violation_status"];
 
 // ── Types ──
 export interface SecurityPolicy {
