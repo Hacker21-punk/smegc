@@ -91,6 +91,11 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       label: "Asset Inventory",
       href: "/dashboard/assets"
     },
+    {
+      icon: <Route className="h-5 w-5" />,
+      label: "Attack Paths",
+      href: "/dashboard/attack-paths"
+    },
   ];
 
   const bottomNavItems: NavItem[] = [
