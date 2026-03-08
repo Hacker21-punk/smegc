@@ -30,12 +30,12 @@ export interface GCPCredentials {
 
 // ── Fetch all cloud accounts ──
 export async function fetchCloudAccounts(): Promise<CloudAccount[]> {
-  const { data, error } = await supabase
-    .from("cloud_accounts")
+  const { data, error } = await (supabase
+    .from("cloud_accounts") as any)
     .select("*")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data as unknown as CloudAccount[]) || [];
+  return (data as CloudAccount[]) || [];
 }
 
 // ── Connect Azure account ──
