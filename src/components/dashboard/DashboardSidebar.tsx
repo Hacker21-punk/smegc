@@ -99,6 +99,21 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       label: "Attack Paths",
       href: "/dashboard/attack-paths"
     },
+    {
+      icon: <Zap className="h-5 w-5" />,
+      label: "Autopilot Policies",
+      href: "/dashboard/autopilot"
+    },
+    {
+      icon: <GitCompareArrows className="h-5 w-5" />,
+      label: "Config Drift",
+      href: "/dashboard/drift"
+    },
+    {
+      icon: <Radar className="h-5 w-5" />,
+      label: "Threat Intelligence",
+      href: "/dashboard/threats"
+    },
   ];
 
   const bottomNavItems: NavItem[] = [

@@ -76,7 +76,7 @@ export function HeroSection() {
                 : "opacity-0 translate-y-4"
             )}
           >
-            SME Cloud Guard continuously scans your AWS environment, explains security risks in plain English, guides you to fix them safely, verifies the fixes, and provides audit-ready evidence — all with read-only access.
+            CloudGuard Autopilot continuously discovers your cloud assets across AWS, Azure, and GCP — analyzes attack paths, predicts breach probability, calculates financial risk, and autonomously fixes security issues. All explained in plain English.
           </p>
 
           {/* CTA Buttons */}
