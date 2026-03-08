@@ -86,8 +86,8 @@ export async function connectGCPAccount(
 
 // ── Delete cloud account ──
 export async function deleteCloudAccount(accountId: string): Promise<void> {
-  const { error } = await supabase
-    .from("cloud_accounts")
+  const { error } = await (supabase
+    .from("cloud_accounts") as any)
     .delete()
     .eq("id", accountId);
   if (error) throw error;
