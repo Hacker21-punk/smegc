@@ -133,6 +133,54 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/dashboard/simulations"
+                element={
+                  <ProtectedRoute>
+                    <BreachSimulation />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/digital-twin"
+                element={
+                  <ProtectedRoute>
+                    <DigitalTwin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/kubernetes"
+                element={
+                  <ProtectedRoute>
+                    <KubernetesSecurity />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/zero-trust"
+                element={
+                  <ProtectedRoute>
+                    <ZeroTrustAccess />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/saas-security"
+                element={
+                  <ProtectedRoute>
+                    <SaasSecurity />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/events"
+                element={
+                  <ProtectedRoute>
+                    <SecurityEvents />
+                  </ProtectedRoute>
+                }
+              />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
