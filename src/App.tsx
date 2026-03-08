@@ -43,148 +43,30 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/accounts"
-                element={
-                  <ProtectedRoute>
-                    <AWSAccounts />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/findings"
-                element={
-                  <ProtectedRoute>
-                    <Findings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/reports"
-                element={
-                  <ProtectedRoute>
-                    <ComplianceReports />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/help"
-                element={
-                  <ProtectedRoute>
-                    <HelpSupport />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/assets"
-                element={
-                  <ProtectedRoute>
-                    <AssetInventory />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/attack-paths"
-                element={
-                  <ProtectedRoute>
-                    <AttackPaths />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/autopilot"
-                element={
-                  <ProtectedRoute>
-                    <AutopilotPolicies />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/drift"
-                element={
-                  <ProtectedRoute>
-                    <ConfigDrift />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/threats"
-                element={
-                  <ProtectedRoute>
-                    <ThreatIntelligence />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/simulations"
-                element={
-                  <ProtectedRoute>
-                    <BreachSimulation />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/digital-twin"
-                element={
-                  <ProtectedRoute>
-                    <DigitalTwin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/kubernetes"
-                element={
-                  <ProtectedRoute>
-                    <KubernetesSecurity />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/zero-trust"
-                element={
-                  <ProtectedRoute>
-                    <ZeroTrustAccess />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/saas-security"
-                element={
-                  <ProtectedRoute>
-                    <SaasSecurity />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/events"
-                element={
-                  <ProtectedRoute>
-                    <SecurityEvents />
-                  </ProtectedRoute>
-                }
-              />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <PageTransition>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/dashboard/accounts" element={<ProtectedRoute><AWSAccounts /></ProtectedRoute>} />
+                <Route path="/dashboard/findings" element={<ProtectedRoute><Findings /></ProtectedRoute>} />
+                <Route path="/dashboard/reports" element={<ProtectedRoute><ComplianceReports /></ProtectedRoute>} />
+                <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/dashboard/help" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
+                <Route path="/dashboard/assets" element={<ProtectedRoute><AssetInventory /></ProtectedRoute>} />
+                <Route path="/dashboard/attack-paths" element={<ProtectedRoute><AttackPaths /></ProtectedRoute>} />
+                <Route path="/dashboard/autopilot" element={<ProtectedRoute><AutopilotPolicies /></ProtectedRoute>} />
+                <Route path="/dashboard/drift" element={<ProtectedRoute><ConfigDrift /></ProtectedRoute>} />
+                <Route path="/dashboard/threats" element={<ProtectedRoute><ThreatIntelligence /></ProtectedRoute>} />
+                <Route path="/dashboard/simulations" element={<ProtectedRoute><BreachSimulation /></ProtectedRoute>} />
+                <Route path="/dashboard/digital-twin" element={<ProtectedRoute><DigitalTwin /></ProtectedRoute>} />
+                <Route path="/dashboard/kubernetes" element={<ProtectedRoute><KubernetesSecurity /></ProtectedRoute>} />
+                <Route path="/dashboard/zero-trust" element={<ProtectedRoute><ZeroTrustAccess /></ProtectedRoute>} />
+                <Route path="/dashboard/saas-security" element={<ProtectedRoute><SaasSecurity /></ProtectedRoute>} />
+                <Route path="/dashboard/events" element={<ProtectedRoute><SecurityEvents /></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </PageTransition>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
