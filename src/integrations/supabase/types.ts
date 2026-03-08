@@ -346,6 +346,242 @@ export type Database = {
           },
         ]
       }
+      kubernetes_clusters: {
+        Row: {
+          aws_account_id: string | null
+          cloud_account_id: string | null
+          cluster_name: string
+          cluster_type: string
+          created_at: string
+          endpoint: string | null
+          id: string
+          last_scan_at: string | null
+          metadata: Json | null
+          network_mode: string | null
+          node_count: number | null
+          organization_id: string
+          provider: string
+          region: string | null
+          risk_score: number | null
+          status: string
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          aws_account_id?: string | null
+          cloud_account_id?: string | null
+          cluster_name: string
+          cluster_type?: string
+          created_at?: string
+          endpoint?: string | null
+          id?: string
+          last_scan_at?: string | null
+          metadata?: Json | null
+          network_mode?: string | null
+          node_count?: number | null
+          organization_id: string
+          provider?: string
+          region?: string | null
+          risk_score?: number | null
+          status?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          aws_account_id?: string | null
+          cloud_account_id?: string | null
+          cluster_name?: string
+          cluster_type?: string
+          created_at?: string
+          endpoint?: string | null
+          id?: string
+          last_scan_at?: string | null
+          metadata?: Json | null
+          network_mode?: string | null
+          node_count?: number | null
+          organization_id?: string
+          provider?: string
+          region?: string | null
+          risk_score?: number | null
+          status?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kubernetes_clusters_aws_account_id_fkey"
+            columns: ["aws_account_id"]
+            isOneToOne: false
+            referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kubernetes_clusters_cloud_account_id_fkey"
+            columns: ["cloud_account_id"]
+            isOneToOne: false
+            referencedRelation: "cloud_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kubernetes_clusters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kubernetes_findings: {
+        Row: {
+          category: string
+          cluster_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_resolved: boolean | null
+          metadata: Json | null
+          namespace: string | null
+          organization_id: string
+          remediation_steps: string[] | null
+          resolved_at: string | null
+          resource_id: string | null
+          resource_kind: string | null
+          resource_name: string | null
+          risk_score_contribution: number | null
+          severity: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          cluster_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          namespace?: string | null
+          organization_id: string
+          remediation_steps?: string[] | null
+          resolved_at?: string | null
+          resource_id?: string | null
+          resource_kind?: string | null
+          resource_name?: string | null
+          risk_score_contribution?: number | null
+          severity?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          cluster_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          metadata?: Json | null
+          namespace?: string | null
+          organization_id?: string
+          remediation_steps?: string[] | null
+          resolved_at?: string | null
+          resource_id?: string | null
+          resource_kind?: string | null
+          resource_name?: string | null
+          risk_score_contribution?: number | null
+          severity?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kubernetes_findings_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "kubernetes_clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kubernetes_findings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kubernetes_findings_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "kubernetes_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kubernetes_resources: {
+        Row: {
+          annotations: Json | null
+          cluster_id: string
+          created_at: string
+          id: string
+          labels: Json | null
+          metadata: Json | null
+          namespace: string | null
+          organization_id: string
+          resource_kind: string
+          resource_name: string
+          risk_score: number | null
+          spec: Json | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          annotations?: Json | null
+          cluster_id: string
+          created_at?: string
+          id?: string
+          labels?: Json | null
+          metadata?: Json | null
+          namespace?: string | null
+          organization_id: string
+          resource_kind: string
+          resource_name: string
+          risk_score?: number | null
+          spec?: Json | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          annotations?: Json | null
+          cluster_id?: string
+          created_at?: string
+          id?: string
+          labels?: Json | null
+          metadata?: Json | null
+          namespace?: string | null
+          organization_id?: string
+          resource_kind?: string
+          resource_name?: string
+          risk_score?: number | null
+          spec?: Json | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kubernetes_resources_cluster_id_fkey"
+            columns: ["cluster_id"]
+            isOneToOne: false
+            referencedRelation: "kubernetes_clusters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kubernetes_resources_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string
