@@ -61,9 +61,9 @@ export function HeroSection() {
                 : "opacity-0 translate-y-4"
             )}
           >
-            Secure Your AWS
+            CloudGuard Autopilot
             <span className="block mt-2 bg-gradient-to-r from-primary via-info to-primary bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
-              Without Giving Up Control
+              Security That Runs Itself
             </span>
           </h1>
 
