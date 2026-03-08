@@ -486,14 +486,13 @@ async function handleSimulateEvents(supabase: any, orgId: string) {
 
   if (error) throw error;
 
-  // Now run detection
-  const detectionResult = await handleRunDetection(supabase, orgId);
-  const detectionBody = await detectionResult.json();
+  // Now run detection inline (not via Response)
+  const detectionData = await runDetectionLogic(supabase, orgId);
 
   return new Response(JSON.stringify({
     success: true,
     events_simulated: data.length,
-    ...detectionBody,
+    ...detectionData,
   }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
