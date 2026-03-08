@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateCloudFormationTemplate, generateCloudFormationYAML } from "@/lib/cloudformation-template";
+import { runFullSecurityPipeline } from "@/lib/security-services";
 import { 
   Plus, 
   Cloud, 
@@ -24,7 +25,8 @@ import {
   ExternalLink,
   Shield,
   AlertTriangle,
-  Trash2
+  Trash2,
+  Zap
 } from "lucide-react";
 import { z } from "zod";
 
@@ -48,6 +50,7 @@ export default function AWSAccounts() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [accounts, setAccounts] = useState<AWSAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pipelineRunning, setPipelineRunning] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [step, setStep] = useState<"input" | "setup" | "verify">("input");
 
@@ -228,6 +231,44 @@ export default function AWSAccounts() {
       toast.error("Failed to start scan", {
         description: error instanceof Error ? error.message : "Unknown error",
       });
+    }
+  };
+
+  const handleRunPipeline = async (account: AWSAccount) => {
+    if (!account.role_arn) {
+      toast.error("No IAM role configured for this account");
+      return;
+    }
+
+    setPipelineRunning(account.id);
+    toast.info("Running full security pipeline...", {
+      description: "Asset Discovery → Graph Builder → Attack Path Analysis",
+    });
+
+    try {
+      // Get org ID
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (!profile?.organization_id) throw new Error("Organization not found");
+
+      const result = await runFullSecurityPipeline(profile.organization_id, account.id);
+
+      toast.success("Security pipeline completed!", {
+        description: `Discovered ${result.discovery.discovered.total} assets, ${result.analysis.analysis.total_paths} attack paths found`,
+      });
+
+      fetchAccounts();
+    } catch (error) {
+      console.error("Pipeline error:", error);
+      toast.error("Pipeline failed", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setPipelineRunning(null);
     }
   };
 
@@ -543,15 +584,31 @@ export default function AWSAccounts() {
 
                   <div className="flex gap-2">
                     {account.status === "connected" && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1 gap-1"
-                        onClick={() => handleTriggerScan(account.id)}
-                      >
-                        <RefreshCw className="h-3 w-3" />
-                        Scan Now
-                      </Button>
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1 gap-1"
+                          onClick={() => handleTriggerScan(account.id)}
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          Scan
+                        </Button>
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="flex-1 gap-1"
+                          disabled={pipelineRunning === account.id}
+                          onClick={() => handleRunPipeline(account)}
+                        >
+                          {pipelineRunning === account.id ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Zap className="h-3 w-3" />
+                          )}
+                          {pipelineRunning === account.id ? "Running..." : "Full Pipeline"}
+                        </Button>
+                      </>
                     )}
                     <Button 
                       variant="outline" 
