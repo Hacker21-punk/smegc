@@ -372,7 +372,6 @@ async function handleRunDetection(supabase: any, orgId: string) {
   return new Response(JSON.stringify(result), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-  });
 }
 
 async function handleSimulateEvents(supabase: any, orgId: string) {
