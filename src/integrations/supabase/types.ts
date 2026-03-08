@@ -214,10 +214,64 @@ export type Database = {
           },
         ]
       }
+      cloud_accounts: {
+        Row: {
+          account_identifier: string
+          account_name: string
+          created_at: string
+          credentials_encrypted: Json
+          id: string
+          last_scan_at: string | null
+          metadata: Json | null
+          organization_id: string
+          provider: Database["public"]["Enums"]["cloud_provider"]
+          risk_score: number | null
+          status: Database["public"]["Enums"]["account_status"]
+          updated_at: string
+        }
+        Insert: {
+          account_identifier: string
+          account_name: string
+          created_at?: string
+          credentials_encrypted?: Json
+          id?: string
+          last_scan_at?: string | null
+          metadata?: Json | null
+          organization_id: string
+          provider: Database["public"]["Enums"]["cloud_provider"]
+          risk_score?: number | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+        }
+        Update: {
+          account_identifier?: string
+          account_name?: string
+          created_at?: string
+          credentials_encrypted?: Json
+          id?: string
+          last_scan_at?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          provider?: Database["public"]["Enums"]["cloud_provider"]
+          risk_score?: number | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cloud_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cloud_assets: {
         Row: {
           cloud_account_id: string | null
           created_at: string
+          generic_cloud_account_id: string | null
           id: string
           last_seen_at: string | null
           metadata: Json | null
@@ -235,6 +289,7 @@ export type Database = {
         Insert: {
           cloud_account_id?: string | null
           created_at?: string
+          generic_cloud_account_id?: string | null
           id?: string
           last_seen_at?: string | null
           metadata?: Json | null
@@ -252,6 +307,7 @@ export type Database = {
         Update: {
           cloud_account_id?: string | null
           created_at?: string
+          generic_cloud_account_id?: string | null
           id?: string
           last_seen_at?: string | null
           metadata?: Json | null
@@ -272,6 +328,13 @@ export type Database = {
             columns: ["cloud_account_id"]
             isOneToOne: false
             referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cloud_assets_generic_cloud_account_id_fkey"
+            columns: ["generic_cloud_account_id"]
+            isOneToOne: false
+            referencedRelation: "cloud_accounts"
             referencedColumns: ["id"]
           },
           {
