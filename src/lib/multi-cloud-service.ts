@@ -67,21 +67,21 @@ export async function connectGCPAccount(
   name: string,
   credentials: GCPCredentials
 ): Promise<CloudAccount> {
-  const { data, error } = await supabase
-    .from("cloud_accounts")
+  const { data, error } = await (supabase
+    .from("cloud_accounts") as any)
     .insert({
       organization_id: organizationId,
-      provider: "gcp" as const,
+      provider: "gcp",
       account_name: name,
       account_identifier: credentials.project_id,
       credentials_encrypted: credentials,
-      status: "pending" as const,
+      status: "pending",
       metadata: { project_id: credentials.project_id },
     })
     .select()
     .single();
   if (error) throw error;
-  return data as unknown as CloudAccount;
+  return data as CloudAccount;
 }
 
 // ── Delete cloud account ──
