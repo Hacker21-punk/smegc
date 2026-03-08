@@ -16,6 +16,9 @@ import Settings from "./pages/Settings";
 import HelpSupport from "./pages/HelpSupport";
 import AssetInventory from "./pages/AssetInventory";
 import AttackPaths from "./pages/AttackPaths";
+import AutopilotPolicies from "./pages/AutopilotPolicies";
+import ConfigDrift from "./pages/ConfigDrift";
+import ThreatIntelligence from "./pages/ThreatIntelligence";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
