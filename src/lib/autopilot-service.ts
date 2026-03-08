@@ -107,9 +107,9 @@ export async function createPolicy(policy: {
   organization_id: string;
   name: string;
   description?: string;
-  policy_type: string;
-  scope?: string;
-  enforcement_mode?: "advisory" | "autopilot";
+  policy_type: PolicyType;
+  scope?: "global" | "account" | "asset";
+  enforcement_mode?: EnforcementMode;
   severity?: string;
   aws_account_id?: string;
 }): Promise<SecurityPolicy> {
