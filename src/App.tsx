@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AWSAccounts from "./pages/AWSAccounts";
+import CloudAccounts from "./pages/CloudAccounts";
 import Findings from "./pages/Findings";
 import ComplianceReports from "./pages/ComplianceReports";
 import Settings from "./pages/Settings";
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard/accounts" element={<ProtectedRoute><AWSAccounts /></ProtectedRoute>} />
+                <Route path="/dashboard/cloud-accounts" element={<ProtectedRoute><CloudAccounts /></ProtectedRoute>} />
                 <Route path="/dashboard/findings" element={<ProtectedRoute><Findings /></ProtectedRoute>} />
                 <Route path="/dashboard/reports" element={<ProtectedRoute><ComplianceReports /></ProtectedRoute>} />
                 <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
