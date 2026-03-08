@@ -22,7 +22,8 @@ export function Logo({ className = "", showText = true, size = "md" }: LogoProps
       </div>
       {showText && (
         <span className={cn(sizeClasses[size].text, "font-bold text-foreground")}>
-          SME Cloud<span className="text-primary">Guard</span>
+          Cloud<span className="text-primary">Guard</span>
+          <span className="text-xs font-normal text-muted-foreground ml-1">Autopilot</span>
         </span>
       )}
     </div>
