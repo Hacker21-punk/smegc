@@ -72,6 +72,7 @@ const App = () => (
                 <Route path="/dashboard/zero-trust" element={<ProtectedRoute><ZeroTrustAccess /></ProtectedRoute>} />
                 <Route path="/dashboard/saas-security" element={<ProtectedRoute><SaasSecurity /></ProtectedRoute>} />
                 <Route path="/dashboard/events" element={<ProtectedRoute><SecurityEvents /></ProtectedRoute>} />
+                <Route path="/dashboard/runtime-security" element={<ProtectedRoute><RuntimeSecurity /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </PageTransition>

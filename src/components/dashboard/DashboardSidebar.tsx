@@ -94,6 +94,7 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
         { icon: <Crosshair className="h-4 w-4" />, label: "Breach Simulation", href: "/dashboard/simulations" },
         { icon: <Layers className="h-4 w-4" />, label: "Digital Twin", href: "/dashboard/digital-twin" },
         { icon: <Activity className="h-4 w-4" />, label: "Security Events", href: "/dashboard/events" },
+        { icon: <Radar className="h-4 w-4" />, label: "Runtime Detection", href: "/dashboard/runtime-security" },
       ],
     },
     {
