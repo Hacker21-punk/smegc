@@ -19,6 +19,12 @@ import AttackPaths from "./pages/AttackPaths";
 import AutopilotPolicies from "./pages/AutopilotPolicies";
 import ConfigDrift from "./pages/ConfigDrift";
 import ThreatIntelligence from "./pages/ThreatIntelligence";
+import BreachSimulation from "./pages/BreachSimulation";
+import DigitalTwin from "./pages/DigitalTwin";
+import KubernetesSecurity from "./pages/KubernetesSecurity";
+import ZeroTrustAccess from "./pages/ZeroTrustAccess";
+import SaasSecurity from "./pages/SaasSecurity";
+import SecurityEvents from "./pages/SecurityEvents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
