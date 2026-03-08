@@ -25,6 +25,13 @@ export function AnimatedCounter({
   const elementRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
+    // Reset animation when value changes
+    hasAnimated.current = false;
+    startTime.current = null;
+    if (animationFrame.current) {
+      cancelAnimationFrame(animationFrame.current);
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -39,6 +46,15 @@ export function AnimatedCounter({
 
     if (elementRef.current) {
       observer.observe(elementRef.current);
+    }
+
+    // If already visible, animate immediately
+    if (elementRef.current && !hasAnimated.current) {
+      const rect = elementRef.current.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        hasAnimated.current = true;
+        startAnimation();
+      }
     }
 
     return () => {

@@ -292,28 +292,28 @@ export default function RuntimeSecurity() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               icon={<ShieldAlert className="h-5 w-5 text-destructive" />}
-              value={summary?.active_threats ?? 0}
+              value={threats.length}
               label="Active Threats"
               variant="destructive"
               delay="stagger-2"
             />
             <StatCard
               icon={<Key className="h-5 w-5 text-warning" />}
-              value={summary?.suspicious_logins ?? 0}
+              value={threats.filter(t => t.threat_category === "credential_abuse").length}
               label="Suspicious Logins"
               variant="warning"
               delay="stagger-3"
             />
             <StatCard
               icon={<TrendingUp className="h-5 w-5 text-info" />}
-              value={summary?.escalation_attempts ?? 0}
+              value={threats.filter(t => t.threat_category === "privilege_escalation").length}
               label="Escalation Attempts"
               variant="info"
               delay="stagger-4"
             />
             <StatCard
               icon={<Zap className="h-5 w-5 text-primary" />}
-              value={summary?.autopilot_actions ?? 0}
+              value={responses.filter(r => r.status === "completed" || r.action_mode === "autonomous").length}
               label="Autopilot Actions"
               variant="primary"
               delay="stagger-5"
