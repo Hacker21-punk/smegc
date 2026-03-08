@@ -240,7 +240,7 @@ async function handleIngestEvents(supabase: any, orgId: string, body: any) {
   });
 }
 
-async function handleRunDetection(supabase: any, orgId: string) {
+async function runDetectionLogic(supabase: any, orgId: string) {
   // Get unprocessed events
   const { data: events, error } = await supabase
     .from("runtime_events")
@@ -252,9 +252,7 @@ async function handleRunDetection(supabase: any, orgId: string) {
 
   if (error) throw error;
   if (!events || events.length === 0) {
-    return new Response(JSON.stringify({ success: true, threats: 0, alerts: 0, responses: 0 }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return { success: true, processed: 0, threats: 0, alerts: 0, responses: 0 };
   }
 
   let threatCount = 0;
@@ -360,14 +358,20 @@ async function handleRunDetection(supabase: any, orgId: string) {
     .update({ processed_at: new Date().toISOString() })
     .in("id", processedIds);
 
-  return new Response(JSON.stringify({
+  return {
     success: true,
     processed: events.length,
     threats: threatCount,
     alerts: alertCount,
     responses: responseCount,
-  }), {
+  };
+}
+
+async function handleRunDetection(supabase: any, orgId: string) {
+  const result = await runDetectionLogic(supabase, orgId);
+  return new Response(JSON.stringify(result), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
   });
 }
 
