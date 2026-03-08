@@ -190,6 +190,16 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Unified Security Score */}
+            <UnifiedSecurityScore
+              securityScore={stats.overallRiskScore}
+              totalFindings={stats.totalFindings}
+              criticalFindings={stats.criticalFindings}
+              highFindings={stats.highFindings}
+              accountCount={accounts.length}
+              complianceScore={stats.complianceScore}
+            />
+
             {/* Metrics Grid */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {/* Risk Score */}
