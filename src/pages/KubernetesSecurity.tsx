@@ -193,7 +193,7 @@ export default function KubernetesSecurity() {
           {loading ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <GlassCard key={i} intensity="light" hover={false} className="h-24 animate-pulse" />
+                <GlassCard key={i} intensity="light" hover={false} className="h-24 animate-pulse"><div /></GlassCard>
               ))}
             </div>
           ) : (
