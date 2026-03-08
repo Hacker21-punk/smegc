@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateCloudFormationTemplate, generateCloudFormationYAML } from "@/lib/cloudformation-template";
+import { runFullSecurityPipeline } from "@/lib/security-services";
 import { 
   Plus, 
   Cloud, 
@@ -24,7 +25,8 @@ import {
   ExternalLink,
   Shield,
   AlertTriangle,
-  Trash2
+  Trash2,
+  Zap
 } from "lucide-react";
 import { z } from "zod";
 

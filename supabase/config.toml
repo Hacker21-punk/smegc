@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.security-copilot]
 verify_jwt = false
+
+[functions.asset-discovery]
+verify_jwt = false
+
+[functions.security-graph-builder]
+verify_jwt = false
+
+[functions.attack-path-analyzer]
+verify_jwt = false
