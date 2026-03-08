@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { RefreshCw, User, Menu, LogOut, Bell } from "lucide-react";
+import { NotificationDropdown } from "@/components/dashboard/NotificationDropdown";
+import { RefreshCw, User, Menu, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
