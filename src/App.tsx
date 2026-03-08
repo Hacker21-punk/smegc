@@ -103,6 +103,30 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/dashboard/autopilot"
+                element={
+                  <ProtectedRoute>
+                    <AutopilotPolicies />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/drift"
+                element={
+                  <ProtectedRoute>
+                    <ConfigDrift />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/threats"
+                element={
+                  <ProtectedRoute>
+                    <ThreatIntelligence />
+                  </ProtectedRoute>
+                }
+              />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
