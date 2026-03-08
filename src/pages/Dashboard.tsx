@@ -3,6 +3,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { SecurityCopilot } from "@/components/dashboard/SecurityCopilot";
 import { BreachCostWidget } from "@/components/dashboard/BreachCostWidget";
 import { UnifiedSecurityScore } from "@/components/dashboard/UnifiedSecurityScore";
+import { AutopilotEnforcementPanel } from "@/components/dashboard/AutopilotEnforcementPanel";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -395,9 +396,16 @@ const Dashboard = () => {
               </Card>
             )}
 
-            {/* Breach Cost */}
+            {/* Autopilot Enforcement Panel */}
             {accounts.length > 0 && (
               <div className="animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+                <AutopilotEnforcementPanel />
+              </div>
+            )}
+
+            {/* Breach Cost */}
+            {accounts.length > 0 && (
+              <div className="animate-fade-in-up" style={{ animationDelay: "0.55s" }}>
                 <BreachCostWidget
                   securityScore={stats.complianceScore}
                   totalFindings={stats.totalFindings}
