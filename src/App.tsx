@@ -16,6 +16,9 @@ import Settings from "./pages/Settings";
 import HelpSupport from "./pages/HelpSupport";
 import AssetInventory from "./pages/AssetInventory";
 import AttackPaths from "./pages/AttackPaths";
+import AutopilotPolicies from "./pages/AutopilotPolicies";
+import ConfigDrift from "./pages/ConfigDrift";
+import ThreatIntelligence from "./pages/ThreatIntelligence";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,6 +100,30 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AttackPaths />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/autopilot"
+                element={
+                  <ProtectedRoute>
+                    <AutopilotPolicies />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/drift"
+                element={
+                  <ProtectedRoute>
+                    <ConfigDrift />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/threats"
+                element={
+                  <ProtectedRoute>
+                    <ThreatIntelligence />
                   </ProtectedRoute>
                 }
               />

@@ -9,9 +9,9 @@ export function HeroSection() {
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
 
   const trustBadges = [
-    { icon: Eye, text: "Read-Only Access" },
-    { icon: Lock, text: "No Auto-Changes" },
-    { icon: UserCheck, text: "You Stay in Control" },
+    { icon: Eye, text: "Multi-Cloud Security" },
+    { icon: Lock, text: "Autonomous Protection" },
+    { icon: UserCheck, text: "Built for SMEs" },
   ];
 
   return (
@@ -49,7 +49,7 @@ export function HeroSection() {
             )}
           >
             <Shield className="h-4 w-4" />
-            <span>Zero-Write AWS Security Platform</span>
+            <span>Autonomous Multi-Cloud Cybersecurity</span>
           </div>
 
           {/* Headline */}
@@ -61,9 +61,9 @@ export function HeroSection() {
                 : "opacity-0 translate-y-4"
             )}
           >
-            Secure Your AWS
+            CloudGuard Autopilot
             <span className="block mt-2 bg-gradient-to-r from-primary via-info to-primary bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
-              Without Giving Up Control
+              Security That Runs Itself
             </span>
           </h1>
 
@@ -76,7 +76,7 @@ export function HeroSection() {
                 : "opacity-0 translate-y-4"
             )}
           >
-            SME Cloud Guard continuously scans your AWS environment, explains security risks in plain English, guides you to fix them safely, verifies the fixes, and provides audit-ready evidence — all with read-only access.
+            CloudGuard Autopilot continuously discovers your cloud assets across AWS, Azure, and GCP — analyzes attack paths, predicts breach probability, calculates financial risk, and autonomously fixes security issues. All explained in plain English.
           </p>
 
           {/* CTA Buttons */}

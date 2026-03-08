@@ -12,6 +12,9 @@ import {
   Lock,
   Globe,
   Route,
+  Zap,
+  GitCompareArrows,
+  Radar,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,6 +98,21 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       icon: <Route className="h-5 w-5" />,
       label: "Attack Paths",
       href: "/dashboard/attack-paths"
+    },
+    {
+      icon: <Zap className="h-5 w-5" />,
+      label: "Autopilot Policies",
+      href: "/dashboard/autopilot"
+    },
+    {
+      icon: <GitCompareArrows className="h-5 w-5" />,
+      label: "Config Drift",
+      href: "/dashboard/drift"
+    },
+    {
+      icon: <Radar className="h-5 w-5" />,
+      label: "Threat Intelligence",
+      href: "/dashboard/threats"
     },
   ];
 
