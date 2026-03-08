@@ -132,7 +132,7 @@ export async function togglePolicy(policyId: string, enabled: boolean): Promise<
 }
 
 // ── Update Enforcement Mode ──
-export async function updateEnforcementMode(policyId: string, mode: "advisory" | "autopilot"): Promise<void> {
+export async function updateEnforcementMode(policyId: string, mode: EnforcementMode): Promise<void> {
   const { error } = await supabase
     .from("security_policies")
     .update({ enforcement_mode: mode })
