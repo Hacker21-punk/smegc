@@ -76,8 +76,13 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       items: [
         { icon: <LayoutDashboard className="h-4 w-4" />, label: "Dashboard", href: "/dashboard" },
         { icon: <Shield className="h-4 w-4" />, label: "Security Findings", href: "/dashboard/findings", badge: activeFindings > 0 ? activeFindings : undefined },
+      ],
+    },
+    {
+      label: "Cloud Integrations",
+      items: [
         { icon: <Cloud className="h-4 w-4" />, label: "AWS Accounts", href: "/dashboard/accounts" },
-        { icon: <Cloud className="h-4 w-4" />, label: "Cloud Accounts", href: "/dashboard/cloud-accounts" },
+        { icon: <Cloud className="h-4 w-4" />, label: "Azure & GCP", href: "/dashboard/cloud-accounts" },
       ],
     },
     {
