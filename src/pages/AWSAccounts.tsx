@@ -234,6 +234,44 @@ export default function AWSAccounts() {
     }
   };
 
+  const handleRunPipeline = async (account: AWSAccount) => {
+    if (!account.role_arn) {
+      toast.error("No IAM role configured for this account");
+      return;
+    }
+
+    setPipelineRunning(account.id);
+    toast.info("Running full security pipeline...", {
+      description: "Asset Discovery → Graph Builder → Attack Path Analysis",
+    });
+
+    try {
+      // Get org ID
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("organization_id")
+        .eq("id", user?.id)
+        .single();
+
+      if (!profile?.organization_id) throw new Error("Organization not found");
+
+      const result = await runFullSecurityPipeline(profile.organization_id, account.id);
+
+      toast.success("Security pipeline completed!", {
+        description: `Discovered ${result.discovery.discovered.total} assets, ${result.analysis.analysis.total_paths} attack paths found`,
+      });
+
+      fetchAccounts();
+    } catch (error) {
+      console.error("Pipeline error:", error);
+      toast.error("Pipeline failed", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setPipelineRunning(null);
+    }
+  };
+
   const handleDeleteAccount = (account: { id: string; account_alias: string | null; account_id: string }) => {
     setAccountToDelete({ id: account.id, alias: account.account_alias, accountId: account.account_id });
     setDeleteConfirmText("");
