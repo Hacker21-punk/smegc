@@ -30,6 +30,9 @@ import ZeroTrustAccess from "./pages/ZeroTrustAccess";
 import SaasSecurity from "./pages/SaasSecurity";
 import SecurityEvents from "./pages/SecurityEvents";
 import RuntimeSecurity from "./pages/RuntimeSecurity";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import Security from "./pages/Security";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,6 +76,9 @@ const App = () => (
                 <Route path="/dashboard/saas-security" element={<ProtectedRoute><SaasSecurity /></ProtectedRoute>} />
                 <Route path="/dashboard/events" element={<ProtectedRoute><SecurityEvents /></ProtectedRoute>} />
                 <Route path="/dashboard/runtime-security" element={<ProtectedRoute><RuntimeSecurity /></ProtectedRoute>} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/security" element={<Security />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </PageTransition>

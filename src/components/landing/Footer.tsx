@@ -20,9 +20,9 @@ export function Footer() {
       { label: "MeitY Guidelines", href: "#" },
     ],
     legal: [
-      { label: "Privacy Policy", href: "#" },
-      { label: "Terms of Service", href: "#" },
-      { label: "Security", href: "#" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Terms of Service", href: "/terms-of-service" },
+      { label: "Security", href: "/security" },
     ],
   };
 
