@@ -49,7 +49,6 @@ export function Logo({ className = "", showText = true, size = "md" }: LogoProps
     </div>
   );
 }
-
 export function Logo({ className = "", showText = true, size = "md" }: LogoProps) {
   const sizeClasses = {
     sm: { container: "h-7 w-7", icon: "h-4 w-4", text: "text-base", bolt: "h-2 w-2" },
