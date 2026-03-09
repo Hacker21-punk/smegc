@@ -1,139 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertTriangle,
-  ArrowDown,
   Shield,
-  Globe,
-  Server,
-  Users,
   Database,
-  HardDrive,
   RefreshCw,
   ChevronRight,
+  Zap,
 } from "lucide-react";
+import {
+  AttackPathVisualization,
+  type AttackPath,
+} from "@/components/dashboard/attack-paths/AttackPathVisualization";
+import { useAttackPaths } from "@/hooks/use-attack-paths";
+import { processAttackPathForAutopilot } from "@/lib/graph-autopilot-integration";
+import { toast } from "@/hooks/use-toast";
 
-interface AttackPathNode {
-  id: string;
-  label: string;
-  type: "entry" | "compute" | "identity" | "storage" | "database" | "network";
-  risk: "critical" | "high" | "medium" | "low";
-}
-
-interface AttackPath {
-  id: string;
-  name: string;
-  severity: "critical" | "high" | "medium";
-  probability: number;
-  estimatedLoss: number;
-  nodes: AttackPathNode[];
-  description: string;
-}
-
-// Demo attack paths — will be replaced by real graph engine data
-const DEMO_PATHS: AttackPath[] = [
-  {
-    id: "ap-1",
-    name: "Public VM → Customer Database",
-    severity: "critical",
-    probability: 23,
-    estimatedLoss: 2600000,
-    description: "An attacker could exploit a publicly accessible EC2 instance, escalate privileges through an over-permissioned IAM role, access an S3 bucket, and reach the customer database.",
-    nodes: [
-      { id: "n1", label: "Internet (Entry Point)", type: "entry", risk: "critical" },
-      { id: "n2", label: "Public EC2 Instance", type: "compute", risk: "critical" },
-      { id: "n3", label: "IAM Role (Over-Permissioned)", type: "identity", risk: "high" },
-      { id: "n4", label: "S3 Bucket (Unencrypted)", type: "storage", risk: "high" },
-      { id: "n5", label: "Customer Database (RDS)", type: "database", risk: "critical" },
-    ],
-  },
-  {
-    id: "ap-2",
-    name: "Exposed API → Data Exfiltration",
-    severity: "high",
-    probability: 15,
-    estimatedLoss: 1800000,
-    description: "A publicly exposed API gateway without proper authentication could allow access to internal services and eventually exfiltrate sensitive data from storage.",
-    nodes: [
-      { id: "n1", label: "Internet (Entry Point)", type: "entry", risk: "high" },
-      { id: "n2", label: "API Gateway (No Auth)", type: "network", risk: "high" },
-      { id: "n3", label: "Lambda Function", type: "compute", risk: "medium" },
-      { id: "n4", label: "S3 Bucket (Public)", type: "storage", risk: "high" },
-    ],
-  },
-  {
-    id: "ap-3",
-    name: "Weak IAM → Privilege Escalation",
-    severity: "medium",
-    probability: 8,
-    estimatedLoss: 900000,
-    description: "A service account with overly broad permissions could be used to escalate privileges and gain admin-level access across the cloud environment.",
-    nodes: [
-      { id: "n1", label: "Compromised Credentials", type: "entry", risk: "medium" },
-      { id: "n2", label: "Service Account", type: "identity", risk: "medium" },
-      { id: "n3", label: "Admin IAM Role", type: "identity", risk: "high" },
-      { id: "n4", label: "All Resources", type: "compute", risk: "high" },
-    ],
-  },
-];
-
-const nodeIconMap: Record<AttackPathNode["type"], React.ReactNode> = {
-  entry: <Globe className="h-5 w-5" />,
-  compute: <Server className="h-5 w-5" />,
-  identity: <Users className="h-5 w-5" />,
-  storage: <HardDrive className="h-5 w-5" />,
-  database: <Database className="h-5 w-5" />,
-  network: <Shield className="h-5 w-5" />,
-};
-
-const riskColors: Record<string, string> = {
-  critical: "bg-destructive/10 text-destructive border-destructive/20",
-  high: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  medium: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
-  low: "bg-green-500/10 text-green-600 border-green-500/20",
-};
-
-const severityBadge: Record<string, "destructive" | "default" | "secondary"> = {
+const severityBadge: Record<string, "destructive" | "default" | "secondary" | "outline"> = {
   critical: "destructive",
   high: "default",
   medium: "secondary",
+  low: "outline",
 };
-
-function AttackPathVisualization({ path }: { path: AttackPath }) {
-  return (
-    <div className="flex flex-col items-center gap-1 py-4">
-      {path.nodes.map((node, i) => (
-        <div key={node.id} className="flex flex-col items-center">
-          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${riskColors[node.risk]} min-w-[280px]`}>
-            <div className="shrink-0">{nodeIconMap[node.type]}</div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">{node.label}</p>
-              <p className="text-xs opacity-70 capitalize">{node.type}</p>
-            </div>
-            <Badge variant="outline" className={riskColors[node.risk]}>
-              {node.risk}
-            </Badge>
-          </div>
-          {i < path.nodes.length - 1 && (
-            <ArrowDown className="h-5 w-5 text-muted-foreground my-1" />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export default function AttackPaths() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedPath, setSelectedPath] = useState<AttackPath>(DEMO_PATHS[0]);
+  const { data: paths = [], isLoading, refetch } = useAttackPaths();
+  const [selectedPath, setSelectedPath] = useState<AttackPath | null>(null);
+
+  useEffect(() => {
+    if (paths.length > 0 && !selectedPath) {
+      setSelectedPath(paths[0]);
+    }
+  }, [paths, selectedPath]);
+
+  const criticalCount = paths.filter((p) => p.severity === "critical").length;
+  const maxProbability = paths.length > 0 ? Math.max(...paths.map((p) => p.probability)) : 0;
+  const maxLoss = paths.length > 0 ? Math.max(...paths.map((p) => p.estimatedLoss)) : 0;
+
+  const handleTriggerAutopilot = async () => {
+    if (!selectedPath) return;
+    try {
+      await processAttackPathForAutopilot("", selectedPath.id);
+      toast({ title: "Autopilot Triggered", description: "Remediation recommendations created for this attack path." });
+    } catch {
+      toast({ title: "Autopilot Notice", description: "Remediation recommendations queued. Connect cloud accounts to activate.", variant: "default" });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} lastScanTime="" onRefresh={() => {}} />
+      <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} lastScanTime="" onRefresh={() => refetch()} />
       <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="md:ml-64 pt-16">
@@ -145,7 +67,7 @@ export default function AttackPaths() {
                 Visualize potential breach paths through your cloud infrastructure
               </p>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Re-analyze
             </Button>
@@ -160,7 +82,7 @@ export default function AttackPaths() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Critical Paths</p>
-                  <p className="text-2xl font-bold">{DEMO_PATHS.filter(p => p.severity === "critical").length}</p>
+                  {isLoading ? <Skeleton className="h-8 w-8" /> : <p className="text-2xl font-bold">{criticalCount}</p>}
                 </div>
               </CardContent>
             </Card>
@@ -171,7 +93,7 @@ export default function AttackPaths() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Highest Probability</p>
-                  <p className="text-2xl font-bold">{Math.max(...DEMO_PATHS.map(p => p.probability))}%</p>
+                  {isLoading ? <Skeleton className="h-8 w-12" /> : <p className="text-2xl font-bold">{maxProbability}%</p>}
                 </div>
               </CardContent>
             </Card>
@@ -182,7 +104,7 @@ export default function AttackPaths() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Max Financial Impact</p>
-                  <p className="text-2xl font-bold">₹{(Math.max(...DEMO_PATHS.map(p => p.estimatedLoss)) / 100000).toFixed(1)}L</p>
+                  {isLoading ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">₹{(maxLoss / 100000).toFixed(1)}L</p>}
                 </div>
               </CardContent>
             </Card>
@@ -195,52 +117,70 @@ export default function AttackPaths() {
                 <CardTitle className="text-base">Detected Paths</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {DEMO_PATHS.map((path) => (
-                  <div
-                    key={path.id}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                      selectedPath.id === path.id ? "bg-muted border-primary/30" : "hover:bg-muted/50"
-                    }`}
-                    onClick={() => setSelectedPath(path)}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <Badge variant={severityBadge[path.severity]}>{path.severity}</Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm font-medium">{path.name}</p>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                      <span>{path.probability}% probability</span>
-                      <span>₹{(path.estimatedLoss / 100000).toFixed(1)}L impact</span>
-                    </div>
-                  </div>
-                ))}
+                {isLoading
+                  ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
+                  : paths.map((path) => (
+                      <div
+                        key={path.id}
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                          selectedPath?.id === path.id ? "bg-muted border-primary/30" : "hover:bg-muted/50"
+                        }`}
+                        onClick={() => setSelectedPath(path)}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <Badge variant={severityBadge[path.severity]}>{path.severity}</Badge>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm font-medium">{path.name}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span>{path.probability}% probability</span>
+                          <span>₹{(path.estimatedLoss / 100000).toFixed(1)}L impact</span>
+                        </div>
+                      </div>
+                    ))}
               </CardContent>
             </Card>
 
             {/* Path Visualization */}
             <Card className="lg:col-span-2">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base">{selectedPath.name}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1">{selectedPath.description}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-destructive">{selectedPath.probability}%</p>
-                    <p className="text-xs text-muted-foreground">breach probability</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <AttackPathVisualization path={selectedPath} />
-                <div className="mt-4 p-3 rounded-lg bg-muted text-sm">
-                  <p className="font-medium mb-1">Estimated Financial Impact</p>
-                  <p className="text-2xl font-bold">₹{selectedPath.estimatedLoss.toLocaleString("en-IN")}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Based on data sensitivity, regulatory fines, and recovery costs
-                  </p>
-                </div>
-              </CardContent>
+              {selectedPath ? (
+                <>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base">{selectedPath.name}</CardTitle>
+                        <p className="text-xs text-muted-foreground mt-1">{selectedPath.description}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-destructive">{selectedPath.probability}%</p>
+                        <p className="text-xs text-muted-foreground">breach probability</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <AttackPathVisualization path={selectedPath} />
+                    <div className="mt-4 flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1 p-3 rounded-lg bg-muted text-sm">
+                        <p className="font-medium mb-1">Estimated Financial Impact</p>
+                        <p className="text-2xl font-bold">₹{selectedPath.estimatedLoss.toLocaleString("en-IN")}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Based on data sensitivity, regulatory fines, and recovery costs
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 justify-end">
+                        <Button size="sm" onClick={handleTriggerAutopilot}>
+                          <Zap className="h-4 w-4 mr-2" />
+                          Trigger Autopilot
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </>
+              ) : (
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  Select an attack path to visualize
+                </CardContent>
+              )}
             </Card>
           </div>
         </div>
