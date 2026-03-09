@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.runtime-threat-detector]
 verify_jwt = false
+
+[functions.contact-form]
+verify_jwt = false
