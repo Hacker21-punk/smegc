@@ -92,6 +92,7 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       items: [
         { icon: <Globe className="h-4 w-4" />, label: "Asset Inventory", href: "/dashboard/assets" },
         { icon: <Route className="h-4 w-4" />, label: "Attack Paths", href: "/dashboard/attack-paths" },
+        { icon: <Network className="h-4 w-4" />, label: "Security Graph", href: "/dashboard/security-graph" },
         { icon: <Crosshair className="h-4 w-4" />, label: "Breach Simulation", href: "/dashboard/simulations" },
         { icon: <Layers className="h-4 w-4" />, label: "Digital Twin", href: "/dashboard/digital-twin" },
         { icon: <Activity className="h-4 w-4" />, label: "Security Events", href: "/dashboard/events" },
