@@ -111,12 +111,12 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="hover:text-foreground transition-colors">
-                support@smecloudguard.in
+                sme.cloudguard26@gmail.com
               </li>
               <li className="hover:text-foreground transition-colors">
-                +91 98765 43210
+                +91 8269110527
               </li>
-              <li>Mumbai, Maharashtra, India</li>
+              <li>Pune, Maharashtra, India</li>
             </ul>
           </div>
         </div>

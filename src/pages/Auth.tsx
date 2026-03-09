@@ -235,7 +235,7 @@ export default function Auth() {
                     <Input
                       id="signup-phone"
                       type="tel"
-                      placeholder="+91 98765 43210"
+                      placeholder="+91 8269110527"
                       value={signupPhone}
                       onChange={(e) => setSignupPhone(e.target.value)}
                       disabled={isSubmitting}
