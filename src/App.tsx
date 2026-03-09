@@ -30,6 +30,9 @@ import ZeroTrustAccess from "./pages/ZeroTrustAccess";
 import SaasSecurity from "./pages/SaasSecurity";
 import SecurityEvents from "./pages/SecurityEvents";
 import RuntimeSecurity from "./pages/RuntimeSecurity";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import Security from "./pages/Security";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
