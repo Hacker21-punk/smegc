@@ -108,8 +108,8 @@ export function ContactSection() {
               Get in <span className="text-primary">Touch</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Have questions? Our team is here to help you secure your AWS
-              infrastructure. We speak Hindi and English!
+              Have questions? Our team is here to help you strengthen your cloud
+              security posture across AWS, Azure, and GCP.
             </p>
 
             <div className="space-y-6">
