@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import HelpSupport from "./pages/HelpSupport";
 import AssetInventory from "./pages/AssetInventory";
 import AttackPaths from "./pages/AttackPaths";
+import SecurityGraph from "./pages/SecurityGraph";
 import AutopilotPolicies from "./pages/AutopilotPolicies";
 import ConfigDrift from "./pages/ConfigDrift";
 import ThreatIntelligence from "./pages/ThreatIntelligence";
