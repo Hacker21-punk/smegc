@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export function ContactSection() {
   const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.1 });
@@ -19,16 +20,48 @@ export function ContactSection() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Client-side validation
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    if (formData.message.trim().length < 10) {
+      toast.error("Message must be at least 10 characters.");
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const { data, error } = await supabase.functions.invoke("contact-form", {
+        body: {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          company: formData.company.trim() || undefined,
+          message: formData.message.trim(),
+        },
+      });
 
-    toast.success("Message sent!", {
-      description: "We'll get back to you within 24 hours.",
-    });
-    setFormData({ name: "", email: "", company: "", message: "" });
-    setIsSubmitting(false);
+      if (error) throw error;
+
+      toast.success("Message sent!", {
+        description: data?.message ?? "We'll get back to you within 24 hours.",
+      });
+      setFormData({ name: "", email: "", company: "", message: "" });
+    } catch (err) {
+      console.error("Contact form error:", err);
+      toast.error("Failed to send message. Please try again or email us directly.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactMethods = [
@@ -126,11 +159,8 @@ export function ContactSection() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium"
-                  >
-                    Name
+                  <label htmlFor="name" className="block text-sm font-medium">
+                    Name <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="name"
@@ -140,15 +170,13 @@ export function ContactSection() {
                     }
                     placeholder="Your name"
                     required
+                    maxLength={100}
                     className="transition-all focus:scale-[1.02]"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium"
-                  >
-                    Email
+                  <label htmlFor="email" className="block text-sm font-medium">
+                    Email <span className="text-destructive">*</span>
                   </label>
                   <Input
                     id="email"
@@ -159,16 +187,14 @@ export function ContactSection() {
                     }
                     placeholder="you@company.com"
                     required
+                    maxLength={255}
                     className="transition-all focus:scale-[1.02]"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="company"
-                  className="block text-sm font-medium"
-                >
+                <label htmlFor="company" className="block text-sm font-medium">
                   Company
                 </label>
                 <Input
@@ -178,16 +204,14 @@ export function ContactSection() {
                     setFormData({ ...formData, company: e.target.value })
                   }
                   placeholder="Your company name"
+                  maxLength={200}
                   className="transition-all focus:scale-[1.02]"
                 />
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="message"
-                  className="block text-sm font-medium"
-                >
-                  Message
+                <label htmlFor="message" className="block text-sm font-medium">
+                  Message <span className="text-destructive">*</span>
                 </label>
                 <Textarea
                   id="message"
@@ -198,6 +222,7 @@ export function ContactSection() {
                   placeholder="Tell us about your AWS security needs..."
                   rows={4}
                   required
+                  maxLength={5000}
                   className="transition-all focus:scale-[1.01] resize-none"
                 />
               </div>
