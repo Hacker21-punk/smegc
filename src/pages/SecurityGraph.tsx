@@ -336,76 +336,68 @@ export default function SecurityGraph() {
         </div>
       </main>
 
-      {/* Node Detail Dialog */}
-      <Dialog open={!!selectedNode} onOpenChange={(open) => !open && setSelectedNode(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedNode && (nodeTypeIcons[selectedNode.node_type] || <Server className="h-5 w-5" />)}
-              {selectedNode?.resource_name || selectedNode?.resource_id}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedNode && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-muted-foreground text-xs">Type</p>
-                  <p className="font-medium capitalize">{(selectedNode.node_type || "").replace(/_/g, " ")}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Risk Score</p>
-                  <p className="font-medium">{selectedNode.risk_score ?? "N/A"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Region</p>
-                  <p className="font-medium">{selectedNode.region || "Global"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Provider</p>
-                  <p className="font-medium uppercase">{selectedNode.provider || "aws"}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                {selectedNode.is_public && <Badge variant="outline" className="bg-orange-500/10 text-orange-600">Public</Badge>}
-                {selectedNode.is_sensitive && <Badge variant="outline" className="bg-destructive/10 text-destructive">Sensitive</Badge>}
-              </div>
-
-              {/* Connections */}
-              {nodeConnections.outgoing.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Outgoing Connections</p>
-                  <div className="space-y-1">
-                    {nodeConnections.outgoing.map((conn: any) => (
-                      <div key={conn.id} className="flex items-center gap-2 text-sm p-2 rounded bg-muted">
-                        <span className="text-xs capitalize text-muted-foreground">{(conn.edge_type || "").replace(/_/g, " ")}</span>
-                        <span className="text-xs">→</span>
-                        <span className="font-medium text-xs">{conn.targetNode?.resource_name || "Unknown"}</span>
-                        {conn.is_risky && <Badge variant="destructive" className="text-[10px] ml-auto">Risky</Badge>}
+      {/* Critical Paths Section */}
+      {criticalPaths.length > 0 && (
+        <div className="p-6 max-w-7xl mx-auto md:ml-64">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                Algorithmically Detected Critical Paths
+              </CardTitle>
+              <CardDescription>
+                DFS-based traversal from public entry points to sensitive targets
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {criticalPaths.map((cp, i) => {
+                const pathNodeNames = cp.pathResult.path.map((id) => {
+                  const n = nodes.find((nd: any) => nd.id === id) as any;
+                  return n?.resource_name || n?.resource_id || "Unknown";
+                });
+                return (
+                  <div key={i} className="p-3 rounded-lg border bg-muted/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {pathNodeNames.map((name, j) => (
+                          <span key={j} className="flex items-center gap-1 text-xs">
+                            {j > 0 && <span className="text-muted-foreground">→</span>}
+                            <span className="font-medium">{name}</span>
+                          </span>
+                        ))}
                       </div>
-                    ))}
+                      <Badge variant={cp.compositeScore >= 70 ? "destructive" : cp.compositeScore >= 40 ? "default" : "secondary"}>
+                        Score: {cp.compositeScore}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 text-[10px] text-muted-foreground">
+                      <span>Sensitivity: {cp.dataSensitivityScore}</span>
+                      <span>Priv Esc: {cp.privilegeEscalationScore}</span>
+                      <span>Exposure: {cp.networkExposureScore}</span>
+                      <span>Criticality: {cp.assetCriticalityScore}</span>
+                    </div>
+                    {cp.pathResult.hasPrivilegeEscalation && (
+                      <Badge variant="outline" className="mt-2 text-[10px] bg-orange-500/10 text-orange-600">
+                        ⚡ Privilege Escalation Detected
+                      </Badge>
+                    )}
                   </div>
-                </div>
-              )}
-              {nodeConnections.incoming.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Incoming Connections</p>
-                  <div className="space-y-1">
-                    {nodeConnections.incoming.map((conn: any) => (
-                      <div key={conn.id} className="flex items-center gap-2 text-sm p-2 rounded bg-muted">
-                        <span className="font-medium text-xs">{conn.sourceNode?.resource_name || "Unknown"}</span>
-                        <span className="text-xs">→</span>
-                        <span className="text-xs capitalize text-muted-foreground">{(conn.edge_type || "").replace(/_/g, " ")}</span>
-                        {conn.is_risky && <Badge variant="destructive" className="text-[10px] ml-auto">Risky</Badge>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Enhanced Node Detail Panel */}
+      <NodeDetailPanel
+        node={selectedNode}
+        nodes={nodes}
+        edges={edges}
+        open={!!selectedNode}
+        onClose={() => setSelectedNode(null)}
+        onSelectNode={(n) => setSelectedNode(n)}
+      />
     </div>
   );
 }
