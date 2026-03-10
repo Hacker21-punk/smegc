@@ -26,7 +26,7 @@ import {
   Lock,
   Network,
   Layers,
-  Eye,
+  
 } from "lucide-react";
 import { useGraphNodes, useGraphEdges } from "@/hooks/use-attack-paths";
 import { NodeDetailPanel } from "@/components/dashboard/NodeDetailPanel";
