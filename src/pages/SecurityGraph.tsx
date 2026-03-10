@@ -157,7 +157,11 @@ export default function SecurityGraph() {
     });
   }, [nodes, search, typeFilter]);
 
-  // Compute stats
+  const publicNodes = nodes.filter((n: any) => n.is_public).length;
+  const sensitiveNodes = nodes.filter((n: any) => n.is_sensitive).length;
+  const riskyEdges = edges.filter((e: any) => e.is_risky).length;
+  const highRiskNodes = nodes.filter((n: any) => (n.risk_score ?? 0) >= 70).length;
+
   // Critical attack paths analysis
   const criticalPaths = useMemo(() => {
     return findCriticalAttackPaths(nodes as any[], edges as any[], 6).slice(0, 5);
