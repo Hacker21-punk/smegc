@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import cloudguardLogo from "@/assets/cloudguard-logo.png";
 
 interface LogoProps {
   className?: string;
@@ -17,23 +18,11 @@ export function Logo({ className = "", showText = true, size = "md" }: LogoProps
 
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <div className={cn(s.icon, "relative flex items-center justify-center")}>
-        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-          <rect width="32" height="32" rx="8" className="fill-primary" />
-          <path
-            d="M16 6L8 10v6c0 5.25 3.4 10.15 8 11.33C20.6 26.15 24 21.25 24 16v-6l-8-4z"
-            className="fill-primary-foreground"
-            opacity="0.9"
-          />
-          <path
-            d="M14.5 16.5l2 2 4-4"
-            className="stroke-primary"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
+      <img
+        src={cloudguardLogo}
+        alt="CloudGuard Logo"
+        className={cn(s.icon, "object-contain")}
+      />
 
       {showText && (
         <div className="flex flex-col">
