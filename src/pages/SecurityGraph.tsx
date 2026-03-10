@@ -29,12 +29,8 @@ import {
   Eye,
 } from "lucide-react";
 import { useGraphNodes, useGraphEdges } from "@/hooks/use-attack-paths";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { NodeDetailPanel } from "@/components/dashboard/NodeDetailPanel";
+import { findCriticalAttackPaths, type CriticalPathScore } from "@/lib/graph-algorithms";
 
 // Demo graph data for when no real data exists
 const DEMO_NODES = [
