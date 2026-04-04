@@ -44,10 +44,10 @@ export function Footer() {
           >
             <Logo className="mb-4" />
             <p className="text-sm text-muted-foreground mb-4">
-              Affordable AWS security monitoring designed for Indian SMEs.
+              Autonomous multi-cloud security platform designed for businesses of all sizes.
             </p>
             <p className="text-xs text-muted-foreground">
-              Registered in India | GST: XXXXXXXXXXXX
+              Registered in India
             </p>
           </div>
 

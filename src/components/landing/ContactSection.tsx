@@ -219,7 +219,7 @@ export function ContactSection() {
                   onChange={(e) =>
                     setFormData({ ...formData, message: e.target.value })
                   }
-                  placeholder="Tell us about your AWS security needs..."
+                  placeholder="Tell us about your cloud security needs..."
                   rows={4}
                   required
                   maxLength={5000}
