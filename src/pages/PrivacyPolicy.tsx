@@ -54,7 +54,7 @@ export default function PrivacyPolicy() {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">4. Data Security</h2>
           <p className="text-muted-foreground leading-relaxed">
-            We implement industry-standard security measures including AES-256 encryption at rest, TLS 1.3 encryption in transit, and role-based access controls. All AWS scanning is performed using read-only IAM roles with no write permissions unless explicitly enabled by you.
+            We implement industry-standard security measures including AES-256 encryption at rest, TLS 1.3 encryption in transit, and role-based access controls. All cloud scanning is performed using read-only roles with no write permissions unless explicitly enabled by you.
           </p>
         </section>
 
