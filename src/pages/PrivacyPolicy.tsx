@@ -33,7 +33,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-2xl font-semibold">2. Information We Collect</h2>
           <ul className="list-disc list-inside space-y-2 text-muted-foreground leading-relaxed">
             <li><strong className="text-foreground">Account Information:</strong> Name, email address, phone number, and company name provided during registration.</li>
-            <li><strong className="text-foreground">AWS Configuration Data:</strong> Read-only metadata from your AWS accounts including security group configurations, IAM policies, S3 bucket settings, and resource inventories. We never store your AWS credentials.</li>
+            <li><strong className="text-foreground">Cloud Configuration Data:</strong> Read-only metadata from your cloud accounts (AWS, Azure, GCP) including security configurations, IAM policies, storage settings, and resource inventories. We never store your cloud credentials.</li>
             <li><strong className="text-foreground">Usage Data:</strong> Information about how you interact with our platform, including pages visited, features used, and session duration.</li>
             <li><strong className="text-foreground">Device Information:</strong> Browser type, operating system, IP address, and device identifiers.</li>
           </ul>
@@ -54,7 +54,7 @@ export default function PrivacyPolicy() {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">4. Data Security</h2>
           <p className="text-muted-foreground leading-relaxed">
-            We implement industry-standard security measures including AES-256 encryption at rest, TLS 1.3 encryption in transit, and role-based access controls. All AWS scanning is performed using read-only IAM roles with no write permissions unless explicitly enabled by you.
+            We implement industry-standard security measures including AES-256 encryption at rest, TLS 1.3 encryption in transit, and role-based access controls. All cloud scanning is performed using read-only roles with no write permissions unless explicitly enabled by you.
           </p>
         </section>
 

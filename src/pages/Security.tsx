@@ -17,7 +17,7 @@ const securityPractices = [
   {
     icon: Key,
     title: "Credential Security",
-    description: "We never store your AWS access keys or secret keys. Authentication is handled via cross-account IAM roles with external IDs, following AWS security best practices.",
+    description: "We never store your cloud access keys or secret keys. Authentication is handled via cross-account IAM roles, service principals, and service accounts following each cloud provider's security best practices.",
   },
   {
     icon: Server,

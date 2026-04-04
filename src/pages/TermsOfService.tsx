@@ -47,7 +47,7 @@ export default function TermsOfService() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">4. AWS & Cloud Account Access</h2>
+          <h2 className="text-2xl font-semibold">4. Cloud Account Access</h2>
           <p className="text-muted-foreground leading-relaxed">
             By connecting your cloud accounts, you authorize SME Cloud Guard to access your cloud resources using the IAM roles you configure. You retain full control over the permissions granted. We recommend using read-only access for scanning. Write access for automated remediation is optional and requires explicit enablement.
           </p>
