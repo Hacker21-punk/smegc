@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import {
   GitCompareArrows,
   AlertTriangle,
@@ -35,56 +36,7 @@ interface DriftEvent {
   currentValue: string;
 }
 
-const DEMO_DRIFTS: DriftEvent[] = [
-  {
-    id: "d1",
-    resource: "prod-db-sg",
-    resourceType: "Security Group",
-    provider: "aws",
-    change: "Inbound rule added: 0.0.0.0/0 on port 3306",
-    riskLevel: "critical",
-    detectedAt: "2 hours ago",
-    status: "open",
-    previousValue: "No public access",
-    currentValue: "Port 3306 open to internet",
-  },
-  {
-    id: "d2",
-    resource: "user-uploads-bucket",
-    resourceType: "S3 Bucket",
-    provider: "aws",
-    change: "Public access block disabled",
-    riskLevel: "high",
-    detectedAt: "5 hours ago",
-    status: "open",
-    previousValue: "Block all public access: ON",
-    currentValue: "Block all public access: OFF",
-  },
-  {
-    id: "d3",
-    resource: "api-gateway-prod",
-    resourceType: "API Gateway",
-    provider: "aws",
-    change: "Authentication removed from /admin endpoint",
-    riskLevel: "critical",
-    detectedAt: "1 day ago",
-    status: "remediated",
-    previousValue: "IAM auth required",
-    currentValue: "No authentication",
-  },
-  {
-    id: "d4",
-    resource: "staging-vm-01",
-    resourceType: "Compute Instance",
-    provider: "gcp",
-    change: "Firewall rule modified: SSH open to all",
-    riskLevel: "medium",
-    detectedAt: "2 days ago",
-    status: "accepted",
-    previousValue: "SSH restricted to VPN",
-    currentValue: "SSH open to 0.0.0.0/0",
-  },
-];
+const DEMO_DRIFTS: DriftEvent[] = [];
 
 const riskBadgeVariant: Record<string, "destructive" | "default" | "secondary" | "outline"> = {
   critical: "destructive",
@@ -159,66 +111,74 @@ export default function ConfigDrift() {
           </div>
 
           {/* Drift Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Recent Configuration Changes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Resource</TableHead>
-                      <TableHead>Change</TableHead>
-                      <TableHead>Risk</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Detected</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {DEMO_DRIFTS.map(drift => {
-                      const status = statusConfig[drift.status];
-                      return (
-                        <TableRow key={drift.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium text-sm">{drift.resource}</p>
-                              <p className="text-xs text-muted-foreground">{drift.resourceType} · {drift.provider.toUpperCase()}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="max-w-xs">
-                              <p className="text-sm">{drift.change}</p>
-                              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                                <span className="line-through">{drift.previousValue}</span>
-                                <ArrowRight className="h-3 w-3" />
-                                <span className="text-foreground">{drift.currentValue}</span>
+          {DEMO_DRIFTS.length === 0 ? (
+            <EmptyState
+              icon={<GitCompareArrows className="h-7 w-7" />}
+              title="No configuration changes detected"
+              description="CloudGuard continuously monitors your cloud infrastructure for risky configuration drift. Connect an account to start tracking changes."
+            />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Recent Configuration Changes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Resource</TableHead>
+                        <TableHead>Change</TableHead>
+                        <TableHead>Risk</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Detected</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {DEMO_DRIFTS.map(drift => {
+                        const status = statusConfig[drift.status];
+                        return (
+                          <TableRow key={drift.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium text-sm">{drift.resource}</p>
+                                <p className="text-xs text-muted-foreground">{drift.resourceType} · {drift.provider.toUpperCase()}</p>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={riskBadgeVariant[drift.riskLevel]}>{drift.riskLevel}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5">
-                              {status.icon}
-                              <span className="text-sm">{status.label}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Clock className="h-3.5 w-3.5" />
-                              {drift.detectedAt}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                            </TableCell>
+                            <TableCell>
+                              <div className="max-w-xs">
+                                <p className="text-sm">{drift.change}</p>
+                                <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                                  <span className="line-through">{drift.previousValue}</span>
+                                  <ArrowRight className="h-3 w-3" />
+                                  <span className="text-foreground">{drift.currentValue}</span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={riskBadgeVariant[drift.riskLevel]}>{drift.riskLevel}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                {status.icon}
+                                <span className="text-sm">{status.label}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Clock className="h-3.5 w-3.5" />
+                                {drift.detectedAt}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>

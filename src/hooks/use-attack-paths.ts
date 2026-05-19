@@ -36,67 +36,7 @@ function riskFromScore(score: number | null): "critical" | "high" | "medium" | "
   return "low";
 }
 
-// Demo data as fallback
-const DEMO_PATHS: AttackPath[] = [
-  {
-    id: "ap-1",
-    name: "Public VM → Customer Database",
-    severity: "critical",
-    probability: 23,
-    estimatedLoss: 2600000,
-    riskScore: 92,
-    blastRadius: 15,
-    pathLength: 5,
-    status: "active",
-    description:
-      "An attacker could exploit a publicly accessible EC2 instance, escalate privileges through an over-permissioned IAM role, access an S3 bucket, and reach the customer database.",
-    nodes: [
-      { id: "n1", label: "Internet (Entry Point)", type: "entry", risk: "critical" },
-      { id: "n2", label: "Public EC2 Instance", type: "compute", risk: "critical" },
-      { id: "n3", label: "IAM Role (Over-Permissioned)", type: "identity", risk: "high" },
-      { id: "n4", label: "S3 Bucket (Unencrypted)", type: "storage", risk: "high" },
-      { id: "n5", label: "Customer Database (RDS)", type: "database", risk: "critical" },
-    ],
-  },
-  {
-    id: "ap-2",
-    name: "Exposed API → Data Exfiltration",
-    severity: "high",
-    probability: 15,
-    estimatedLoss: 1800000,
-    riskScore: 78,
-    blastRadius: 8,
-    pathLength: 4,
-    status: "active",
-    description:
-      "A publicly exposed API gateway without proper authentication could allow access to internal services and eventually exfiltrate sensitive data from storage.",
-    nodes: [
-      { id: "n1", label: "Internet (Entry Point)", type: "entry", risk: "high" },
-      { id: "n2", label: "API Gateway (No Auth)", type: "network", risk: "high" },
-      { id: "n3", label: "Lambda Function", type: "compute", risk: "medium" },
-      { id: "n4", label: "S3 Bucket (Public)", type: "storage", risk: "high" },
-    ],
-  },
-  {
-    id: "ap-3",
-    name: "Weak IAM → Privilege Escalation",
-    severity: "medium",
-    probability: 8,
-    estimatedLoss: 900000,
-    riskScore: 55,
-    blastRadius: 4,
-    pathLength: 4,
-    status: "active",
-    description:
-      "A service account with overly broad permissions could be used to escalate privileges and gain admin-level access across the cloud environment.",
-    nodes: [
-      { id: "n1", label: "Compromised Credentials", type: "entry", risk: "medium" },
-      { id: "n2", label: "Service Account", type: "identity", risk: "medium" },
-      { id: "n3", label: "Admin IAM Role", type: "identity", risk: "high" },
-      { id: "n4", label: "All Resources", type: "compute", risk: "high" },
-    ],
-  },
-];
+// No demo fallback — production-grade. UI renders an empty state when no real data exists.
 
 export function useAttackPaths() {
   return useQuery({
@@ -110,7 +50,7 @@ export function useAttackPaths() {
         .order("risk_score", { ascending: false });
 
       if (error || !dbPaths || dbPaths.length === 0) {
-        return DEMO_PATHS;
+        return [];
       }
 
       // For each path, fetch its steps with node details
@@ -148,7 +88,7 @@ export function useAttackPaths() {
             blastRadius: ap.blast_radius,
             pathLength: ap.path_length,
             status: ap.status,
-            nodes: nodes.length > 0 ? nodes : DEMO_PATHS[0].nodes,
+            nodes,
             description: ap.description || "",
           };
         })

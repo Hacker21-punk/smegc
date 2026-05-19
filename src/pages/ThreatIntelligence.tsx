@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import {
   Radar,
   AlertTriangle,
@@ -37,63 +38,7 @@ interface ThreatIndicator {
   status: "active" | "mitigated" | "monitoring";
 }
 
-const DEMO_THREATS: ThreatIndicator[] = [
-  {
-    id: "t1",
-    type: "ip",
-    indicator: "185.220.101.xx",
-    description: "Known Tor exit node attempting SSH brute-force attacks",
-    severity: "high",
-    source: "AbuseIPDB",
-    detectedAt: "30 min ago",
-    affectedResources: 3,
-    status: "active",
-  },
-  {
-    id: "t2",
-    type: "ransomware",
-    indicator: "LockBit 3.0 Pattern",
-    description: "File encryption pattern matching LockBit 3.0 ransomware detected in S3 access logs",
-    severity: "critical",
-    source: "CISA Alerts",
-    detectedAt: "2 hours ago",
-    affectedResources: 1,
-    status: "monitoring",
-  },
-  {
-    id: "t3",
-    type: "credential",
-    indicator: "admin@company.com",
-    description: "Credentials found in public breach database (Have I Been Pwned)",
-    severity: "critical",
-    source: "HIBP",
-    detectedAt: "1 day ago",
-    affectedResources: 5,
-    status: "active",
-  },
-  {
-    id: "t4",
-    type: "api",
-    indicator: "Unusual API burst",
-    description: "3,200 API calls in 5 minutes from single IAM user — 40x above baseline",
-    severity: "high",
-    source: "CloudTrail Analysis",
-    detectedAt: "4 hours ago",
-    affectedResources: 2,
-    status: "mitigated",
-  },
-  {
-    id: "t5",
-    type: "ip",
-    indicator: "45.155.205.xx",
-    description: "IP associated with Cobalt Strike C2 infrastructure",
-    severity: "critical",
-    source: "Threat Intel Feed",
-    detectedAt: "6 hours ago",
-    affectedResources: 1,
-    status: "active",
-  },
-];
+const DEMO_THREATS: ThreatIndicator[] = [];
 
 const typeIcons: Record<string, React.ReactNode> = {
   ip: <Globe className="h-4 w-4" />,
@@ -191,7 +136,13 @@ export default function ThreatIntelligence() {
             </Card>
           </div>
 
-          {/* Threat Table */}
+          {DEMO_THREATS.length === 0 ? (
+            <EmptyState
+              icon={<Radar className="h-7 w-7" />}
+              title="No threat indicators yet"
+              description="Once cloud accounts are connected, CloudGuard will correlate audit logs and threat feeds (AbuseIPDB, CISA, HIBP) to surface indicators of compromise."
+            />
+          ) : (
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -230,32 +181,15 @@ export default function ThreatIntelligence() {
                             <span className="text-xs capitalize">{threat.type}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <span className="font-mono text-sm">{threat.indicator}</span>
-                        </TableCell>
+                        <TableCell><span className="font-mono text-sm">{threat.indicator}</span></TableCell>
                         <TableCell>
                           <p className="text-sm max-w-xs">{threat.description}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {threat.affectedResources} resource{threat.affectedResources > 1 ? "s" : ""} affected
-                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">{threat.affectedResources} resource{threat.affectedResources > 1 ? "s" : ""} affected</p>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant={severityBadge[threat.severity]}>{threat.severity}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`text-sm font-medium capitalize ${statusColors[threat.status]}`}>
-                            {threat.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">{threat.source}</span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="h-3.5 w-3.5" />
-                            {threat.detectedAt}
-                          </div>
-                        </TableCell>
+                        <TableCell><Badge variant={severityBadge[threat.severity]}>{threat.severity}</Badge></TableCell>
+                        <TableCell><span className={`text-sm font-medium capitalize ${statusColors[threat.status]}`}>{threat.status}</span></TableCell>
+                        <TableCell><span className="text-sm text-muted-foreground">{threat.source}</span></TableCell>
+                        <TableCell><div className="flex items-center gap-1 text-sm text-muted-foreground"><Clock className="h-3.5 w-3.5" />{threat.detectedAt}</div></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -263,6 +197,7 @@ export default function ThreatIntelligence() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
       </main>
     </div>

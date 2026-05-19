@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
@@ -38,27 +39,8 @@ interface WhatIfResult {
   details: string;
 }
 
-const TWIN_NODES: TwinNode[] = [
-  { id: "vpc-1", name: "Production VPC", type: "network", provider: "AWS", status: "secure", connections: ["ec2-1", "rds-1", "sg-1"] },
-  { id: "ec2-1", name: "Web Server (EC2)", type: "compute", provider: "AWS", status: "at_risk", connections: ["vpc-1", "iam-1", "s3-1"] },
-  { id: "rds-1", name: "PostgreSQL (RDS)", type: "database", provider: "AWS", status: "secure", connections: ["vpc-1", "sg-1"] },
-  { id: "s3-1", name: "Data Bucket (S3)", type: "storage", provider: "AWS", status: "critical", connections: ["ec2-1", "iam-1"] },
-  { id: "iam-1", name: "App Service Role", type: "identity", provider: "AWS", status: "at_risk", connections: ["ec2-1", "s3-1", "rds-1"] },
-  { id: "sg-1", name: "Web Security Group", type: "security", provider: "AWS", status: "at_risk", connections: ["vpc-1", "ec2-1", "rds-1"] },
-  { id: "vm-1", name: "API Server (Azure VM)", type: "compute", provider: "Azure", status: "secure", connections: ["vnet-1"] },
-  { id: "vnet-1", name: "Azure VNet", type: "network", provider: "Azure", status: "secure", connections: ["vm-1", "cosmos-1"] },
-  { id: "cosmos-1", name: "Cosmos DB", type: "database", provider: "Azure", status: "secure", connections: ["vnet-1"] },
-  { id: "gce-1", name: "GCE Instance", type: "compute", provider: "GCP", status: "secure", connections: ["gcs-1"] },
-  { id: "gcs-1", name: "Cloud Storage Bucket", type: "storage", provider: "GCP", status: "at_risk", connections: ["gce-1"] },
-];
-
-const WHAT_IF_SCENARIOS: WhatIfResult[] = [
-  { id: "wif-1", scenario: "Block public access on S3 bucket", impact: "positive", riskChange: -15, details: "Eliminates public data exposure path. Risk score drops from 72 to 57." },
-  { id: "wif-2", scenario: "Enable MFA on IAM role", impact: "positive", riskChange: -8, details: "Reduces credential theft risk. Breaks 2 attack paths." },
-  { id: "wif-3", scenario: "Open port 22 to 0.0.0.0/0", impact: "negative", riskChange: 25, details: "Creates direct SSH access from internet. Enables 3 new attack vectors." },
-  { id: "wif-4", scenario: "Enable RDS encryption at rest", impact: "positive", riskChange: -5, details: "Protects data if storage is compromised. Compliance score improves." },
-  { id: "wif-5", scenario: "Disable CloudTrail logging", impact: "negative", riskChange: 20, details: "Blind spot for audit trail. Attackers can operate undetected." },
-];
+const TWIN_NODES: TwinNode[] = [];
+const WHAT_IF_SCENARIOS: WhatIfResult[] = [];
 
 const iconMap: Record<string, React.ReactNode> = {
   compute: <Cpu className="h-4 w-4" />,
