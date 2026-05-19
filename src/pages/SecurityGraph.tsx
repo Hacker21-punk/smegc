@@ -101,10 +101,10 @@ export default function SecurityGraph() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
 
+  const isLoading = loadingNodes || loadingEdges;
   const nodes = dbNodes ?? [];
   const edges = dbEdges ?? [];
   const isEmpty = !isLoading && nodes.length === 0;
-  const isLoading = loadingNodes || loadingEdges;
 
   const categories = useMemo(() => {
     const cats = new Set<string>();
