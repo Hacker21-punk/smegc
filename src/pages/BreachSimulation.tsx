@@ -58,7 +58,7 @@ function formatINR(amount: number) {
 export default function BreachSimulation() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scenarios, setScenarios] = useState(SCENARIOS);
-  const [selected, setSelected] = useState<SimulationScenario>(SCENARIOS[0]);
+  const [selected, setSelected] = useState<SimulationScenario | null>(SCENARIOS[0] ?? null);
 
   const runSimulation = (id: string) => {
     setScenarios(prev =>
@@ -75,7 +75,7 @@ export default function BreachSimulation() {
     }, 3000);
   };
 
-  const avgProbability = Math.round(scenarios.reduce((a, s) => a + s.breachProbability, 0) / scenarios.length);
+  const avgProbability = scenarios.length === 0 ? 0 : Math.round(scenarios.reduce((a, s) => a + s.breachProbability, 0) / scenarios.length);
   const totalRisk = scenarios.reduce((a, s) => a + s.financialImpact, 0);
 
   return (
