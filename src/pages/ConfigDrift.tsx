@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import {
   GitCompareArrows,
   AlertTriangle,
