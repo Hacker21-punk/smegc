@@ -35,56 +35,7 @@ interface DriftEvent {
   currentValue: string;
 }
 
-const DEMO_DRIFTS: DriftEvent[] = [
-  {
-    id: "d1",
-    resource: "prod-db-sg",
-    resourceType: "Security Group",
-    provider: "aws",
-    change: "Inbound rule added: 0.0.0.0/0 on port 3306",
-    riskLevel: "critical",
-    detectedAt: "2 hours ago",
-    status: "open",
-    previousValue: "No public access",
-    currentValue: "Port 3306 open to internet",
-  },
-  {
-    id: "d2",
-    resource: "user-uploads-bucket",
-    resourceType: "S3 Bucket",
-    provider: "aws",
-    change: "Public access block disabled",
-    riskLevel: "high",
-    detectedAt: "5 hours ago",
-    status: "open",
-    previousValue: "Block all public access: ON",
-    currentValue: "Block all public access: OFF",
-  },
-  {
-    id: "d3",
-    resource: "api-gateway-prod",
-    resourceType: "API Gateway",
-    provider: "aws",
-    change: "Authentication removed from /admin endpoint",
-    riskLevel: "critical",
-    detectedAt: "1 day ago",
-    status: "remediated",
-    previousValue: "IAM auth required",
-    currentValue: "No authentication",
-  },
-  {
-    id: "d4",
-    resource: "staging-vm-01",
-    resourceType: "Compute Instance",
-    provider: "gcp",
-    change: "Firewall rule modified: SSH open to all",
-    riskLevel: "medium",
-    detectedAt: "2 days ago",
-    status: "accepted",
-    previousValue: "SSH restricted to VPN",
-    currentValue: "SSH open to 0.0.0.0/0",
-  },
-];
+const DEMO_DRIFTS: DriftEvent[] = [];
 
 const riskBadgeVariant: Record<string, "destructive" | "default" | "secondary" | "outline"> = {
   critical: "destructive",

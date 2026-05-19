@@ -27,18 +27,7 @@ interface SecurityEvent {
   icon: React.ReactNode;
 }
 
-const BASE_EVENTS: Omit<SecurityEvent, "id" | "timestamp">[] = [
-  { source: "CloudTrail", severity: "critical", event: "Root account login without MFA", details: "AWS root account accessed from IP 203.0.113.42", icon: <Key className="h-4 w-4" /> },
-  { source: "Auth Events", severity: "critical", event: "Brute force attack detected", details: "47 failed login attempts for admin@company.com in 2 minutes", icon: <Lock className="h-4 w-4" /> },
-  { source: "VPC Flow", severity: "high", event: "Unusual outbound data transfer", details: "15GB transferred to external IP from prod-db-server", icon: <Globe className="h-4 w-4" /> },
-  { source: "K8s Audit", severity: "high", event: "Privileged pod created", details: "New pod with hostNetwork: true in production namespace", icon: <Server className="h-4 w-4" /> },
-  { source: "CloudTrail", severity: "high", event: "Security group modified", details: "Port 22 opened to 0.0.0.0/0 on sg-0abc1234", icon: <Shield className="h-4 w-4" /> },
-  { source: "WAF", severity: "medium", event: "SQL injection attempt blocked", details: "Blocked request from 198.51.100.23 targeting /api/users", icon: <Database className="h-4 w-4" /> },
-  { source: "CloudTrail", severity: "medium", event: "IAM policy attached", details: "AdministratorAccess attached to user dev-intern", icon: <Key className="h-4 w-4" /> },
-  { source: "Auth Events", severity: "medium", event: "Login from new location", details: "finance@company.com logged in from Nairobi, Kenya", icon: <Eye className="h-4 w-4" /> },
-  { source: "VPC Flow", severity: "low", event: "Port scan detected", details: "Sequential port scan from 192.0.2.100 on public subnet", icon: <Zap className="h-4 w-4" /> },
-  { source: "K8s Audit", severity: "info", event: "ConfigMap updated", details: "app-config ConfigMap modified in staging namespace", icon: <Server className="h-4 w-4" /> },
-];
+const BASE_EVENTS: Omit<SecurityEvent, "id" | "timestamp">[] = [];
 
 const severityColors: Record<string, string> = {
   critical: "bg-destructive/10 text-destructive border-destructive/20",

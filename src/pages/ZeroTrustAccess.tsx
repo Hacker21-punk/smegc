@@ -44,13 +44,7 @@ const POLICIES: AccessPolicy[] = [
   { id: "zt-6", name: "Context-Aware Access", description: "Adjust permissions based on time, device, location, and risk score", enabled: true, icon: <Monitor className="h-5 w-5" /> },
 ];
 
-const SESSIONS: ActiveSession[] = [
-  { id: "ses-1", user: "admin@company.com", device: "MacBook Pro (Managed)", location: "Mumbai, IN", trustScore: 95, lastVerified: "5 min ago", status: "trusted" },
-  { id: "ses-2", user: "dev@company.com", device: "Windows Laptop (Managed)", location: "Bangalore, IN", trustScore: 88, lastVerified: "12 min ago", status: "trusted" },
-  { id: "ses-3", user: "ops@company.com", device: "iPhone 15 (Personal)", location: "Delhi, IN", trustScore: 62, lastVerified: "45 min ago", status: "review" },
-  { id: "ses-4", user: "contractor@ext.com", device: "Unknown Device", location: "Lagos, NG", trustScore: 15, lastVerified: "2 hours ago", status: "blocked" },
-  { id: "ses-5", user: "finance@company.com", device: "ChromeBook (Managed)", location: "Pune, IN", trustScore: 91, lastVerified: "8 min ago", status: "trusted" },
-];
+const SESSIONS: ActiveSession[] = [];
 
 const statusColors: Record<string, string> = {
   trusted: "text-green-600 bg-green-500/10",

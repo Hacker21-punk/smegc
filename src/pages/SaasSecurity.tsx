@@ -25,16 +25,7 @@ interface SaasFinding {
   status: "open" | "resolved";
 }
 
-const FINDINGS: SaasFinding[] = [
-  { id: "saas-1", app: "Google Workspace", issue: "Sensitive spreadsheet shared publicly via link", severity: "critical", category: "sharing", user: "finance@company.com", status: "open" },
-  { id: "saas-2", app: "GitHub", issue: "Private repository made public with API keys in code", severity: "critical", category: "exposure", user: "dev@company.com", status: "open" },
-  { id: "saas-3", app: "Microsoft 365", issue: "Global admin without MFA enabled", severity: "high", category: "permissions", user: "admin@company.com", status: "open" },
-  { id: "saas-4", app: "Slack", issue: "External sharing enabled for all channels", severity: "high", category: "config", user: "workspace admin", status: "open" },
-  { id: "saas-5", app: "Google Workspace", issue: "Drive file sharing default set to 'Anyone with link'", severity: "high", category: "config", user: "admin@company.com", status: "open" },
-  { id: "saas-6", app: "GitHub", issue: "Dependabot alerts ignored for 30+ days (12 critical CVEs)", severity: "medium", category: "exposure", user: "dev-team", status: "open" },
-  { id: "saas-7", app: "Microsoft 365", issue: "Mailbox forwarding rule to external address detected", severity: "medium", category: "config", user: "hr@company.com", status: "resolved" },
-  { id: "saas-8", app: "Slack", issue: "Bot token with admin scope installed by non-admin user", severity: "medium", category: "permissions", user: "intern@company.com", status: "resolved" },
-];
+const FINDINGS: SaasFinding[] = [];
 
 const appIcons: Record<string, React.ReactNode> = {
   "Google Workspace": <Mail className="h-4 w-4" />,

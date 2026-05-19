@@ -37,63 +37,7 @@ interface ThreatIndicator {
   status: "active" | "mitigated" | "monitoring";
 }
 
-const DEMO_THREATS: ThreatIndicator[] = [
-  {
-    id: "t1",
-    type: "ip",
-    indicator: "185.220.101.xx",
-    description: "Known Tor exit node attempting SSH brute-force attacks",
-    severity: "high",
-    source: "AbuseIPDB",
-    detectedAt: "30 min ago",
-    affectedResources: 3,
-    status: "active",
-  },
-  {
-    id: "t2",
-    type: "ransomware",
-    indicator: "LockBit 3.0 Pattern",
-    description: "File encryption pattern matching LockBit 3.0 ransomware detected in S3 access logs",
-    severity: "critical",
-    source: "CISA Alerts",
-    detectedAt: "2 hours ago",
-    affectedResources: 1,
-    status: "monitoring",
-  },
-  {
-    id: "t3",
-    type: "credential",
-    indicator: "admin@company.com",
-    description: "Credentials found in public breach database (Have I Been Pwned)",
-    severity: "critical",
-    source: "HIBP",
-    detectedAt: "1 day ago",
-    affectedResources: 5,
-    status: "active",
-  },
-  {
-    id: "t4",
-    type: "api",
-    indicator: "Unusual API burst",
-    description: "3,200 API calls in 5 minutes from single IAM user — 40x above baseline",
-    severity: "high",
-    source: "CloudTrail Analysis",
-    detectedAt: "4 hours ago",
-    affectedResources: 2,
-    status: "mitigated",
-  },
-  {
-    id: "t5",
-    type: "ip",
-    indicator: "45.155.205.xx",
-    description: "IP associated with Cobalt Strike C2 infrastructure",
-    severity: "critical",
-    source: "Threat Intel Feed",
-    detectedAt: "6 hours ago",
-    affectedResources: 1,
-    status: "active",
-  },
-];
+const DEMO_THREATS: ThreatIndicator[] = [];
 
 const typeIcons: Record<string, React.ReactNode> = {
   ip: <Globe className="h-4 w-4" />,
