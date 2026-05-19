@@ -159,8 +159,8 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold tracking-tight mb-1">Security Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             {accounts.length > 0
-              ? `Monitoring ${accounts.length} AWS account${accounts.length > 1 ? "s" : ""} for security issues.`
-              : "Connect your first AWS account to start monitoring."}
+              ? `Monitoring ${accounts.length} cloud account${accounts.length > 1 ? "s" : ""} for security issues.`
+              : "Connect your first cloud account to start monitoring."}
           </p>
         </div>
 
@@ -171,7 +171,7 @@ const Dashboard = () => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-success">Read-Only Security Monitoring</p>
-            <p className="text-[11px] text-muted-foreground">We never modify your AWS resources. You stay in control.</p>
+            <p className="text-[11px] text-muted-foreground">We never modify your cloud resources. You stay in control.</p>
           </div>
         </div>
 
