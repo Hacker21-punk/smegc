@@ -50,7 +50,7 @@ export function useAttackPaths() {
         .order("risk_score", { ascending: false });
 
       if (error || !dbPaths || dbPaths.length === 0) {
-        return DEMO_PATHS;
+        return [];
       }
 
       // For each path, fetch its steps with node details
@@ -88,7 +88,7 @@ export function useAttackPaths() {
             blastRadius: ap.blast_radius,
             pathLength: ap.path_length,
             status: ap.status,
-            nodes: nodes.length > 0 ? nodes : DEMO_PATHS[0].nodes,
+            nodes,
             description: ap.description || "",
           };
         })
