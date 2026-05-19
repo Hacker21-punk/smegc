@@ -227,78 +227,88 @@ export default function SecurityGraph() {
             </Card>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search nodes..."
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {isEmpty ? (
+            <EmptyState
+              icon={<Layers className="h-7 w-7" />}
+              title="No security graph data yet"
+              description="Connect a cloud account so CloudGuard can discover assets and build a relationship graph showing exposure paths to your sensitive resources."
+            />
+          ) : (
+            <>
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search nodes..."
+                    className="pl-9"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="All types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Node Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {isLoading
-              ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-28" />)
-              : filteredNodes.map((node: any) => {
-                  const connectionCount = edges.filter(
-                    (e: any) => e.source_node_id === node.id || e.target_node_id === node.id
-                  ).length;
-                  return (
-                    <Card
-                      key={node.id}
-                      className={`cursor-pointer transition-all hover:shadow-md border ${riskColor(node.risk_score)}`}
-                      onClick={() => setSelectedNode(node)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            {nodeTypeIcons[node.node_type] || <Server className="h-4 w-4" />}
-                            <span className="text-xs font-medium capitalize">
-                              {(node.node_type || "").replace(/_/g, " ")}
-                            </span>
-                          </div>
-                          <Badge variant="outline" className={`text-[10px] ${riskColor(node.risk_score)}`}>
-                            {riskLabel(node.risk_score)}
-                          </Badge>
-                        </div>
-                        <p className="text-sm font-semibold truncate">{node.resource_name || node.resource_id}</p>
-                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                          {node.is_public && (
-                            <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600">Public</Badge>
-                          )}
-                          {node.is_sensitive && (
-                            <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive">Sensitive</Badge>
-                          )}
-                          <span className="ml-auto">{connectionCount} connections</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-          </div>
+              {/* Node Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {isLoading
+                  ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-28" />)
+                  : filteredNodes.map((node: any) => {
+                      const connectionCount = edges.filter(
+                        (e: any) => e.source_node_id === node.id || e.target_node_id === node.id
+                      ).length;
+                      return (
+                        <Card
+                          key={node.id}
+                          className={`cursor-pointer transition-all hover:shadow-md border ${riskColor(node.risk_score)}`}
+                          onClick={() => setSelectedNode(node)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                {nodeTypeIcons[node.node_type] || <Server className="h-4 w-4" />}
+                                <span className="text-xs font-medium capitalize">
+                                  {(node.node_type || "").replace(/_/g, " ")}
+                                </span>
+                              </div>
+                              <Badge variant="outline" className={`text-[10px] ${riskColor(node.risk_score)}`}>
+                                {riskLabel(node.risk_score)}
+                              </Badge>
+                            </div>
+                            <p className="text-sm font-semibold truncate">{node.resource_name || node.resource_id}</p>
+                            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                              {node.is_public && (
+                                <Badge variant="outline" className="text-[10px] bg-orange-500/10 text-orange-600">Public</Badge>
+                              )}
+                              {node.is_sensitive && (
+                                <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive">Sensitive</Badge>
+                              )}
+                              <span className="ml-auto">{connectionCount} connections</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+              </div>
 
-          {!isLoading && filteredNodes.length === 0 && (
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                No nodes match your search criteria
-              </CardContent>
-            </Card>
+              {!isLoading && filteredNodes.length === 0 && (
+                <Card>
+                  <CardContent className="p-8 text-center text-muted-foreground">
+                    No nodes match your search criteria
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </div>
       </main>
