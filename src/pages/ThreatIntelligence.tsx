@@ -136,7 +136,13 @@ export default function ThreatIntelligence() {
             </Card>
           </div>
 
-          {/* Threat Table */}
+          {DEMO_THREATS.length === 0 ? (
+            <EmptyState
+              icon={<Radar className="h-7 w-7" />}
+              title="No threat indicators yet"
+              description="Once cloud accounts are connected, CloudGuard will correlate audit logs and threat feeds (AbuseIPDB, CISA, HIBP) to surface indicators of compromise."
+            />
+          ) : (
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -175,32 +181,15 @@ export default function ThreatIntelligence() {
                             <span className="text-xs capitalize">{threat.type}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <span className="font-mono text-sm">{threat.indicator}</span>
-                        </TableCell>
+                        <TableCell><span className="font-mono text-sm">{threat.indicator}</span></TableCell>
                         <TableCell>
                           <p className="text-sm max-w-xs">{threat.description}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {threat.affectedResources} resource{threat.affectedResources > 1 ? "s" : ""} affected
-                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">{threat.affectedResources} resource{threat.affectedResources > 1 ? "s" : ""} affected</p>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant={severityBadge[threat.severity]}>{threat.severity}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`text-sm font-medium capitalize ${statusColors[threat.status]}`}>
-                            {threat.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">{threat.source}</span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="h-3.5 w-3.5" />
-                            {threat.detectedAt}
-                          </div>
-                        </TableCell>
+                        <TableCell><Badge variant={severityBadge[threat.severity]}>{threat.severity}</Badge></TableCell>
+                        <TableCell><span className={`text-sm font-medium capitalize ${statusColors[threat.status]}`}>{threat.status}</span></TableCell>
+                        <TableCell><span className="text-sm text-muted-foreground">{threat.source}</span></TableCell>
+                        <TableCell><div className="flex items-center gap-1 text-sm text-muted-foreground"><Clock className="h-3.5 w-3.5" />{threat.detectedAt}</div></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -208,6 +197,7 @@ export default function ThreatIntelligence() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
       </main>
     </div>
