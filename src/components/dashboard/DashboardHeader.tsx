@@ -62,12 +62,14 @@ export function DashboardHeader({ lastScanTime, onRefresh, onMenuToggle }: Dashb
             <span className="text-xs">Refresh</span>
           </Button>
 
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 border border-border/50">
-            <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-            <span className="text-[11px] text-muted-foreground font-medium">
-              Last scan: {lastScanTime}
-            </span>
-          </div>
+          {lastScanTime && lastScanTime !== "—" && lastScanTime !== "--" && (
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 border border-border/50">
+              <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+              <span className="text-[11px] text-muted-foreground font-medium">
+                Last scan: {lastScanTime}
+              </span>
+            </div>
+          )}
 
           <NotificationDropdown />
 
