@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
