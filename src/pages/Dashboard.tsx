@@ -171,7 +171,7 @@ const Dashboard = () => {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-success">Read-Only Security Monitoring</p>
-            <p className="text-[11px] text-muted-foreground">We never modify your AWS resources. You stay in control.</p>
+            <p className="text-[11px] text-muted-foreground">We never modify your cloud resources. You stay in control.</p>
           </div>
         </div>
 
