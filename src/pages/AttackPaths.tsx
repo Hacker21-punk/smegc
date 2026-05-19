@@ -20,6 +20,8 @@ import {
 import { useAttackPaths } from "@/hooks/use-attack-paths";
 import { processAttackPathForAutopilot } from "@/lib/graph-autopilot-integration";
 import { toast } from "@/hooks/use-toast";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { Target } from "lucide-react";
 
 const severityBadge: Record<string, "destructive" | "default" | "secondary" | "outline"> = {
   critical: "destructive",
@@ -110,79 +112,87 @@ export default function AttackPaths() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Path List */}
-            <Card className="lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="text-base">Detected Paths</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {isLoading
-                  ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
-                  : paths.map((path) => (
-                      <div
-                        key={path.id}
-                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                          selectedPath?.id === path.id ? "bg-muted border-primary/30" : "hover:bg-muted/50"
-                        }`}
-                        onClick={() => setSelectedPath(path)}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <Badge variant={severityBadge[path.severity]}>{path.severity}</Badge>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          {!isLoading && paths.length === 0 ? (
+            <EmptyState
+              icon={<Target className="h-7 w-7" />}
+              title="No attack paths detected yet"
+              description="Once a cloud account is connected and scanned, CloudGuard will model relationships between assets and surface realistic breach paths here."
+            />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Path List */}
+              <Card className="lg:col-span-1">
+                <CardHeader>
+                  <CardTitle className="text-base">Detected Paths</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {isLoading
+                    ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)
+                    : paths.map((path) => (
+                        <div
+                          key={path.id}
+                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedPath?.id === path.id ? "bg-muted border-primary/30" : "hover:bg-muted/50"
+                          }`}
+                          onClick={() => setSelectedPath(path)}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <Badge variant={severityBadge[path.severity]}>{path.severity}</Badge>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <p className="text-sm font-medium">{path.name}</p>
+                          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                            <span>{path.probability}% probability</span>
+                            <span>₹{(path.estimatedLoss / 100000).toFixed(1)}L impact</span>
+                          </div>
                         </div>
-                        <p className="text-sm font-medium">{path.name}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                          <span>{path.probability}% probability</span>
-                          <span>₹{(path.estimatedLoss / 100000).toFixed(1)}L impact</span>
-                        </div>
-                      </div>
-                    ))}
-              </CardContent>
-            </Card>
-
-            {/* Path Visualization */}
-            <Card className="lg:col-span-2">
-              {selectedPath ? (
-                <>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-base">{selectedPath.name}</CardTitle>
-                        <p className="text-xs text-muted-foreground mt-1">{selectedPath.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-destructive">{selectedPath.probability}%</p>
-                        <p className="text-xs text-muted-foreground">breach probability</p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <AttackPathVisualization path={selectedPath} />
-                    <div className="mt-4 flex flex-col sm:flex-row gap-4">
-                      <div className="flex-1 p-3 rounded-lg bg-muted text-sm">
-                        <p className="font-medium mb-1">Estimated Financial Impact</p>
-                        <p className="text-2xl font-bold">₹{selectedPath.estimatedLoss.toLocaleString("en-IN")}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Based on data sensitivity, regulatory fines, and recovery costs
-                        </p>
-                      </div>
-                      <div className="flex flex-col gap-2 justify-end">
-                        <Button size="sm" onClick={handleTriggerAutopilot}>
-                          <Zap className="h-4 w-4 mr-2" />
-                          Trigger Autopilot
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </>
-              ) : (
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  Select an attack path to visualize
+                      ))}
                 </CardContent>
-              )}
-            </Card>
-          </div>
+              </Card>
+
+              {/* Path Visualization */}
+              <Card className="lg:col-span-2">
+                {selectedPath ? (
+                  <>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-base">{selectedPath.name}</CardTitle>
+                          <p className="text-xs text-muted-foreground mt-1">{selectedPath.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-destructive">{selectedPath.probability}%</p>
+                          <p className="text-xs text-muted-foreground">breach probability</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <AttackPathVisualization path={selectedPath} />
+                      <div className="mt-4 flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1 p-3 rounded-lg bg-muted text-sm">
+                          <p className="font-medium mb-1">Estimated Financial Impact</p>
+                          <p className="text-2xl font-bold">₹{selectedPath.estimatedLoss.toLocaleString("en-IN")}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Based on data sensitivity, regulatory fines, and recovery costs
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2 justify-end">
+                          <Button size="sm" onClick={handleTriggerAutopilot}>
+                            <Zap className="h-4 w-4 mr-2" />
+                            Trigger Autopilot
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </>
+                ) : (
+                  <CardContent className="p-8 text-center text-muted-foreground">
+                    Select an attack path to visualize
+                  </CardContent>
+                )}
+              </Card>
+            </div>
+          )}
         </div>
       </main>
     </div>
