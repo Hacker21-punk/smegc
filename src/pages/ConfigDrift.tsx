@@ -111,66 +111,74 @@ export default function ConfigDrift() {
           </div>
 
           {/* Drift Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Recent Configuration Changes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Resource</TableHead>
-                      <TableHead>Change</TableHead>
-                      <TableHead>Risk</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Detected</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {DEMO_DRIFTS.map(drift => {
-                      const status = statusConfig[drift.status];
-                      return (
-                        <TableRow key={drift.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium text-sm">{drift.resource}</p>
-                              <p className="text-xs text-muted-foreground">{drift.resourceType} · {drift.provider.toUpperCase()}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="max-w-xs">
-                              <p className="text-sm">{drift.change}</p>
-                              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                                <span className="line-through">{drift.previousValue}</span>
-                                <ArrowRight className="h-3 w-3" />
-                                <span className="text-foreground">{drift.currentValue}</span>
+          {DEMO_DRIFTS.length === 0 ? (
+            <EmptyState
+              icon={<GitCompareArrows className="h-7 w-7" />}
+              title="No configuration changes detected"
+              description="CloudGuard continuously monitors your cloud infrastructure for risky configuration drift. Connect an account to start tracking changes."
+            />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Recent Configuration Changes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Resource</TableHead>
+                        <TableHead>Change</TableHead>
+                        <TableHead>Risk</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Detected</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {DEMO_DRIFTS.map(drift => {
+                        const status = statusConfig[drift.status];
+                        return (
+                          <TableRow key={drift.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium text-sm">{drift.resource}</p>
+                                <p className="text-xs text-muted-foreground">{drift.resourceType} · {drift.provider.toUpperCase()}</p>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={riskBadgeVariant[drift.riskLevel]}>{drift.riskLevel}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5">
-                              {status.icon}
-                              <span className="text-sm">{status.label}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Clock className="h-3.5 w-3.5" />
-                              {drift.detectedAt}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                            </TableCell>
+                            <TableCell>
+                              <div className="max-w-xs">
+                                <p className="text-sm">{drift.change}</p>
+                                <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                                  <span className="line-through">{drift.previousValue}</span>
+                                  <ArrowRight className="h-3 w-3" />
+                                  <span className="text-foreground">{drift.currentValue}</span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={riskBadgeVariant[drift.riskLevel]}>{drift.riskLevel}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                {status.icon}
+                                <span className="text-sm">{status.label}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Clock className="h-3.5 w-3.5" />
+                                {drift.detectedAt}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>
