@@ -172,9 +172,6 @@ export default function SecurityGraph() {
               <p className="text-muted-foreground">
                 Interactive map of your cloud infrastructure relationships and risk exposure
               </p>
-              {isDemo && (
-                <Badge variant="secondary" className="mt-1">Demo Data — Connect cloud accounts to see real graph</Badge>
-              )}
             </div>
             <Button variant="outline" size="sm" onClick={() => { refetchNodes(); refetchEdges(); }}>
               <RefreshCw className="h-4 w-4 mr-2" />
