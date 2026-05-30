@@ -131,25 +131,27 @@ export default function HelpSupport() {
 
           {/* Quick Links */}
           <div className="grid gap-4 md:grid-cols-2">
-            {resources.map((resource, index) => (
-              <Card key={index} className="hover:border-primary/50 transition-colors cursor-pointer">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                      {resource.icon}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-sm">{resource.title}</h3>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+            {resources.map((resource) => (
+              <Link key={resource.title} to={resource.href} className="block">
+                <Card className="hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer h-full">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                        {resource.icon}
                       </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        {resource.description}
-                      </p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-sm">{resource.title}</h3>
+                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {resource.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
 
