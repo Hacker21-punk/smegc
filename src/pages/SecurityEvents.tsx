@@ -49,10 +49,12 @@ export default function SecurityEvents() {
     BASE_EVENTS.map((e, i) => ({ ...e, id: `evt-${i}`, timestamp: generateTime(i * 120) }))
   );
 
-  // Simulate real-time events
+  // Live stream from cloud audit sources — disabled until a cloud account is connected.
   useEffect(() => {
+    if (BASE_EVENTS.length === 0) return;
     const interval = setInterval(() => {
       const randomEvent = BASE_EVENTS[Math.floor(Math.random() * BASE_EVENTS.length)];
+      if (!randomEvent) return;
       const newEvent: SecurityEvent = {
         ...randomEvent,
         id: `evt-${Date.now()}`,
@@ -62,6 +64,8 @@ export default function SecurityEvents() {
     }, 8000);
     return () => clearInterval(interval);
   }, []);
+
+  const isLive = events.length > 0;
 
   const critCount = events.filter(e => e.severity === "critical").length;
   const highCount = events.filter(e => e.severity === "high").length;
