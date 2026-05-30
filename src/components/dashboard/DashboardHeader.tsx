@@ -18,7 +18,7 @@ import { useState } from "react";
 
 interface DashboardHeaderProps {
   lastScanTime: string;
-  onRefresh?: () => void | Promise<void>;
+  onRefresh?: () => unknown | Promise<unknown>;
   onMenuToggle?: () => void;
 }
 
