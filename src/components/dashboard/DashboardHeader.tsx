@@ -18,7 +18,7 @@ import { useState } from "react";
 
 interface DashboardHeaderProps {
   lastScanTime: string;
-  onRefresh: () => void;
+  onRefresh?: () => unknown | Promise<unknown>;
   onMenuToggle?: () => void;
 }
 
@@ -28,9 +28,16 @@ export function DashboardHeader({ lastScanTime, onRefresh, onMenuToggle }: Dashb
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
+    if (!onRefresh) return;
     setIsRefreshing(true);
-    await onRefresh();
-    setTimeout(() => setIsRefreshing(false), 1000);
+    try {
+      await onRefresh();
+      toast.success("Refreshed");
+    } catch {
+      toast.error("Refresh failed");
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 600);
+    }
   };
 
   const handleSignOut = async () => {
@@ -52,15 +59,18 @@ export function DashboardHeader({ lastScanTime, onRefresh, onMenuToggle }: Dashb
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleRefresh} 
-            className="hidden sm:flex gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <RefreshCw className={cn("h-4 w-4 transition-transform duration-700", isRefreshing && "animate-spin")} />
-            <span className="text-xs">Refresh</span>
-          </Button>
+          {onRefresh && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="hidden sm:flex gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className={cn("h-4 w-4 transition-transform duration-700", isRefreshing && "animate-spin")} />
+              <span className="text-xs">Refresh</span>
+            </Button>
+          )}
 
           {lastScanTime && lastScanTime !== "—" && lastScanTime !== "--" && (
             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 border border-border/50">

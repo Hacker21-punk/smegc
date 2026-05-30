@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,32 +76,32 @@ export default function HelpSupport() {
     {
       icon: <BookOpen className="h-5 w-5" />,
       title: "Getting Started Guide",
-      description: "Learn how to connect your first AWS account",
-      href: "#",
+      description: "Learn how to connect your first cloud account",
+      href: "/dashboard/accounts",
     },
     {
       icon: <Shield className="h-5 w-5" />,
       title: "Security Best Practices",
-      description: "AWS security recommendations for SMEs",
-      href: "#",
+      description: "Review your security score and recommendations",
+      href: "/dashboard",
     },
     {
       icon: <FileText className="h-5 w-5" />,
       title: "Understanding Findings",
       description: "How to interpret and prioritize security findings",
-      href: "#",
+      href: "/dashboard/findings",
     },
     {
       icon: <Cloud className="h-5 w-5" />,
       title: "IAM Role Setup",
-      description: "Detailed guide for AWS role configuration",
-      href: "#",
+      description: "Step-by-step AWS role configuration",
+      href: "/dashboard/accounts",
     },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader lastScanTime="—" onRefresh={() => {}} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <DashboardHeader lastScanTime="—" onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="pt-16 md:pl-64">
@@ -130,25 +131,27 @@ export default function HelpSupport() {
 
           {/* Quick Links */}
           <div className="grid gap-4 md:grid-cols-2">
-            {resources.map((resource, index) => (
-              <Card key={index} className="hover:border-primary/50 transition-colors cursor-pointer">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                      {resource.icon}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-sm">{resource.title}</h3>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+            {resources.map((resource) => (
+              <Link key={resource.title} to={resource.href} className="block">
+                <Card className="hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer h-full">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                        {resource.icon}
                       </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        {resource.description}
-                      </p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium text-sm">{resource.title}</h3>
+                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {resource.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
 
@@ -168,7 +171,7 @@ export default function HelpSupport() {
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 {faqs.map((faq, index) => (
-                  <AccordionItem key={index} value={`item-${index}`}>
+                  <AccordionItem key={faq.question} value={`item-${index}`}>
                     <AccordionTrigger className="text-left text-sm font-medium">
                       {faq.question}
                     </AccordionTrigger>

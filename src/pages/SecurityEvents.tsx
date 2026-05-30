@@ -49,10 +49,12 @@ export default function SecurityEvents() {
     BASE_EVENTS.map((e, i) => ({ ...e, id: `evt-${i}`, timestamp: generateTime(i * 120) }))
   );
 
-  // Simulate real-time events
+  // Live stream from cloud audit sources — disabled until a cloud account is connected.
   useEffect(() => {
+    if (BASE_EVENTS.length === 0) return;
     const interval = setInterval(() => {
       const randomEvent = BASE_EVENTS[Math.floor(Math.random() * BASE_EVENTS.length)];
+      if (!randomEvent) return;
       const newEvent: SecurityEvent = {
         ...randomEvent,
         id: `evt-${Date.now()}`,
@@ -63,12 +65,14 @@ export default function SecurityEvents() {
     return () => clearInterval(interval);
   }, []);
 
+  const isLive = events.length > 0;
+
   const critCount = events.filter(e => e.severity === "critical").length;
   const highCount = events.filter(e => e.severity === "high").length;
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} lastScanTime="" onRefresh={() => {}} />
+      <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} lastScanTime="" />
       <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="md:ml-64 pt-16">
         <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -76,10 +80,12 @@ export default function SecurityEvents() {
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Activity className="h-6 w-6 text-primary" />
               Real-Time Security Events
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
+              {isLive && (
+                <span className="relative flex h-3 w-3" aria-label="Live">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+              )}
             </h1>
             <p className="text-muted-foreground">Live streaming analysis of security events from cloud audit logs, network traffic, and authentication</p>
           </div>

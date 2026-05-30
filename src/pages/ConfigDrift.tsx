@@ -59,7 +59,7 @@ export default function ConfigDrift() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} lastScanTime="" onRefresh={() => {}} />
+      <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} lastScanTime="" />
       <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="md:ml-64 pt-16">

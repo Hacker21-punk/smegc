@@ -310,61 +310,59 @@ export default function SecurityGraph() {
               )}
             </>
           )}
+
+          {/* Critical Paths Section */}
+          {criticalPaths.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  Algorithmically Detected Critical Paths
+                </CardTitle>
+                <CardDescription>
+                  DFS-based traversal from public entry points to sensitive targets
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {criticalPaths.map((cp, i) => {
+                  const pathNodeNames = cp.pathResult.path.map((id) => {
+                    const n = nodes.find((nd: any) => nd.id === id) as any;
+                    return n?.resource_name || n?.resource_id || "Unknown";
+                  });
+                  return (
+                    <div key={i} className="p-3 rounded-lg border bg-muted/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {pathNodeNames.map((name, j) => (
+                            <span key={j} className="flex items-center gap-1 text-xs">
+                              {j > 0 && <span className="text-muted-foreground">→</span>}
+                              <span className="font-medium">{name}</span>
+                            </span>
+                          ))}
+                        </div>
+                        <Badge variant={cp.compositeScore >= 70 ? "destructive" : cp.compositeScore >= 40 ? "default" : "secondary"}>
+                          Score: {cp.compositeScore}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 text-[10px] text-muted-foreground">
+                        <span>Sensitivity: {cp.dataSensitivityScore}</span>
+                        <span>Priv Esc: {cp.privilegeEscalationScore}</span>
+                        <span>Exposure: {cp.networkExposureScore}</span>
+                        <span>Criticality: {cp.assetCriticalityScore}</span>
+                      </div>
+                      {cp.pathResult.hasPrivilegeEscalation && (
+                        <Badge variant="outline" className="mt-2 text-[10px] bg-orange-500/10 text-orange-600">
+                          ⚡ Privilege Escalation Detected
+                        </Badge>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
-
-      {/* Critical Paths Section */}
-      {criticalPaths.length > 0 && (
-        <div className="p-6 max-w-7xl mx-auto md:ml-64">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-                Algorithmically Detected Critical Paths
-              </CardTitle>
-              <CardDescription>
-                DFS-based traversal from public entry points to sensitive targets
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {criticalPaths.map((cp, i) => {
-                const pathNodeNames = cp.pathResult.path.map((id) => {
-                  const n = nodes.find((nd: any) => nd.id === id) as any;
-                  return n?.resource_name || n?.resource_id || "Unknown";
-                });
-                return (
-                  <div key={i} className="p-3 rounded-lg border bg-muted/30">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {pathNodeNames.map((name, j) => (
-                          <span key={j} className="flex items-center gap-1 text-xs">
-                            {j > 0 && <span className="text-muted-foreground">→</span>}
-                            <span className="font-medium">{name}</span>
-                          </span>
-                        ))}
-                      </div>
-                      <Badge variant={cp.compositeScore >= 70 ? "destructive" : cp.compositeScore >= 40 ? "default" : "secondary"}>
-                        Score: {cp.compositeScore}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2 text-[10px] text-muted-foreground">
-                      <span>Sensitivity: {cp.dataSensitivityScore}</span>
-                      <span>Priv Esc: {cp.privilegeEscalationScore}</span>
-                      <span>Exposure: {cp.networkExposureScore}</span>
-                      <span>Criticality: {cp.assetCriticalityScore}</span>
-                    </div>
-                    {cp.pathResult.hasPrivilegeEscalation && (
-                      <Badge variant="outline" className="mt-2 text-[10px] bg-orange-500/10 text-orange-600">
-                        ⚡ Privilege Escalation Detected
-                      </Badge>
-                    )}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Enhanced Node Detail Panel */}
       <NodeDetailPanel
