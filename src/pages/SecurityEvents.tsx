@@ -91,39 +91,47 @@ export default function SecurityEvents() {
             <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">5</p><p className="text-xs text-muted-foreground">Sources</p></CardContent></Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Event Stream
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-2">
-                  {events.map(e => (
-                    <div key={e.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
-                        {e.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className={`text-[10px] ${severityColors[e.severity]}`}>{e.severity}</Badge>
-                          <Badge variant="outline" className="text-[10px]">{e.source}</Badge>
-                          <span className="text-[10px] text-muted-foreground ml-auto">{e.timestamp}</span>
+          {events.length === 0 ? (
+            <EmptyState
+              icon={<Activity className="h-7 w-7" />}
+              title="No security events yet"
+              description="Connect a cloud account to start streaming real-time security events from CloudTrail, VPC Flow Logs, Kubernetes audit, and authentication sources."
+            />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Event Stream
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-2">
+                    {events.map(e => (
+                      <div key={e.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                          {e.icon}
                         </div>
-                        <p className="font-medium text-sm mt-1">{e.event}</p>
-                        <p className="text-xs text-muted-foreground">{e.details}</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className={`text-[10px] ${severityColors[e.severity]}`}>{e.severity}</Badge>
+                            <Badge variant="outline" className="text-[10px]">{e.source}</Badge>
+                            <span className="text-[10px] text-muted-foreground ml-auto">{e.timestamp}</span>
+                          </div>
+                          <p className="font-medium text-sm mt-1">{e.event}</p>
+                          <p className="text-xs text-muted-foreground">{e.details}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>
