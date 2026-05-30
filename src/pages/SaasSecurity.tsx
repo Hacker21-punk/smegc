@@ -67,43 +67,51 @@ export default function SaasSecurity() {
             <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-500">{FINDINGS.length - openCount}</p><p className="text-xs text-muted-foreground">Resolved</p></CardContent></Card>
           </div>
 
-          <Card>
-            <CardHeader><CardTitle>SaaS Findings</CardTitle></CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Severity</TableHead>
-                    <TableHead>Application</TableHead>
-                    <TableHead>Issue</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {FINDINGS.map(f => (
-                    <TableRow key={f.id}>
-                      <TableCell><Badge variant="outline" className={severityColors[f.severity]}>{f.severity}</Badge></TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-sm">
-                          {appIcons[f.app]} {f.app}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm max-w-sm">{f.issue}</TableCell>
-                      <TableCell className="text-sm font-mono">{f.user}</TableCell>
-                      <TableCell>
-                        {f.status === "open" ? (
-                          <Badge variant="outline" className="text-orange-500 bg-orange-500/10"><AlertTriangle className="h-3 w-3 mr-1" />Open</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-green-600 bg-green-500/10"><CheckCircle2 className="h-3 w-3 mr-1" />Resolved</Badge>
-                        )}
-                      </TableCell>
+          {FINDINGS.length === 0 ? (
+            <EmptyState
+              icon={<Globe2 className="h-7 w-7" />}
+              title="No SaaS applications connected"
+              description="Connect Google Workspace, Microsoft 365, Slack, or GitHub to start scanning for risky configurations and exposures."
+            />
+          ) : (
+            <Card>
+              <CardHeader><CardTitle>SaaS Findings</CardTitle></CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Severity</TableHead>
+                      <TableHead>Application</TableHead>
+                      <TableHead>Issue</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {FINDINGS.map(f => (
+                      <TableRow key={f.id}>
+                        <TableCell><Badge variant="outline" className={severityColors[f.severity]}>{f.severity}</Badge></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 text-sm">
+                            {appIcons[f.app]} {f.app}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm max-w-sm">{f.issue}</TableCell>
+                        <TableCell className="text-sm font-mono">{f.user}</TableCell>
+                        <TableCell>
+                          {f.status === "open" ? (
+                            <Badge variant="outline" className="text-orange-500 bg-orange-500/10"><AlertTriangle className="h-3 w-3 mr-1" />Open</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-green-600 bg-green-500/10"><CheckCircle2 className="h-3 w-3 mr-1" />Resolved</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>
