@@ -80,10 +80,12 @@ export default function SecurityEvents() {
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Activity className="h-6 w-6 text-primary" />
               Real-Time Security Events
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
+              {isLive && (
+                <span className="relative flex h-3 w-3" aria-label="Live">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+              )}
             </h1>
             <p className="text-muted-foreground">Live streaming analysis of security events from cloud audit logs, network traffic, and authentication</p>
           </div>
