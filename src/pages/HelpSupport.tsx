@@ -171,7 +171,7 @@ export default function HelpSupport() {
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
                 {faqs.map((faq, index) => (
-                  <AccordionItem key={index} value={`item-${index}`}>
+                  <AccordionItem key={faq.question} value={`item-${index}`}>
                     <AccordionTrigger className="text-left text-sm font-medium">
                       {faq.question}
                     </AccordionTrigger>
