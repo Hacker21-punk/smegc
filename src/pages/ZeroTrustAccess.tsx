@@ -116,41 +116,47 @@ export default function ZeroTrustAccess() {
           <Card>
             <CardHeader><CardTitle>Active Sessions</CardTitle></CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Device</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Trust Score</TableHead>
-                    <TableHead>Last Verified</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {SESSIONS.map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell className="font-medium text-sm">{s.user}</TableCell>
-                      <TableCell className="text-sm">{s.device}</TableCell>
-                      <TableCell className="text-sm">{s.location}</TableCell>
-                      <TableCell>
-                        <span className={`font-bold ${s.trustScore >= 80 ? "text-green-500" : s.trustScore >= 50 ? "text-orange-500" : "text-destructive"}`}>
-                          {s.trustScore}/100
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{s.lastVerified}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={statusColors[s.status]}>
-                          {s.status === "trusted" && <ShieldCheck className="h-3 w-3 mr-1" />}
-                          {s.status === "review" && <UserCheck className="h-3 w-3 mr-1" />}
-                          {s.status === "blocked" && <ShieldAlert className="h-3 w-3 mr-1" />}
-                          {s.status}
-                        </Badge>
-                      </TableCell>
+              {SESSIONS.length === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  No active sessions. Connect identity providers to monitor user sessions in real time.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Device</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Trust Score</TableHead>
+                      <TableHead>Last Verified</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {SESSIONS.map(s => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-medium text-sm">{s.user}</TableCell>
+                        <TableCell className="text-sm">{s.device}</TableCell>
+                        <TableCell className="text-sm">{s.location}</TableCell>
+                        <TableCell>
+                          <span className={`font-bold ${s.trustScore >= 80 ? "text-green-500" : s.trustScore >= 50 ? "text-orange-500" : "text-destructive"}`}>
+                            {s.trustScore}/100
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{s.lastVerified}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={statusColors[s.status]}>
+                            {s.status === "trusted" && <ShieldCheck className="h-3 w-3 mr-1" />}
+                            {s.status === "review" && <UserCheck className="h-3 w-3 mr-1" />}
+                            {s.status === "blocked" && <ShieldAlert className="h-3 w-3 mr-1" />}
+                            {s.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </div>
