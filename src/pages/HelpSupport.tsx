@@ -75,26 +75,26 @@ export default function HelpSupport() {
     {
       icon: <BookOpen className="h-5 w-5" />,
       title: "Getting Started Guide",
-      description: "Learn how to connect your first AWS account",
-      href: "#",
+      description: "Learn how to connect your first cloud account",
+      href: "/dashboard/accounts",
     },
     {
       icon: <Shield className="h-5 w-5" />,
       title: "Security Best Practices",
-      description: "AWS security recommendations for SMEs",
-      href: "#",
+      description: "Review your security score and recommendations",
+      href: "/dashboard",
     },
     {
       icon: <FileText className="h-5 w-5" />,
       title: "Understanding Findings",
       description: "How to interpret and prioritize security findings",
-      href: "#",
+      href: "/dashboard/findings",
     },
     {
       icon: <Cloud className="h-5 w-5" />,
       title: "IAM Role Setup",
-      description: "Detailed guide for AWS role configuration",
-      href: "#",
+      description: "Step-by-step AWS role configuration",
+      href: "/dashboard/accounts",
     },
   ];
 
