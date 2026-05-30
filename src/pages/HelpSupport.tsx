@@ -101,7 +101,7 @@ export default function HelpSupport() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader lastScanTime="—" onRefresh={() => {}} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <DashboardHeader lastScanTime="—" onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="pt-16 md:pl-64">
