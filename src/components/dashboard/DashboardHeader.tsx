@@ -18,7 +18,7 @@ import { useState } from "react";
 
 interface DashboardHeaderProps {
   lastScanTime: string;
-  onRefresh: () => void;
+  onRefresh?: () => void | Promise<void>;
   onMenuToggle?: () => void;
 }
 
@@ -28,9 +28,16 @@ export function DashboardHeader({ lastScanTime, onRefresh, onMenuToggle }: Dashb
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
+    if (!onRefresh) return;
     setIsRefreshing(true);
-    await onRefresh();
-    setTimeout(() => setIsRefreshing(false), 1000);
+    try {
+      await onRefresh();
+      toast.success("Refreshed");
+    } catch {
+      toast.error("Refresh failed");
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 600);
+    }
   };
 
   const handleSignOut = async () => {
