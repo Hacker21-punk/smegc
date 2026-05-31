@@ -1,84 +1,48 @@
-import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { useGraphNodes, useGraphEdges } from "@/hooks/use-attack-paths";
 import {
-  Layers,
-  Play,
-  Server,
-  Database,
-  Globe,
-  Shield,
-  Key,
-  HardDrive,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  Cpu,
+  Layers, Server, Database, Globe, Shield, Key, HardDrive,
+  CheckCircle2, XCircle, AlertTriangle, Cpu, Network,
 } from "lucide-react";
 
-interface TwinNode {
-  id: string;
-  name: string;
-  type: "compute" | "storage" | "database" | "identity" | "network" | "security";
-  provider: "AWS" | "Azure" | "GCP";
-  status: "secure" | "at_risk" | "critical";
-  connections: string[];
-}
-
-interface WhatIfResult {
-  id: string;
-  scenario: string;
-  impact: "positive" | "negative" | "neutral";
-  riskChange: number;
-  details: string;
-}
-
-const TWIN_NODES: TwinNode[] = [];
-const WHAT_IF_SCENARIOS: WhatIfResult[] = [];
-
-const iconMap: Record<string, React.ReactNode> = {
-  compute: <Cpu className="h-4 w-4" />,
-  storage: <HardDrive className="h-4 w-4" />,
-  database: <Database className="h-4 w-4" />,
-  identity: <Key className="h-4 w-4" />,
-  network: <Globe className="h-4 w-4" />,
-  security: <Shield className="h-4 w-4" />,
+const iconFor = (nodeType: string) => {
+  if (nodeType.includes("ec2") || nodeType.includes("lambda") || nodeType.includes("ecs") || nodeType.includes("eks")) return <Cpu className="h-4 w-4" />;
+  if (nodeType.includes("s3") || nodeType.includes("secrets") || nodeType.includes("kms")) return <HardDrive className="h-4 w-4" />;
+  if (nodeType.includes("rds") || nodeType.includes("dynamo")) return <Database className="h-4 w-4" />;
+  if (nodeType.includes("iam")) return <Key className="h-4 w-4" />;
+  if (nodeType.includes("vpc") || nodeType.includes("subnet") || nodeType.includes("gateway") || nodeType.includes("load_balancer")) return <Network className="h-4 w-4" />;
+  if (nodeType.includes("security_group")) return <Shield className="h-4 w-4" />;
+  return <Server className="h-4 w-4" />;
 };
 
-const statusColors: Record<string, string> = {
-  secure: "border-green-500/30 bg-green-500/5",
-  at_risk: "border-orange-500/30 bg-orange-500/5",
-  critical: "border-destructive/30 bg-destructive/5",
-};
-
-const statusBadge: Record<string, string> = {
-  secure: "bg-green-500/10 text-green-600",
-  at_risk: "bg-orange-500/10 text-orange-500",
-  critical: "bg-destructive/10 text-destructive",
+const statusFor = (score: number) => {
+  if (score >= 80) return { label: "critical", cls: "border-destructive/30 bg-destructive/5", badge: "bg-destructive/10 text-destructive", icon: <XCircle className="h-3 w-3 mr-1" /> };
+  if (score >= 50) return { label: "at risk", cls: "border-orange-500/30 bg-orange-500/5", badge: "bg-orange-500/10 text-orange-500", icon: <AlertTriangle className="h-3 w-3 mr-1" /> };
+  return { label: "secure", cls: "border-green-500/30 bg-green-500/5", badge: "bg-green-500/10 text-green-600", icon: <CheckCircle2 className="h-3 w-3 mr-1" /> };
 };
 
 export default function DigitalTwin() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [runningScenario, setRunningScenario] = useState<string | null>(null);
+  const { data: nodes = [], isLoading: nLoading } = useGraphNodes();
+  const { data: edges = [] } = useGraphEdges();
 
-  const runWhatIf = (id: string) => {
-    setRunningScenario(id);
-    toast.info("Running what-if simulation on digital twin...");
-    setTimeout(() => {
-      setRunningScenario(null);
-      toast.success("Simulation complete — results updated");
-    }, 2000);
-  };
+  const isLoading = nLoading;
+  const secure = nodes.filter((n) => (n.risk_score ?? 0) < 50).length;
+  const atRisk = nodes.filter((n) => (n.risk_score ?? 0) >= 50 && (n.risk_score ?? 0) < 80).length;
+  const critical = nodes.filter((n) => (n.risk_score ?? 0) >= 80).length;
 
-  const secureCount = TWIN_NODES.filter(n => n.status === "secure").length;
-  const atRiskCount = TWIN_NODES.filter(n => n.status === "at_risk").length;
-  const criticalCount = TWIN_NODES.filter(n => n.status === "critical").length;
+  // edges per node for connection counts
+  const edgeCounts = edges.reduce<Record<string, number>>((acc, e) => {
+    acc[e.source_node_id] = (acc[e.source_node_id] ?? 0) + 1;
+    acc[e.target_node_id] = (acc[e.target_node_id] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,91 +55,64 @@ export default function DigitalTwin() {
               <Layers className="h-6 w-6 text-primary" />
               Digital Twin — Cloud Replica
             </h1>
-            <p className="text-muted-foreground">Virtual replica of your infrastructure for safe attack simulation and policy testing</p>
+            <p className="text-muted-foreground">A live mirror of your cloud infrastructure built from the security graph.</p>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{TWIN_NODES.length}</p><p className="text-xs text-muted-foreground">Replicated Assets</p></CardContent></Card>
-            <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-500">{secureCount}</p><p className="text-xs text-muted-foreground">Secure</p></CardContent></Card>
-            <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-500">{atRiskCount}</p><p className="text-xs text-muted-foreground">At Risk</p></CardContent></Card>
-            <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-destructive">{criticalCount}</p><p className="text-xs text-muted-foreground">Critical</p></CardContent></Card>
+            <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{nodes.length}</p><p className="text-xs text-muted-foreground">Replicated Assets</p></CardContent></Card>
+            <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-500">{secure}</p><p className="text-xs text-muted-foreground">Secure</p></CardContent></Card>
+            <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-500">{atRisk}</p><p className="text-xs text-muted-foreground">At Risk</p></CardContent></Card>
+            <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-destructive">{critical}</p><p className="text-xs text-muted-foreground">Critical</p></CardContent></Card>
           </div>
 
-          {TWIN_NODES.length === 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
+            </div>
+          ) : nodes.length === 0 ? (
             <EmptyState
               icon={<Layers className="h-7 w-7" />}
               title="Digital twin not built yet"
-              description="Connect a cloud account so we can replicate your infrastructure into a safe digital twin for attack simulation and policy testing."
+              description="Connect a cloud account and run a scan. We'll build a live replica of your infrastructure here for safe simulation."
             />
           ) : (
-            <Tabs defaultValue="topology">
-              <TabsList>
-                <TabsTrigger value="topology">Infrastructure Topology</TabsTrigger>
-                <TabsTrigger value="whatif">What-If Simulations</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="topology" className="mt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {TWIN_NODES.map(node => (
-                    <Card key={node.id} className={`border ${statusColors[node.status]}`}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-                              {iconMap[node.type]}
+            <>
+              <Card>
+                <CardHeader><CardTitle className="text-base">Infrastructure Topology</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {nodes.slice(0, 60).map((n) => {
+                      const s = statusFor(n.risk_score ?? 0);
+                      return (
+                        <Card key={n.id} className={`border ${s.cls}`}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                                  {iconFor(n.node_type)}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-medium text-sm truncate">{n.resource_name || n.resource_id}</p>
+                                  <p className="text-[10px] text-muted-foreground truncate font-mono">{n.node_type}</p>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className="text-[10px] shrink-0">{n.provider.toUpperCase()}</Badge>
                             </div>
-                            <div>
-                              <p className="font-medium text-sm">{node.name}</p>
-                              <p className="text-[10px] text-muted-foreground">{node.id}</p>
+                            <div className="flex items-center justify-between mt-3">
+                              <Badge variant="outline" className={`text-xs ${s.badge}`}>{s.icon}{s.label}</Badge>
+                              <p className="text-[10px] text-muted-foreground">{edgeCounts[n.id] ?? 0} edges</p>
                             </div>
-                          </div>
-                          <Badge variant="outline" className="text-[10px]">{node.provider}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between mt-3">
-                          <Badge variant="outline" className={`text-xs ${statusBadge[node.status]}`}>
-                            {node.status === "secure" && <CheckCircle2 className="h-3 w-3 mr-1" />}
-                            {node.status === "at_risk" && <AlertTriangle className="h-3 w-3 mr-1" />}
-                            {node.status === "critical" && <XCircle className="h-3 w-3 mr-1" />}
-                            {node.status.replace("_", " ")}
-                          </Badge>
-                          <p className="text-[10px] text-muted-foreground">{node.connections.length} connections</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="whatif" className="mt-4 space-y-4">
-                {WHAT_IF_SCENARIOS.map(s => (
-                  <Card key={s.id}>
-                    <CardContent className="p-4 flex items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <p className="font-medium">{s.scenario}</p>
-                        <p className="text-sm text-muted-foreground mt-1">{s.details}</p>
-                        <Badge variant="outline" className={`mt-2 text-xs ${
-                          s.impact === "positive" ? "text-green-600 bg-green-500/10" :
-                          s.impact === "negative" ? "text-destructive bg-destructive/10" :
-                          "text-muted-foreground"
-                        }`}>
-                          Risk: {s.riskChange > 0 ? "+" : ""}{s.riskChange} points
-                        </Badge>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={runningScenario === s.id}
-                        onClick={() => runWhatIf(s.id)}
-                      >
-                        <Play className="h-4 w-4 mr-1" />
-                        {runningScenario === s.id ? "Running..." : "Simulate"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </TabsContent>
-            </Tabs>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                  {nodes.length > 60 && (
+                    <p className="text-xs text-muted-foreground text-center mt-4">Showing top 60 of {nodes.length} replicated assets</p>
+                  )}
+                </CardContent>
+              </Card>
+            </>
           )}
         </div>
       </main>
