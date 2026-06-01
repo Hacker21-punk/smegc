@@ -177,7 +177,7 @@ const ComplianceReports = () => {
             <div className="p-2 rounded-lg bg-primary/10">
               <FileText className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold">Compliance Reports</h1>
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display">Compliance Reports</h1>
           </div>
           <p className="text-muted-foreground">
             Generate audit-ready evidence reports for compliance frameworks.

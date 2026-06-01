@@ -168,7 +168,7 @@ export default function SecurityGraph() {
         <div className="p-6 max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Cloud Security Graph</h1>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display">Cloud Security Graph</h1>
               <p className="text-muted-foreground">
                 Interactive map of your cloud infrastructure relationships and risk exposure
               </p>

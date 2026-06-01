@@ -135,7 +135,7 @@ export default function AutopilotPolicies() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display flex items-center gap-2">
                 <Zap className="h-6 w-6 text-primary" />
                 Security Autopilot
               </h1>

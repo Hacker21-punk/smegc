@@ -134,7 +134,7 @@ export default function GCPAccounts() {
         <div className="p-6 max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">🔶 Google Cloud Projects</h1>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display flex items-center gap-2">🔶 Google Cloud Projects</h1>
               <p className="text-muted-foreground">Connect and manage Google Cloud Platform projects.</p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={(open) => open ? setDialogOpen(true) : resetDialog()}>
