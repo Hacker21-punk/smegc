@@ -592,8 +592,10 @@
 
   /* Better text rendering */
   h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
     text-wrap: balance;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
   }
 
   p {
