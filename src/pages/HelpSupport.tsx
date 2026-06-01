@@ -108,7 +108,7 @@ export default function HelpSupport() {
         <div className="p-6 max-w-4xl mx-auto space-y-6">
           {/* Page Header */}
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Help & Support</h1>
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display text-foreground">Help & Support</h1>
             <p className="text-muted-foreground mt-1">
               Find answers, learn best practices, and get in touch
             </p>

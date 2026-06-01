@@ -54,7 +54,7 @@ export default function Settings() {
         <div className="p-6 max-w-4xl mx-auto space-y-6">
           {/* Page Header */}
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display text-foreground">Settings</h1>
             <p className="text-muted-foreground mt-1">
               Manage your account preferences and application settings
             </p>

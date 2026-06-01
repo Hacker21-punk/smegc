@@ -64,7 +64,7 @@ export default function AttackPaths() {
         <div className="p-6 max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Attack Path Analysis</h1>
+              <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display">Attack Path Analysis</h1>
               <p className="text-muted-foreground">
                 Visualize potential breach paths through your cloud infrastructure
               </p>
