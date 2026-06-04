@@ -267,7 +267,7 @@ export default function RuntimeSecurity() {
                     Runtime Attack Detection
                     <LiveIndicator />
                   </h1>
-                  <p className="text-sm text-muted-foreground">Real-time cloud attack detection & automated response</p>
+                  <p className="text-fluid-subtitle text-muted-foreground">Real-time cloud attack detection & automated response</p>
                 </div>
               </div>
             </div>

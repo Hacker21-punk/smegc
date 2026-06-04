@@ -84,7 +84,7 @@ export default function ThreatIntelligence() {
                 <Radar className="h-6 w-6 text-primary" />
                 Threat Intelligence
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-fluid-subtitle text-muted-foreground">
                 Real-time threat feeds and indicators of compromise affecting your environment
               </p>
             </div>
