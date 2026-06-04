@@ -321,7 +321,7 @@ const Dashboard = () => {
                     <div className="absolute -inset-2 bg-primary/5 rounded-3xl animate-pulse" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">Get Started</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">
+                  <p className="text-fluid-lead text-muted-foreground mb-6 max-w-md mx-auto">
                     Connect your AWS account to start monitoring for security issues.
                     We use read-only access and never modify your resources.
                   </p>
@@ -389,7 +389,7 @@ const Dashboard = () => {
                 <CardContent className="py-8 text-center">
                   <CheckCircle2 className="h-12 w-12 mx-auto text-success mb-4" />
                   <h3 className="text-lg font-semibold text-success mb-2">All Clear!</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto text-sm">
+                  <p className="text-fluid-lead text-muted-foreground max-w-md mx-auto">
                     No security issues detected. We'll continue monitoring and alert you if anything changes.
                   </p>
                 </CardContent>

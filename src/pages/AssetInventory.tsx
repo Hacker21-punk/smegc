@@ -172,7 +172,7 @@ export default function AssetInventory() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="heading-display">Asset Inventory</h1>
-              <p className="text-muted-foreground">
+              <p className="text-fluid-subtitle text-muted-foreground">
                 Unified view of all cloud resources across AWS, Azure, and GCP
               </p>
             </div>

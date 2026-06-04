@@ -109,7 +109,7 @@ export default function HelpSupport() {
           {/* Page Header */}
           <div>
             <h1 className="heading-display text-foreground">Help & Support</h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-fluid-subtitle text-muted-foreground mt-1">
               Find answers, learn best practices, and get in touch
             </p>
           </div>

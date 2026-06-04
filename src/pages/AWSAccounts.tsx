@@ -365,7 +365,7 @@ export default function AWSAccounts() {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="heading-display mb-2">AWS Accounts</h1>
-            <p className="text-muted-foreground">
+            <p className="text-fluid-subtitle text-muted-foreground">
               Connect and manage your AWS accounts for security monitoring.
             </p>
           </div>

@@ -76,7 +76,7 @@ export default function ZeroTrustAccess() {
               <Fingerprint className="h-6 w-6 text-primary" />
               Zero Trust Access Engine
             </h1>
-            <p className="text-muted-foreground">Identity inventory, trust scoring, and context-aware access policies.</p>
+            <p className="text-fluid-subtitle text-muted-foreground">Identity inventory, trust scoring, and context-aware access policies.</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

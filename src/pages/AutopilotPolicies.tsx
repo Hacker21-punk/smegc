@@ -139,7 +139,7 @@ export default function AutopilotPolicies() {
                 <Zap className="h-6 w-6 text-primary" />
                 Security Autopilot
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-fluid-subtitle text-muted-foreground">
                 Configure autonomous security policies that automatically fix violations
               </p>
             </div>

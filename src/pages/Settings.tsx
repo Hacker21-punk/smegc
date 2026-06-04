@@ -55,7 +55,7 @@ export default function Settings() {
           {/* Page Header */}
           <div>
             <h1 className="heading-display text-foreground">Settings</h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-fluid-subtitle text-muted-foreground mt-1">
               Manage your account preferences and application settings
             </p>
           </div>

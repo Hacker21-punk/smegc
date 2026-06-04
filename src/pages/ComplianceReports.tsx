@@ -179,7 +179,7 @@ const ComplianceReports = () => {
             </div>
             <h1 className="heading-display">Compliance Reports</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-fluid-subtitle text-muted-foreground">
             Generate audit-ready evidence reports for compliance frameworks.
           </p>
         </div>

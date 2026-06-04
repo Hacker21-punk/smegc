@@ -72,7 +72,7 @@ export default function SaasSecurity() {
                 <Globe2 className="h-6 w-6 text-primary" />
                 SaaS Security Scanner
               </h1>
-              <p className="text-muted-foreground">Posture management for Google Workspace, Microsoft 365, Slack, and GitHub.</p>
+              <p className="text-fluid-subtitle text-muted-foreground">Posture management for Google Workspace, Microsoft 365, Slack, and GitHub.</p>
             </div>
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
               <Sparkles className="h-3 w-3 mr-1" />

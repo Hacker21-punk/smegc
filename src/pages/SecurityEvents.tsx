@@ -87,7 +87,7 @@ export default function SecurityEvents() {
                 </span>
               )}
             </h1>
-            <p className="text-muted-foreground">Live streaming analysis of security events from cloud audit logs, network traffic, and authentication</p>
+            <p className="text-fluid-subtitle text-muted-foreground">Live streaming analysis of security events from cloud audit logs, network traffic, and authentication</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
