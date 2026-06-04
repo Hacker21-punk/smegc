@@ -263,7 +263,7 @@ export default function RuntimeSecurity() {
                   <Radar className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display tracking-tight flex items-center gap-2.5">
+                  <h1 className="heading-display flex items-center gap-2.5">
                     Runtime Attack Detection
                     <LiveIndicator />
                   </h1>

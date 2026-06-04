@@ -156,7 +156,7 @@ const Dashboard = () => {
       <main className="md:ml-64 p-6 max-w-7xl">
         {/* Page Header */}
         <div className="mb-8 animate-fade-in-up" style={{ animationDelay: "0.05s" }}>
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display tracking-tight mb-1">Security Dashboard</h1>
+          <h1 className="heading-display mb-1">Security Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             {accounts.length > 0
               ? `Monitoring ${accounts.length} cloud account${accounts.length > 1 ? "s" : ""} for security issues.`
