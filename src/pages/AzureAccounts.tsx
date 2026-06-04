@@ -134,7 +134,7 @@ export default function AzureAccounts() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="heading-display flex items-center gap-2">🔷 Azure Accounts</h1>
-              <p className="text-muted-foreground">Connect and manage Microsoft Azure subscriptions.</p>
+              <p className="text-fluid-subtitle text-muted-foreground">Connect and manage Microsoft Azure subscriptions.</p>
             </div>
             <Dialog open={dialogOpen} onOpenChange={(open) => open ? setDialogOpen(true) : resetDialog()}>
               <DialogTrigger asChild>

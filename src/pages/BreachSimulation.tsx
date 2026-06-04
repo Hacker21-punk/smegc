@@ -90,7 +90,7 @@ export default function BreachSimulation() {
               <Crosshair className="h-6 w-6 text-destructive" />
               Continuous Breach Simulation
             </h1>
-            <p className="text-muted-foreground">AI-powered red team simulating real attack scenarios against your infrastructure</p>
+            <p className="text-fluid-subtitle text-muted-foreground">AI-powered red team simulating real attack scenarios against your infrastructure</p>
           </div>
 
           {/* Stats */}

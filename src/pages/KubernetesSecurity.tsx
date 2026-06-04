@@ -164,7 +164,7 @@ export default function KubernetesSecurity() {
                   Kubernetes Security
                   <LiveIndicator />
                 </h1>
-                <p className="text-sm text-muted-foreground">Detect misconfigurations across EKS, AKS &amp; GKE clusters</p>
+                <p className="text-fluid-subtitle text-muted-foreground">Detect misconfigurations across EKS, AKS &amp; GKE clusters</p>
               </div>
             </div>
             <div className="flex gap-3">

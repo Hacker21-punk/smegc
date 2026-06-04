@@ -36,7 +36,7 @@ export default function ConfigDrift() {
               <GitCompareArrows className="h-6 w-6" />
               Configuration Drift Detection
             </h1>
-            <p className="text-muted-foreground">Assets whose configuration changed since first discovery — last 30 days.</p>
+            <p className="text-fluid-subtitle text-muted-foreground">Assets whose configuration changed since first discovery — last 30 days.</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

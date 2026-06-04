@@ -290,7 +290,7 @@ const Findings = () => {
       <main className="md:ml-64 p-6">
         <div className="mb-6">
           <h1 className="heading-display mb-2">Security Findings</h1>
-          <p className="text-muted-foreground">
+          <p className="text-fluid-subtitle text-muted-foreground">
             Review and remediate security issues across your AWS accounts.
           </p>
         </div>

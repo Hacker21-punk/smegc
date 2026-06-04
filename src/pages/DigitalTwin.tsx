@@ -55,7 +55,7 @@ export default function DigitalTwin() {
               <Layers className="h-6 w-6 text-primary" />
               Digital Twin — Cloud Replica
             </h1>
-            <p className="text-muted-foreground">A live mirror of your cloud infrastructure built from the security graph.</p>
+            <p className="text-fluid-subtitle text-muted-foreground">A live mirror of your cloud infrastructure built from the security graph.</p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

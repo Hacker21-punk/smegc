@@ -65,7 +65,7 @@ export default function AttackPaths() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="heading-display">Attack Path Analysis</h1>
-              <p className="text-muted-foreground">
+              <p className="text-fluid-subtitle text-muted-foreground">
                 Visualize potential breach paths through your cloud infrastructure
               </p>
             </div>
