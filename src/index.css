@@ -627,3 +627,32 @@
     color: hsl(var(--foreground));
   }
 }
+
+@layer components {
+  /* Fluid display heading — scales 24px→40px without layout shift.
+     Reserves line-height up-front so font swap doesn't cause CLS. */
+  .heading-display {
+    font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.5rem, 1.05rem + 2.2vw, 2.5rem);
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+    min-height: 1.15em;
+  }
+
+  .heading-section {
+    font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.25rem, 1rem + 1.2vw, 1.75rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .text-fluid-lead {
+    font-size: clamp(0.95rem, 0.85rem + 0.4vw, 1.125rem);
+    line-height: 1.55;
+  }
+}
