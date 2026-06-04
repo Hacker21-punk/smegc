@@ -220,7 +220,7 @@ export default function KubernetesSecurity() {
                     <GlassCard intensity="light" hover={false} className="py-16 text-center">
                       <Container className="h-14 w-14 mx-auto text-muted-foreground/40 mb-4" />
                       <h3 className="text-lg font-semibold mb-2">No Kubernetes clusters discovered</h3>
-                      <p className="text-muted-foreground max-w-md mx-auto text-sm">Connect cloud accounts first, then click "Discover Clusters" to find EKS, AKS, and GKE clusters.</p>
+                      <p className="text-fluid-lead text-muted-foreground max-w-md mx-auto">Connect cloud accounts first, then click "Discover Clusters" to find EKS, AKS, and GKE clusters.</p>
                     </GlassCard>
                   ) : clusters.map((cluster, idx) => {
                     const cf = findings.filter(f => f.cluster_id === cluster.id && !f.is_resolved);
