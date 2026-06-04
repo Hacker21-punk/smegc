@@ -72,7 +72,7 @@ export default function ZeroTrustAccess() {
       <main className="md:ml-64 pt-16">
         <div className="p-6 max-w-7xl mx-auto space-y-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight font-display flex items-center gap-2">
+            <h1 className="heading-display flex items-center gap-2">
               <Fingerprint className="h-6 w-6 text-primary" />
               Zero Trust Access Engine
             </h1>
