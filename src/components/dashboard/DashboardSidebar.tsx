@@ -24,6 +24,7 @@ import {
   Activity,
   ChevronDown,
   Network,
+  ClipboardList,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -114,6 +115,7 @@ export function DashboardSidebar({ isOpen = true, onClose }: DashboardSidebarPro
       items: [
         { icon: <Radar className="h-4 w-4" />, label: "Threat Intel", href: "/dashboard/threats" },
         { icon: <FileText className="h-4 w-4" />, label: "Compliance", href: "/dashboard/reports" },
+        { icon: <ClipboardList className="h-4 w-4" />, label: "GRC Reporting", href: "/dashboard/grc" },
       ],
     },
   ];
