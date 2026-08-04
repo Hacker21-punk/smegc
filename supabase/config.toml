@@ -35,3 +35,10 @@ verify_jwt = false
 
 [functions.contact-form]
 verify_jwt = false
+
+[functions.azure-scanner]
+verify_jwt = false
+
+[functions.gcp-scanner]
+verify_jwt = false
+

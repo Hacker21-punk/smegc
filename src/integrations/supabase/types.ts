@@ -996,21 +996,24 @@ export type Database = {
       }
       risk_score_history: {
         Row: {
-          aws_account_id: string
+          aws_account_id: string | null
+          cloud_account_id: string | null
           created_at: string
           id: string
           recorded_at: string
           score: number
         }
         Insert: {
-          aws_account_id: string
+          aws_account_id?: string | null
+          cloud_account_id?: string | null
           created_at?: string
           id?: string
           recorded_at?: string
           score: number
         }
         Update: {
-          aws_account_id?: string
+          aws_account_id?: string | null
+          cloud_account_id?: string | null
           created_at?: string
           id?: string
           recorded_at?: string
@@ -1022,6 +1025,13 @@ export type Database = {
             columns: ["aws_account_id"]
             isOneToOne: false
             referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "risk_score_history_cloud_account_id_fkey"
+            columns: ["cloud_account_id"]
+            isOneToOne: false
+            referencedRelation: "cloud_accounts"
             referencedColumns: ["id"]
           },
         ]
@@ -1226,7 +1236,8 @@ export type Database = {
       }
       security_findings: {
         Row: {
-          aws_account_id: string
+          aws_account_id: string | null
+          cloud_account_id: string | null
           cloudformation_template: string | null
           compliance_tags: string[] | null
           created_at: string
@@ -1241,13 +1252,14 @@ export type Database = {
           resource_type: string
           risk_score_contribution: number | null
           rollback_guidance: string | null
-          scan_job_id: string
-          service: Database["public"]["Enums"]["aws_service"]
+          scan_job_id: string | null
+          service: string
           severity: Database["public"]["Enums"]["finding_severity"]
           title: string
         }
         Insert: {
-          aws_account_id: string
+          aws_account_id?: string | null
+          cloud_account_id?: string | null
           cloudformation_template?: string | null
           compliance_tags?: string[] | null
           created_at?: string
@@ -1262,13 +1274,14 @@ export type Database = {
           resource_type: string
           risk_score_contribution?: number | null
           rollback_guidance?: string | null
-          scan_job_id: string
-          service: Database["public"]["Enums"]["aws_service"]
+          scan_job_id?: string | null
+          service: string
           severity: Database["public"]["Enums"]["finding_severity"]
           title: string
         }
         Update: {
-          aws_account_id?: string
+          aws_account_id?: string | null
+          cloud_account_id?: string | null
           cloudformation_template?: string | null
           compliance_tags?: string[] | null
           created_at?: string
@@ -1283,8 +1296,8 @@ export type Database = {
           resource_type?: string
           risk_score_contribution?: number | null
           rollback_guidance?: string | null
-          scan_job_id?: string
-          service?: Database["public"]["Enums"]["aws_service"]
+          scan_job_id?: string | null
+          service?: string
           severity?: Database["public"]["Enums"]["finding_severity"]
           title?: string
         }
@@ -1294,6 +1307,13 @@ export type Database = {
             columns: ["aws_account_id"]
             isOneToOne: false
             referencedRelation: "aws_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_findings_cloud_account_id_fkey"
+            columns: ["cloud_account_id"]
+            isOneToOne: false
+            referencedRelation: "cloud_accounts"
             referencedColumns: ["id"]
           },
           {

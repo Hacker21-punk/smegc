@@ -103,12 +103,34 @@ export async function deleteCloudAccount(accountId: string): Promise<void> {
 
 // ── Run multi-cloud discovery ──
 export async function runMultiCloudDiscovery(cloudAccountId: string) {
-  const { data, error } = await supabase.functions.invoke("multi-cloud-discovery", {
+  // 1. Run discovery
+  const { data: discoveryData, error: discoveryError } = await supabase.functions.invoke("multi-cloud-discovery", {
     body: { cloud_account_id: cloudAccountId },
   });
-  if (error) throw new Error(`Discovery failed: ${error.message}`);
-  if (!data?.success) throw new Error(data?.error || "Discovery returned unsuccessful");
-  return data;
+  if (discoveryError) throw new Error(`Discovery failed: ${discoveryError.message}`);
+  if (!discoveryData?.success) throw new Error(discoveryData?.error || "Discovery returned unsuccessful");
+
+  // 2. Fetch the account provider to call the correct security scanner
+  const { data: account, error: accError } = await (supabase
+    .from("cloud_accounts") as any)
+    .select("provider")
+    .eq("id", cloudAccountId)
+    .single();
+
+  if (!accError && account) {
+    const provider = account.provider;
+    console.log(`Discovery successful. Triggering security scanner for ${provider}...`);
+    const { data: scanData, error: scanError } = await supabase.functions.invoke(`${provider}-scanner`, {
+      body: { cloud_account_id: cloudAccountId },
+    });
+    if (scanError) {
+      console.error(`Security scanner failed: ${scanError.message}`);
+    } else {
+      console.log(`Security scanner completed successfully for ${provider}`, scanData);
+    }
+  }
+
+  return discoveryData;
 }
 
 // ── Get asset counts by provider ──
