@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { z } from "https://esm.sh/zod@3.22.4";
+import { assertCloudAccountAccess } from "../_shared/org-guard.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -568,7 +570,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    await validateAuth(req);
+    const authResult = await validateAuth(req);
 
     const body = await req.json();
     const { cloud_account_id } = RequestSchema.parse(body);
@@ -577,6 +579,17 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Authorization: the account must belong to the caller's organization.
+    try {
+      await assertCloudAccountAccess(supabase, authResult, cloud_account_id);
+    } catch (authError) {
+      console.error("Authorization failed:", authError);
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Get cloud account
     const { data: account, error: accErr } = await supabase
@@ -588,7 +601,14 @@ serve(async (req) => {
 
     const adapter = getAdapter(account.provider);
     const orgId = account.organization_id;
-    const creds = account.credentials_encrypted as Record<string, string>;
+
+    // Decrypt credentials
+    const { data: decryptedCreds, error: decryptErr } = await supabase
+      .rpc("decrypt_cloud_credentials", { encrypted: account.credentials_encrypted });
+    if (decryptErr || !decryptedCreds) {
+      throw new Error(`Failed to decrypt cloud credentials: ${decryptErr?.message || "unknown error"}`);
+    }
+    const creds = decryptedCreds as Record<string, string>;
 
     // Run all discovery functions in parallel
     const [compute, storage, databases, identity, networking, security] = await Promise.all([

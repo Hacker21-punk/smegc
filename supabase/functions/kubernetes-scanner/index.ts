@@ -476,10 +476,19 @@ Deno.serve(async (req) => {
       // Discover from Azure/GCP accounts
       for (const ca of cloudAccounts || []) {
         let clusters: ClusterInfo[] = [];
+
+        // Decrypt credentials
+        const { data: decryptedCreds, error: decryptErr } = await supabase
+          .rpc("decrypt_cloud_credentials", { encrypted: ca.credentials_encrypted });
+        if (decryptErr || !decryptedCreds) {
+          console.error(`Failed to decrypt credentials for cloud account ${ca.id}:`, decryptErr);
+          continue;
+        }
+
         if (ca.provider === "azure") {
-          clusters = await discoverAKSClusters(ca.credentials_encrypted);
+          clusters = await discoverAKSClusters(decryptedCreds);
         } else if (ca.provider === "gcp") {
-          clusters = await discoverGKEClusters(ca.credentials_encrypted);
+          clusters = await discoverGKEClusters(decryptedCreds);
         }
 
         for (const c of clusters) {

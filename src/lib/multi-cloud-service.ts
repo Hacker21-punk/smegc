@@ -44,6 +44,10 @@ export async function connectAzureAccount(
   name: string,
   credentials: AzureCredentials
 ): Promise<CloudAccount> {
+  const { data: encryptedCreds, error: rpcError } = await supabase
+    .rpc("encrypt_cloud_credentials", { creds: credentials });
+  if (rpcError) throw rpcError;
+
   const { data, error } = await (supabase
     .from("cloud_accounts") as any)
     .insert({
@@ -51,7 +55,7 @@ export async function connectAzureAccount(
       provider: "azure",
       account_name: name,
       account_identifier: credentials.subscription_id,
-      credentials_encrypted: credentials,
+      credentials_encrypted: encryptedCreds,
       status: "pending",
       metadata: { tenant_id: credentials.tenant_id },
     })
@@ -67,6 +71,10 @@ export async function connectGCPAccount(
   name: string,
   credentials: GCPCredentials
 ): Promise<CloudAccount> {
+  const { data: encryptedCreds, error: rpcError } = await supabase
+    .rpc("encrypt_cloud_credentials", { creds: credentials });
+  if (rpcError) throw rpcError;
+
   const { data, error } = await (supabase
     .from("cloud_accounts") as any)
     .insert({
@@ -74,7 +82,7 @@ export async function connectGCPAccount(
       provider: "gcp",
       account_name: name,
       account_identifier: credentials.project_id,
-      credentials_encrypted: credentials,
+      credentials_encrypted: encryptedCreds,
       status: "pending",
       metadata: { project_id: credentials.project_id },
     })

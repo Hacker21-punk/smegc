@@ -64,3 +64,24 @@ export async function assertAwsAccountAccess(
   }
   return { organizationId: data.organization_id as string };
 }
+
+/** Verifies a cloud_accounts row belongs to the caller's organization. */
+export async function assertCloudAccountAccess(
+  admin: SupabaseClient,
+  auth: { isServiceRole: boolean; userId?: string },
+  cloudAccountId: string,
+): Promise<{ organizationId: string }> {
+  const { data, error } = await admin
+    .from("cloud_accounts")
+    .select("id, organization_id")
+    .eq("id", cloudAccountId)
+    .maybeSingle();
+  if (error || !data) throw new Error("Account not found");
+  if (!auth.isServiceRole) {
+    if (!auth.userId) throw new Error("Forbidden");
+    const orgId = await getUserOrganizationId(admin, auth.userId);
+    if (orgId !== data.organization_id) throw new Error("Forbidden");
+  }
+  return { organizationId: data.organization_id as string };
+}
+

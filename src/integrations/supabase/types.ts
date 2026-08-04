@@ -222,7 +222,7 @@ export type Database = {
           account_identifier: string
           account_name: string
           created_at: string
-          credentials_encrypted: Json
+          credentials_encrypted: string
           id: string
           last_scan_at: string | null
           metadata: Json | null
@@ -236,7 +236,7 @@ export type Database = {
           account_identifier: string
           account_name: string
           created_at?: string
-          credentials_encrypted?: Json
+          credentials_encrypted: string
           id?: string
           last_scan_at?: string | null
           metadata?: Json | null
@@ -250,7 +250,7 @@ export type Database = {
           account_identifier?: string
           account_name?: string
           created_at?: string
-          credentials_encrypted?: Json
+          credentials_encrypted?: string
           id?: string
           last_scan_at?: string | null
           metadata?: Json | null

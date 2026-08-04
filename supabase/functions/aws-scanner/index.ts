@@ -4,6 +4,8 @@ import { STSClient, AssumeRoleCommand } from "https://esm.sh/@aws-sdk/client-sts
 import { EC2Client, DescribeSecurityGroupsCommand } from "https://esm.sh/@aws-sdk/client-ec2@3.525.0";
 import { IAMClient, ListUsersCommand, ListAccessKeysCommand, GetLoginProfileCommand, ListMFADevicesCommand, ListAttachedUserPoliciesCommand, ListUserPoliciesCommand, GetAccessKeyLastUsedCommand } from "https://esm.sh/@aws-sdk/client-iam@3.525.0";
 import { z } from "https://esm.sh/zod@3.22.4";
+import { assertAwsAccountAccess } from "../_shared/org-guard.ts";
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -630,6 +632,17 @@ serve(async (req) => {
     }
     
     const { aws_account_id, scan_job_id, services } = validatedBody;
+
+    // Authorization: the account must belong to the caller's organization
+    try {
+      await assertAwsAccountAccess(supabaseClient, authResult, aws_account_id);
+    } catch (authError) {
+      console.error('Authorization failed:', authError);
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     console.log(`Starting scan for account ${aws_account_id}, job ${scan_job_id}, services: ${services.join(', ')}`);
 
