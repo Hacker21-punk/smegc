@@ -2,12 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { resolveOrganizationId, assertAwsAccountAccess } from "../_shared/org-guard.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 // ── Auth ──
 async function validateAuth(req: Request) {
@@ -229,7 +226,7 @@ function buildEdges(nodes: GraphNode[], orgId: string): GraphEdge[] {
 
 // ── Main ──
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: getCorsHeaders(req) });
 
   try {
     const auth = await validateAuth(req);
@@ -261,7 +258,7 @@ serve(async (req) => {
     if (!rawNodes || rawNodes.length === 0) {
       return new Response(
         JSON.stringify({ success: true, message: "No graph nodes found. Run asset discovery first.", edges_created: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -328,13 +325,13 @@ serve(async (req) => {
           ),
         },
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("Security graph error:", err);
     return new Response(
       JSON.stringify({ success: false, error: err.message }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

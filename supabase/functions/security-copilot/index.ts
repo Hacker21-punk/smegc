@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 // ── Auth: reject unauthenticated callers (prevents credit abuse + prompt injection) ──
 async function requireUser(req: Request): Promise<string> {
@@ -21,10 +22,6 @@ const MAX_CONTEXT_CHARS = 4000;
 const MAX_MESSAGES = 30;
 const MAX_MESSAGE_CHARS = 4000;
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
 
 const SYSTEM_PROMPT = `You are CloudGuard Autopilot's AI Security Copilot — an expert cybersecurity advisor for SMEs using cloud infrastructure.
 
@@ -45,14 +42,14 @@ You have expertise in AWS, Azure, GCP security, compliance (DPDPA, IT Act, RBI g
 If you don't have specific data about the user's environment, give general best-practice advice and note that connecting their cloud accounts will enable personalized recommendations.`;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: getCorsHeaders(req) });
 
   try {
     try {
       await requireUser(req);
     } catch {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -60,7 +57,7 @@ serve(async (req) => {
     const rawMessages = Array.isArray(body?.messages) ? body.messages : null;
     if (!rawMessages || rawMessages.length === 0) {
       return new Response(JSON.stringify({ error: "messages must be a non-empty array" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
     const messages = rawMessages.slice(-MAX_MESSAGES).map((m: unknown) => {
@@ -71,7 +68,7 @@ serve(async (req) => {
     }).filter((m) => m.content.length > 0);
     if (messages.length === 0) {
       return new Response(JSON.stringify({ error: "messages must contain text content" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
     const context = body?.context ?? null;
@@ -131,28 +128,28 @@ serve(async (req) => {
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted or payment required." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
       console.error("AI service error:", response.status, t);
       return new Response(JSON.stringify({ error: "AI service temporarily unavailable" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
     return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "text/event-stream" },
     });
   } catch (e) {
     console.error("security-copilot error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

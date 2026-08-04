@@ -5,12 +5,9 @@ import { EC2Client, DescribeSecurityGroupsCommand } from "https://esm.sh/@aws-sd
 import { IAMClient, ListUsersCommand, ListAccessKeysCommand, GetLoginProfileCommand, ListMFADevicesCommand, ListAttachedUserPoliciesCommand, ListUserPoliciesCommand, GetAccessKeyLastUsedCommand } from "https://esm.sh/@aws-sdk/client-iam@3.525.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { assertAwsAccountAccess } from "../_shared/org-guard.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 // Authentication helper - validates service role key or JWT for authorization
 // verify_jwt = false in config, so we validate JWTs in code using getClaims()
@@ -590,7 +587,7 @@ function calculateRiskScore(findings: Finding[]): number {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
@@ -602,7 +599,7 @@ serve(async (req) => {
       console.error('Authentication failed:', authError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
     
@@ -625,7 +622,7 @@ serve(async (req) => {
           details: validationError.errors.map(e => ({ path: e.path.join('.'), message: e.message }))
         }), {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
         });
       }
       throw validationError;
@@ -640,7 +637,7 @@ serve(async (req) => {
       console.error('Authorization failed:', authError);
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
 
@@ -770,7 +767,7 @@ serve(async (req) => {
       risk_score: riskScore,
       services_scanned: scannedServices,
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     });
 
   } catch (error: unknown) {
@@ -800,7 +797,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     });
   }
 });

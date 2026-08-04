@@ -31,11 +31,7 @@ import {
 } from "https://esm.sh/@aws-sdk/client-rds@3.525.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { assertAwsAccountAccess } from "../_shared/org-guard.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders } from "../_shared/cors.ts";
 
 // ── Auth ──
 async function validateAuth(req: Request) {
@@ -387,7 +383,7 @@ const RequestSchema = z.object({
 
 // ── Main Handler ──
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: getCorsHeaders(req) });
 
   try {
     const auth = await validateAuth(req);
@@ -480,13 +476,13 @@ serve(async (req) => {
         },
         upserted: upsertedCount,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("Asset discovery error:", err);
     return new Response(
       JSON.stringify({ success: false, error: err.message }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
