@@ -44,6 +44,7 @@ const LABELS: Record<string, string> = {
   "saas-security": "SaaS Security",
   threats: "Threat Intel",
   reports: "Compliance",
+  grc: "GRC Reporting",
   settings: "Settings",
   help: "Help & Support",
 };
