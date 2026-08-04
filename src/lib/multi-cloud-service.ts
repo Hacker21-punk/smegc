@@ -32,7 +32,7 @@ export interface GCPCredentials {
 export async function fetchCloudAccounts(): Promise<CloudAccount[]> {
   const { data, error } = await (supabase
     .from("cloud_accounts") as any)
-    .select("*")
+    .select("id, organization_id, provider, account_name, account_identifier, status, last_scan_at, risk_score, metadata, created_at, updated_at")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data as CloudAccount[]) || [];
@@ -55,7 +55,7 @@ export async function connectAzureAccount(
       status: "pending",
       metadata: { tenant_id: credentials.tenant_id },
     })
-    .select()
+    .select("id, organization_id, provider, account_name, account_identifier, status, last_scan_at, risk_score, metadata, created_at, updated_at")
     .single();
   if (error) throw error;
   return data as CloudAccount;
@@ -78,7 +78,7 @@ export async function connectGCPAccount(
       status: "pending",
       metadata: { project_id: credentials.project_id },
     })
-    .select()
+    .select("id, organization_id, provider, account_name, account_identifier, status, last_scan_at, risk_score, metadata, created_at, updated_at")
     .single();
   if (error) throw error;
   return data as CloudAccount;
