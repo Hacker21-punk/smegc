@@ -118,7 +118,7 @@ serve(async (req) => {
           body: JSON.stringify({
             from: "SME Cloud Guard <onboarding@resend.dev>",
             to: ["sme.cloudguard26@gmail.com"],
-            subject: `New Contact Form Submission from ${safeName}`,
+            subject: `New Contact Form Submission from ${formData.name.trim().slice(0, 100)}`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #0ea5e9;">New Contact Form Submission</h2>
