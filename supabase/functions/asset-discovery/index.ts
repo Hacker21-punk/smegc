@@ -30,6 +30,7 @@ import {
   DescribeDBInstancesCommand,
 } from "https://esm.sh/@aws-sdk/client-rds@3.525.0";
 import { z } from "https://esm.sh/zod@3.22.4";
+import { assertAwsAccountAccess } from "../_shared/org-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -389,7 +390,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { userId } = await validateAuth(req);
+    const auth = await validateAuth(req);
 
     const body = await req.json();
     const { aws_account_id } = RequestSchema.parse(body);
@@ -398,6 +399,9 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Authorization: the account must belong to the caller's organization.
+    await assertAwsAccountAccess(supabase, auth, aws_account_id);
 
     // Get account details
     const { data: account, error: accErr } = await supabase

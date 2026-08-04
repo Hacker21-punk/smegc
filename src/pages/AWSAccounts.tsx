@@ -37,8 +37,7 @@ interface AWSAccount {
   id: string;
   account_id: string;
   account_alias: string | null;
-  external_id: string;
-  role_arn: string | null;
+  role_configured: boolean;
   status: "pending" | "connected" | "disconnected" | "error";
   last_scan_at: string | null;
   risk_score: number;
@@ -75,7 +74,7 @@ export default function AWSAccounts() {
     try {
       const { data, error } = await supabase
         .from("aws_accounts")
-        .select("*")
+        .select("id, account_id, account_alias, status, last_scan_at, risk_score, created_at, role_configured")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -118,7 +117,7 @@ export default function AWSAccounts() {
           account_alias: newAccountAlias || null,
           status: "pending",
         })
-        .select()
+        .select("id")
         .single();
 
       if (error) {
@@ -130,9 +129,20 @@ export default function AWSAccounts() {
         return;
       }
 
-      const account = data as AWSAccount;
-      setCurrentExternalId(account.external_id);
-      setPendingAccountId(account.id);
+      const accountId = (data as { id: string }).id;
+
+      // The external ID is a connection secret: it is never exposed to the client
+      // via table reads, only through an admin-only server function.
+      const { data: secrets, error: secretsError } = await supabase.functions.invoke(
+        "aws-account-secrets",
+        { body: { aws_account_id: accountId } },
+      );
+      if (secretsError || !secrets?.external_id) {
+        throw new Error("Could not load the connection details for this account");
+      }
+
+      setCurrentExternalId(secrets.external_id as string);
+      setPendingAccountId(accountId);
       setStep("setup");
       toast.success("Account registered! Now set up the IAM role.");
       fetchAccounts();
@@ -235,7 +245,7 @@ export default function AWSAccounts() {
   };
 
   const handleRunPipeline = async (account: AWSAccount) => {
-    if (!account.role_arn) {
+    if (!account.role_configured) {
       toast.error("No IAM role configured for this account");
       return;
     }

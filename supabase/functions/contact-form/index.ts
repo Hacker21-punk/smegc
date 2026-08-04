@@ -7,6 +7,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 interface ContactFormData {
   name: string;
   email: string;
@@ -94,6 +103,11 @@ serve(async (req) => {
     let emailSent = false;
 
     if (resendApiKey) {
+      // HTML-encode every user-supplied value before embedding it in the email.
+      const safeName = escapeHtml(formData.name.trim());
+      const safeEmail = escapeHtml(formData.email.trim().toLowerCase());
+      const safeCompany = formData.company ? escapeHtml(formData.company.trim()) : "";
+      const safeMessage = escapeHtml(formData.message.trim());
       try {
         const emailResponse = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -104,16 +118,16 @@ serve(async (req) => {
           body: JSON.stringify({
             from: "SME Cloud Guard <onboarding@resend.dev>",
             to: ["sme.cloudguard26@gmail.com"],
-            subject: `New Contact Form Submission from ${formData.name}`,
+            subject: `New Contact Form Submission from ${formData.name.trim().slice(0, 100)}`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #0ea5e9;">New Contact Form Submission</h2>
                 <hr style="border: 1px solid #e5e7eb;" />
-                <p><strong>Name:</strong> ${formData.name}</p>
-                <p><strong>Email:</strong> <a href="mailto:${formData.email}">${formData.email}</a></p>
-                ${formData.company ? `<p><strong>Company:</strong> ${formData.company}</p>` : ""}
+                <p><strong>Name:</strong> ${safeName}</p>
+                <p><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
+                ${safeCompany ? `<p><strong>Company:</strong> ${safeCompany}</p>` : ""}
                 <p><strong>Message:</strong></p>
-                <div style="background: #f9fafb; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${formData.message}</div>
+                <div style="background: #f9fafb; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${safeMessage}</div>
                 <hr style="border: 1px solid #e5e7eb; margin-top: 24px;" />
                 <p style="color: #6b7280; font-size: 12px;">
                   Submitted at: ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST

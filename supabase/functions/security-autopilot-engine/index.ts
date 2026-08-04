@@ -1,5 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+import { z } from "https://esm.sh/zod@3.22.4";
+import { resolveOrganizationId, assertAwsAccountAccess } from "../_shared/org-guard.ts";
+
+const RequestSchema = z.object({
+  organization_id: z.string().uuid().optional(),
+  aws_account_id: z.string().uuid().optional(),
+});
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,16 +141,22 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    await validateAuth(req);
+    const auth = await validateAuth(req);
     const body = await req.json();
-    const { organization_id, aws_account_id } = body;
-
-    if (!organization_id) throw new Error("organization_id required");
+    const parsed = RequestSchema.parse(body);
+    const aws_account_id = parsed.aws_account_id;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // Authorization: never trust a client-supplied organization_id.
+    const organization_id = await resolveOrganizationId(supabase, auth, parsed.organization_id);
+    if (aws_account_id) {
+      const { organizationId } = await assertAwsAccountAccess(supabase, auth, aws_account_id);
+      if (organizationId !== organization_id) throw new Error("Forbidden");
+    }
 
     // 1. Fetch enabled policies
     let policyQuery = supabase

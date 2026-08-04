@@ -172,6 +172,7 @@ export type Database = {
           organization_id: string
           risk_score: number | null
           role_arn: string | null
+          role_configured: boolean | null
           status: Database["public"]["Enums"]["account_status"]
           updated_at: string
           write_access_enabled: boolean
@@ -186,6 +187,7 @@ export type Database = {
           organization_id: string
           risk_score?: number | null
           role_arn?: string | null
+          role_configured?: boolean | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
           write_access_enabled?: boolean
@@ -200,6 +202,7 @@ export type Database = {
           organization_id?: string
           risk_score?: number | null
           role_arn?: string | null
+          role_configured?: boolean | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
           write_access_enabled?: boolean
@@ -1579,15 +1582,44 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       get_user_organization_id: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       account_status: "pending" | "connected" | "disconnected" | "error"
+      app_role: "admin" | "member"
       asset_status: "active" | "inactive" | "unknown" | "deleted"
       attack_path_severity: "critical" | "high" | "medium" | "low"
       attack_path_status: "active" | "mitigated" | "accepted" | "false_positive"
@@ -1804,6 +1836,7 @@ export const Constants = {
   public: {
     Enums: {
       account_status: ["pending", "connected", "disconnected", "error"],
+      app_role: ["admin", "member"],
       asset_status: ["active", "inactive", "unknown", "deleted"],
       attack_path_severity: ["critical", "high", "medium", "low"],
       attack_path_status: ["active", "mitigated", "accepted", "false_positive"],

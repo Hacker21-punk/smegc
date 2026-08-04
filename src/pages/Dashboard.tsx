@@ -85,7 +85,9 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const { data: accountsData, error: accountsError } = await supabase
-        .from("aws_accounts").select("*").order("created_at", { ascending: false });
+        .from("aws_accounts")
+        .select("id, account_id, account_alias, status, last_scan_at, risk_score, created_at, role_configured")
+        .order("created_at", { ascending: false });
       if (accountsError) throw accountsError;
 
       const { data: findingsData, error: findingsError } = await supabase
