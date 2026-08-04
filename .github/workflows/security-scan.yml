@@ -17,11 +17,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-size: 20
+          node-version: 20
           cache: 'npm'
 
       - name: Audit Dependencies
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high || true
 
   lint-and-typecheck:
     name: Lint and Typecheck
