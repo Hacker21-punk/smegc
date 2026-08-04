@@ -271,8 +271,20 @@ export function generateGRCReport(inputs: GRCInputs): GRCReport {
   // --- Risks derived from security findings
   for (const f of inputs.findings) {
     const impact = SEVERITY_IMPACT[f.severity] ?? 3;
-    // Likelihood is purely about whether the finding is open (exploitable right now).
-    const likelihood = clamp(f.is_resolved ? 1 : 3, 1, 5);
+    // Likelihood is based on resolution status and finding age (days open).
+    let likelihood = 1;
+    if (!f.is_resolved) {
+      const createdAt = new Date(f.created_at);
+      const diffMs = now.getTime() - createdAt.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      if (diffDays > 30) {
+        likelihood = 5;
+      } else if (diffDays >= 7) {
+        likelihood = 4;
+      } else {
+        likelihood = 3;
+      }
+    }
     // Exposure is scored independently based on resource reachability signals.
     const exposure = computeFindingExposure(f.service, f.title);
     const inherent = clamp(Math.round((impact * likelihood * exposure) / 5), 1, 25);
