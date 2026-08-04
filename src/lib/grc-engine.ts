@@ -3,7 +3,8 @@
  *
  * Builds an audit-ready GRC pack from real telemetry only:
  *  - Governance: security policies, enforcement mode, ownership
- *  - Risk: risk register derived from findings + attack paths (likelihood x impact)
+ *  - Risk: risk register derived from findings + attack paths
+ *              (likelihood × impact × exposure) / 5 — three-factor model
  *  - Compliance: multi-framework control posture (read-only coverage, never pass/fail)
  *  - Exceptions: accepted / suppressed risks with justification trail
  *
@@ -30,9 +31,10 @@ export interface RiskRegisterEntry {
   category: string;
   scope: string;
   likelihood: number; // 1-5
-  impact: number; // 1-5
-  inherent_score: number; // 1-25
-  residual_score: number; // 1-25 after mitigating controls
+  impact: number;    // 1-5
+  exposure: number;  // 1-5  — how reachable/exploitable the resource is
+  inherent_score: number; // 1-25  formula: round((L × I × E) / 5)
+  residual_score: number; // 1-25  after mitigating controls
   rating: RiskRating;
   treatment: RiskTreatment;
   status: RiskStatus;
@@ -176,6 +178,90 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+/**
+ * Deterministic exposure score (1-5) based on reachability signals.
+ *
+ * Signals checked in priority order:
+ *  1. Internet-facing keywords in the finding title (open port to 0.0.0.0/0,
+ *     public IP assigned, public S3 bucket) → 5
+ *  2. IAM root / admin-level privilege → 5
+ *  3. IAM scoped / least-privilege identity → 2
+ *  4. VPC / network-layer findings (reachable internally but not public) → 3
+ *  5. Default / unknown → 3 (neutral midpoint)
+ *
+ * The function is pure and produces the same output for the same inputs.
+ */
+function computeFindingExposure(service: string, title: string): number {
+  const t = title.toLowerCase();
+
+  // Strongest signal: explicitly internet-facing
+  const internetFacing =
+    t.includes("0.0.0.0/0") ||
+    t.includes("::/0") ||
+    t.includes("internet") ||
+    t.includes("publicly accessible") ||
+    t.includes("public bucket") ||
+    t.includes("public ip") ||
+    t.includes("open to the internet") ||
+    t.includes("open to internet");
+
+  if (internetFacing) return 5;
+
+  // IAM: distinguish privilege level before defaulting
+  if (service === "iam") {
+    const adminLevel =
+      t.includes("administratoraccess") ||
+      t.includes("root") ||
+      t.includes("poweruser") ||
+      t.includes("iamfullaccess") ||
+      t.includes("admin");
+    return adminLevel ? 5 : 2;
+  }
+
+  // Network services are internally reachable but not necessarily internet-facing
+  if (service === "vpc" || service === "security_groups") return 3;
+
+  // Default: neutral midpoint
+  return 3;
+}
+
+/**
+ * Exposure score for attack-path risks.
+ * Attack paths that originate from an internet-facing entry point score 5;
+ * all others default to 3 (we lack granular entry-point metadata here).
+ */
+function computeAttackPathExposure(title: string, riskScore: number | null): number {
+  const t = title.toLowerCase();
+  const internetFacing =
+    t.includes("internet") ||
+    t.includes("public") ||
+    t.includes("external") ||
+    t.includes("0.0.0.0");
+  if (internetFacing) return 5;
+  // High risk-score paths are likely reachable from a broad surface
+  if ((riskScore ?? 0) >= 70) return 4;
+  return 3;
+}
+
+/**
+ * Exposure score for policy-violation risks.
+ * Violations on network or data-store resource types score higher.
+ */
+function computeViolationExposure(resourceType: string, region: string | null): number {
+  const rt = resourceType.toLowerCase();
+  const publicFacing =
+    rt.includes("security_group") ||
+    rt.includes("s3") ||
+    rt.includes("bucket") ||
+    rt.includes("load_balancer") ||
+    rt.includes("api_gateway");
+  if (publicFacing) return 5;
+  const internal =
+    rt.includes("iam") || rt.includes("kms") || rt.includes("secret");
+  if (internal) return 2;
+  return 3;
+}
+
 /* ------------------------------------------------------------- generation */
 
 export function generateGRCReport(inputs: GRCInputs): GRCReport {
@@ -185,13 +271,11 @@ export function generateGRCReport(inputs: GRCInputs): GRCReport {
   // --- Risks derived from security findings
   for (const f of inputs.findings) {
     const impact = SEVERITY_IMPACT[f.severity] ?? 3;
-    // Unresolved findings on public/identity services are more likely to be exploited.
-    const likelihood = clamp(
-      (f.is_resolved ? 1 : 3) + (f.service === "iam" || f.service === "s3" ? 1 : 0),
-      1,
-      5,
-    );
-    const inherent = impact * likelihood;
+    // Likelihood is purely about whether the finding is open (exploitable right now).
+    const likelihood = clamp(f.is_resolved ? 1 : 3, 1, 5);
+    // Exposure is scored independently based on resource reachability signals.
+    const exposure = computeFindingExposure(f.service, f.title);
+    const inherent = clamp(Math.round((impact * likelihood * exposure) / 5), 1, 25);
     const residual = f.is_resolved ? clamp(Math.round(inherent * 0.25), 1, 25) : inherent;
 
     register.push({
@@ -202,6 +286,7 @@ export function generateGRCReport(inputs: GRCInputs): GRCReport {
       scope: f.service.replace(/_/g, " ").toUpperCase(),
       likelihood,
       impact,
+      exposure,
       inherent_score: inherent,
       residual_score: residual,
       rating: ratingFromScore(residual),
@@ -224,7 +309,8 @@ export function generateGRCReport(inputs: GRCInputs): GRCReport {
   for (const p of inputs.attackPaths) {
     const impact = SEVERITY_IMPACT[p.severity] ?? 4;
     const likelihood = clamp(Math.ceil(((p.risk_score ?? 50) / 100) * 5), 1, 5);
-    const inherent = impact * likelihood;
+    const exposure = computeAttackPathExposure(p.title, p.risk_score);
+    const inherent = clamp(Math.round((impact * likelihood * exposure) / 5), 1, 25);
     const mitigated = p.status === "mitigated" || p.status === "false_positive";
     const residual = mitigated ? clamp(Math.round(inherent * 0.2), 1, 25) : inherent;
 
@@ -236,6 +322,7 @@ export function generateGRCReport(inputs: GRCInputs): GRCReport {
       scope: `Blast radius: ${p.blast_radius ?? 0} resources`,
       likelihood,
       impact,
+      exposure,
       inherent_score: inherent,
       residual_score: residual,
       rating: ratingFromScore(residual),
@@ -261,7 +348,8 @@ export function generateGRCReport(inputs: GRCInputs): GRCReport {
     if (v.status === "resolved") continue;
     const impact = SEVERITY_IMPACT[v.severity] ?? 3;
     const likelihood = v.status === "open" ? 4 : 2;
-    const inherent = impact * likelihood;
+    const exposure = computeViolationExposure(v.resource_type, v.region);
+    const inherent = clamp(Math.round((impact * likelihood * exposure) / 5), 1, 25);
 
     register.push({
       risk_id: `RSK-PV-${v.id.slice(0, 8).toUpperCase()}`,
@@ -271,6 +359,7 @@ export function generateGRCReport(inputs: GRCInputs): GRCReport {
       scope: `${v.resource_type}${v.region ? ` · ${v.region}` : ""}`,
       likelihood,
       impact,
+      exposure,
       inherent_score: inherent,
       residual_score: inherent,
       rating: ratingFromScore(inherent),
@@ -443,7 +532,7 @@ export function generateGRCReport(inputs: GRCInputs): GRCReport {
       "All evidence in this report was collected through read-only cloud APIs.",
       "No configuration changes were made while producing this report.",
       "Control coverage reflects platform-supported evidence only and is not a certification of compliance.",
-      "Risk scores are deterministic (likelihood x impact) and reproducible from the same dataset.",
+      "Risk scores are deterministic (likelihood × impact × exposure / 5, rounded to 1-25) and reproducible from the same dataset.",
     ],
   };
 }
@@ -490,6 +579,7 @@ export function formatRiskRegisterAsCSV(report: GRCReport): string {
     "Scope",
     "Likelihood (1-5)",
     "Impact (1-5)",
+    "Exposure (1-5)",
     "Inherent Score",
     "Residual Score",
     "Rating",
@@ -510,6 +600,7 @@ export function formatRiskRegisterAsCSV(report: GRCReport): string {
       r.scope,
       r.likelihood,
       r.impact,
+      r.exposure,
       r.inherent_score,
       r.residual_score,
       r.rating,
@@ -573,11 +664,11 @@ export function formatGRCReportAsMarkdown(report: GRCReport): string {
   if (report.risk_register.length === 0) {
     lines.push("_No risks recorded for the selected scope._");
   } else {
-    lines.push("| Risk ID | Title | Category | L | I | Residual | Rating | Treatment | Status |");
-    lines.push("| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+    lines.push("| Risk ID | Title | Category | L | I | E | Residual | Rating | Treatment | Status |");
+    lines.push("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |");
     for (const r of report.risk_register.slice(0, 200)) {
       lines.push(
-        `| ${r.risk_id} | ${r.title} | ${r.category} | ${r.likelihood} | ${r.impact} | ${r.residual_score} | ${r.rating} | ${r.treatment} | ${r.status} |`,
+        `| ${r.risk_id} | ${r.title} | ${r.category} | ${r.likelihood} | ${r.impact} | ${r.exposure} | ${r.residual_score} | ${r.rating} | ${r.treatment} | ${r.status} |`,
       );
     }
     if (report.risk_register.length > 200) {

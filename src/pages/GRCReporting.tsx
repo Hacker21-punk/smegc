@@ -383,7 +383,7 @@ const GRCReporting = () => {
                       <div>
                         <CardTitle className="text-lg">Risk register</CardTitle>
                         <CardDescription>
-                          Likelihood × impact scoring across findings, attack paths and
+                          Likelihood × impact × exposure scoring across findings, attack paths and
                           policy violations
                         </CardDescription>
                       </div>
@@ -430,6 +430,7 @@ const GRCReporting = () => {
                               <TableHead>Category</TableHead>
                               <TableHead className="text-center">L</TableHead>
                               <TableHead className="text-center">I</TableHead>
+                              <TableHead className="text-center">E</TableHead>
                               <TableHead className="text-center">Residual</TableHead>
                               <TableHead>Rating</TableHead>
                               <TableHead>Treatment</TableHead>
@@ -460,6 +461,9 @@ const GRCReporting = () => {
                                   </TableCell>
                                   <TableCell className="text-center text-sm">
                                     {r.impact}
+                                  </TableCell>
+                                  <TableCell className="text-center text-sm">
+                                    {r.exposure}
                                   </TableCell>
                                   <TableCell className="text-center text-sm font-semibold">
                                     {r.residual_score}
