@@ -212,6 +212,7 @@ const GRCReporting = () => {
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader
+        lastScanTime="--"
         onRefresh={fetchData}
         onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
       />

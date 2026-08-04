@@ -15,6 +15,7 @@ import AWSAccounts from "./pages/AWSAccounts";
 import AzureAccounts from "./pages/AzureAccounts";
 import GCPAccounts from "./pages/GCPAccounts";
 import Findings from "./pages/Findings";
+import GRCReporting from "./pages/GRCReporting";
 import ComplianceReports from "./pages/ComplianceReports";
 import Settings from "./pages/Settings";
 import HelpSupport from "./pages/HelpSupport";
@@ -62,6 +63,7 @@ const App = () => (
                 <Route path="/dashboard/gcp-accounts" element={<ProtectedRoute><GCPAccounts /></ProtectedRoute>} />
                 <Route path="/dashboard/cloud-accounts" element={<Navigate to="/dashboard/azure-accounts" replace />} />
                 <Route path="/dashboard/findings" element={<ProtectedRoute><Findings /></ProtectedRoute>} />
+                <Route path="/dashboard/grc" element={<ProtectedRoute><GRCReporting /></ProtectedRoute>} />
                 <Route path="/dashboard/reports" element={<ProtectedRoute><ComplianceReports /></ProtectedRoute>} />
                 <Route path="/dashboard/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="/dashboard/help" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
