@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: ["budapest-average-stake-room.trycloudflare.com"],
+    allowedHosts: ["temporarily-golden-collins-crossword.trycloudflare.com"],
   },
   plugins: [react()],
   resolve: {
