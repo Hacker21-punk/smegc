@@ -71,7 +71,7 @@ export function HeroSection() {
               isIntersecting ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
             )}
           >
-            Continuously discovers your cloud assets across AWS, Azure, and GCP — analyzes attack paths, predicts breach probability, and autonomously fixes security issues. All explained in plain English.
+            Continuously discovers your cloud assets across AWS, Azure, and GCP — analyzes attack paths, predicts breach probability, and automatically fixes security issues on AWS today, with Azure and GCP remediation on the roadmap. All explained in plain English.
           </p>
 
           {/* CTAs */}

@@ -1,26 +1,24 @@
-import { EmptyState } from "@/components/dashboard/EmptyState";
 import { useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Crosshair,
-  Play,
-  AlertTriangle,
-  TrendingUp,
-  Shield,
-  Zap,
-  Target,
-  ArrowDown,
   Clock,
-  IndianRupee,
+  Sparkles,
+  Bell,
+  CheckCircle2,
 } from "lucide-react";
 
-interface SimulationScenario {
+export interface SimulationScenario {
   id: string;
   name: string;
   description: string;
@@ -34,164 +32,133 @@ interface SimulationScenario {
   criticalAssets: number;
 }
 
-const SCENARIOS: SimulationScenario[] = [];
-
-const typeColors: Record<string, string> = {
-  credential_theft: "text-orange-500 bg-orange-500/10",
-  privilege_escalation: "text-red-500 bg-red-500/10",
-  ransomware: "text-destructive bg-destructive/10",
-  data_exfiltration: "text-purple-500 bg-purple-500/10",
-  public_exploit: "text-yellow-500 bg-yellow-500/10",
-};
-
-const typeLabels: Record<string, string> = {
-  credential_theft: "Credential Theft",
-  privilege_escalation: "Privilege Escalation",
-  ransomware: "Ransomware",
-  data_exfiltration: "Data Exfiltration",
-  public_exploit: "Public Exploit",
-};
-
-function formatINR(amount: number) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
-}
+export const SCENARIOS: SimulationScenario[] = [];
 
 export default function BreachSimulation() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [scenarios, setScenarios] = useState(SCENARIOS);
-  const [selected, setSelected] = useState<SimulationScenario | null>(SCENARIOS[0] ?? null);
+  const { user } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({
+    name: user?.user_metadata?.full_name ?? "",
+    email: user?.email ?? "",
+    company: user?.user_metadata?.company_name ?? "",
+    message: "",
+  });
 
-  const runSimulation = (id: string) => {
-    setScenarios(prev =>
-      prev.map(s => (s.id === id ? { ...s, status: "running" as const } : s))
-    );
-    toast.info("Simulation started...");
-    setTimeout(() => {
-      setScenarios(prev =>
-        prev.map(s =>
-          s.id === id ? { ...s, status: "completed" as const, lastRun: "Just now" } : s
-        )
-      );
-      toast.success("Simulation completed");
-    }, 3000);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.email || !form.name) {
+      toast.error("Name and email are required");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.functions.invoke("contact-form", {
+        body: {
+          name: form.name,
+          email: form.email,
+          company: form.company,
+          message: `[Breach Simulation early-access request] ${form.message || "No additional comments"}`,
+        },
+      });
+      if (error) throw error;
+      setSubmitted(true);
+      toast.success("You're on the list — we'll be in touch when Breach Simulation is ready.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not submit request. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
-
-  const avgProbability = scenarios.length === 0 ? 0 : Math.round(scenarios.reduce((a, s) => a + s.breachProbability, 0) / scenarios.length);
-  const totalRisk = scenarios.reduce((a, s) => a + s.financialImpact, 0);
 
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} lastScanTime="" />
       <DashboardSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="md:ml-64 pt-16">
-        <div className="p-6 max-w-7xl mx-auto space-y-6">
-          <div>
-            <h1 className="heading-display flex items-center gap-2">
-              <Crosshair className="h-6 w-6 text-destructive" />
-              Continuous Breach Simulation
-            </h1>
-            <p className="text-fluid-subtitle text-muted-foreground">AI-powered red team simulating real attack scenarios against your infrastructure</p>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Target className="h-5 w-5 mx-auto mb-1 text-destructive" />
-                <p className="text-2xl font-bold">{scenarios.length}</p>
-                <p className="text-xs text-muted-foreground">Attack Scenarios</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <TrendingUp className="h-5 w-5 mx-auto mb-1 text-orange-500" />
-                <p className="text-2xl font-bold">{avgProbability}%</p>
-                <p className="text-xs text-muted-foreground">Avg Breach Probability</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <IndianRupee className="h-5 w-5 mx-auto mb-1 text-destructive" />
-                <p className="text-2xl font-bold">{formatINR(totalRisk)}</p>
-                <p className="text-xs text-muted-foreground">Total Risk Exposure</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Shield className="h-5 w-5 mx-auto mb-1 text-green-500" />
-                <p className="text-2xl font-bold text-green-500">{formatINR(680000)}</p>
-                <p className="text-xs text-muted-foreground">Risk Prevented This Month</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {scenarios.length === 0 || !selected ? (
-            <EmptyState
-              icon={<Crosshair className="h-7 w-7" />}
-              title="No breach simulations available"
-              description="Connect a cloud account to enable continuous breach simulation. CloudGuard will safely model real attack scenarios against your discovered infrastructure."
-            />
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="space-y-3">
-                <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Scenarios</h2>
-                {scenarios.map(s => (
-                  <Card key={s.id} className={`cursor-pointer transition-all hover:border-primary/40 ${selected.id === s.id ? "border-primary ring-1 ring-primary/20" : ""}`} onClick={() => setSelected(s)}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-medium text-sm">{s.name}</p>
-                          <Badge variant="outline" className={`mt-1 text-xs ${typeColors[s.type]}`}>{typeLabels[s.type]}</Badge>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-lg font-bold text-destructive">{s.breachProbability}%</p>
-                          <p className="text-[10px] text-muted-foreground">breach prob.</p>
-                        </div>
-                      </div>
-                      {s.lastRun && (
-                        <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1"><Clock className="h-3 w-3" /> Last run: {s.lastRun}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              <div className="lg:col-span-2 space-y-4">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{selected.name}</CardTitle>
-                      <Button size="sm" variant={selected.status === "running" ? "secondary" : "default"} disabled={selected.status === "running"} onClick={() => runSimulation(selected.id)}>
-                        {selected.status === "running" ? (<><Zap className="h-4 w-4 mr-1 animate-pulse" /> Running...</>) : (<><Play className="h-4 w-4 mr-1" /> Run Simulation</>)}
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground">{selected.description}</p>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center p-3 rounded-lg bg-muted/50"><p className="text-2xl font-bold text-destructive">{selected.breachProbability}%</p><p className="text-xs text-muted-foreground">Breach Probability</p></div>
-                      <div className="text-center p-3 rounded-lg bg-muted/50"><p className="text-2xl font-bold">{formatINR(selected.financialImpact)}</p><p className="text-xs text-muted-foreground">Financial Impact</p></div>
-                      <div className="text-center p-3 rounded-lg bg-muted/50"><p className="text-2xl font-bold">{selected.criticalAssets}</p><p className="text-xs text-muted-foreground">Critical Assets at Risk</p></div>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-destructive" /> Most Likely Breach Path</h3>
-                      <div className="flex flex-col items-center gap-1">
-                        {selected.breachPath.map((step, i) => (
-                          <div key={i} className="flex flex-col items-center">
-                            <div className={`px-4 py-2 rounded-lg text-sm font-medium border w-full max-w-xs text-center ${i === 0 ? "bg-blue-500/10 border-blue-500/30 text-blue-600 dark:text-blue-400" : i === selected.breachPath.length - 1 ? "bg-destructive/10 border-destructive/30 text-destructive" : "bg-muted border-border"}`}>{step}</div>
-                            {i < selected.breachPath.length - 1 && (<ArrowDown className="h-4 w-4 text-muted-foreground my-1" />)}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-sm mb-1"><span className="text-muted-foreground">Attack Success Likelihood</span><span className="font-semibold text-destructive">{selected.breachProbability}%</span></div>
-                      <Progress value={selected.breachProbability} className="h-3" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+        <div className="p-6 max-w-5xl mx-auto space-y-6">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="heading-display flex items-center gap-2">
+                <Crosshair className="h-6 w-6 text-destructive" />
+                Continuous Breach Simulation
+              </h1>
+              <p className="text-fluid-subtitle text-muted-foreground">AI-powered red team simulating real attack scenarios against your infrastructure</p>
             </div>
-          )}
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Early access
+            </Badge>
+          </div>
+
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardContent className="p-6 flex items-start gap-4">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Clock className="h-6 w-6" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-lg font-semibold">Coming Soon</h2>
+                <p className="text-sm text-muted-foreground">
+                  We're building Continuous Breach Simulation to safely model real attack scenarios against your discovered infrastructure. This will allow your team to simulate credential theft, privilege escalation, ransomware, data exfiltration, and public exploits to predict breach probability and financial impact before they occur.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Join the early-access list below to help us prioritize simulation scenarios and get access before public release.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Bell className="h-4 w-4" />
+                Request early access
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {submitted ? (
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/10 text-green-700 dark:text-green-400">
+                  <CheckCircle2 className="h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm">You're on the list</p>
+                    <p className="text-xs opacity-80">We'll email you the moment Breach Simulation is ready for early-access testing.</p>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={submit} className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bs-name">Name</Label>
+                    <Input id="bs-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bs-email">Work email</Label>
+                    <Input id="bs-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="bs-company">Company</Label>
+                    <Input id="bs-company" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="bs-message">Any specific attack scenarios or requirements?</Label>
+                    <Textarea
+                      id="bs-message"
+                      placeholder="e.g. ransomware simulations, custom API exploits, active directory compromise"
+                      value={form.message}
+                      onChange={(e) => setForm({ ...form, message: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+                      {submitting ? "Submitting..." : "Notify me at launch"}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
