@@ -125,6 +125,10 @@ export async function runMultiCloudDiscovery(cloudAccountId: string) {
     });
     if (scanError) {
       console.error(`Security scanner failed: ${scanError.message}`);
+      throw new Error(`Security scanner error: ${scanError.message}`);
+    } else if (scanData && scanData.success === false) {
+      console.error(`Security scanner execution failed: ${scanData.error}`);
+      throw new Error(`Security scan failed: ${scanData.error || "Unknown scan failure"}`);
     } else {
       console.log(`Security scanner completed successfully for ${provider}`, scanData);
     }

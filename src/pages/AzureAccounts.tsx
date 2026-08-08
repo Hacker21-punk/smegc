@@ -84,13 +84,13 @@ export default function AzureAccounts() {
 
   const handleScan = async (account: CloudAccount) => {
     setScanningId(account.id);
-    toast.info("Starting Azure discovery...");
+    toast.info("Starting Azure discovery & security scan...");
     try {
       const result = await runMultiCloudDiscovery(account.id);
-      toast.success(`Discovered ${result.discovered.total} Azure resources!`);
+      toast.success(`Scan completed successfully! Discovered ${result.discovered.total} Azure resources.`);
       loadAccounts();
     } catch (error) {
-      toast.error("Discovery failed", { description: error instanceof Error ? error.message : "Unknown error" });
+      toast.error("Scan Failed", { description: error instanceof Error ? error.message : "Security scan failed" });
     } finally {
       setScanningId(null);
     }

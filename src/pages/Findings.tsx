@@ -454,10 +454,10 @@ const Findings = () => {
                 ) : filteredFindings.length === 0 ? (
                   <div className="text-center py-12">
                     <Shield className="h-12 w-12 mx-auto text-success mb-4" />
-                    <h3 className="font-semibold mb-2">No Active Findings</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="font-semibold text-lg mb-2">No Active Findings</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
                       {findings.length === 0 
-                        ? "Run a security scan to detect issues in your AWS accounts."
+                        ? "Scan Status: Succeeded — 0 security issues detected across configured cloud accounts."
                         : "No findings match your current filters."}
                     </p>
                   </div>

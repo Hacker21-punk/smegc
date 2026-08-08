@@ -279,23 +279,59 @@ serve(async (req) => {
             for (const rbac of rbacData.value || []) {
               const roleDefId = rbac.properties?.roleDefinitionId || "";
               const principalId = rbac.properties?.principalId;
-              const principalType = rbac.properties?.principalType || "User";
+        }
 
-              const isOwner = roleDefId.endsWith("/8e3af6b5-3b9b-4e25-b441-4235d558a824");
-              const isContributor = roleDefId.endsWith("/b24988ac-6180-42a0-ab88-20f7382dd24c");
+        // 2. Scan Storage Accounts for public access
+        const saUrl = `https://management.azure.com/subscriptions/${subId}/providers/Microsoft.Storage/storageAccounts?api-version=2022-09-01`;
+        const saResp = await fetch(saUrl, { headers: azureHeaders });
+        if (saResp.ok) {
+          const saData = await saResp.json();
+          for (const sa of saData.value || []) {
+            if (sa.properties?.allowBlobPublicAccess === true) {
+              findings.push({
+                cloud_account_id,
+                service: "storage_account",
+                severity: "critical",
+                title: `Azure Storage Account ${sa.name} allows public blob access`,
+                description: `Public blob access is enabled on storage account '${sa.name}'. Anonymous read access to blobs and containers is permitted.`,
+                resource_id: sa.id,
+                resource_type: "Microsoft.Storage/storageAccounts",
+                remediation_steps: [
+                  `Open Storage Account '${sa.name}' in Azure Portal.`,
+                  "Go to Settings -> Configuration.",
+                  "Set 'Allow Blob public access' to Disabled."
+                ],
+                risk_score_contribution: 20,
+                impact_assessment: "Allows external unauthenticated users to read container contents.",
+                execution_tag: "SAFE_AUTOMATABLE",
+                rollback_guidance: "Re-enable Blob public access.",
+                compliance_tags: ["ISO27001-A.12.3.1", "SOC2-CC6.1"],
+              });
+            }
+          }
+        }
 
-              if ((isOwner || isContributor) && rbac.properties?.scope === `/subscriptions/${creds.subscription_id}`) {
+        // 3. Scan Azure AD / RBAC Role Assignments for over-privileged principles
+        const rbacUrl = `https://management.azure.com/subscriptions/${subId}/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01`;
+        const rbacResp = await fetch(rbacUrl, { headers: azureHeaders });
+        if (rbacResp.ok) {
+          const rbacData = await rbacResp.json();
+          for (const ra of rbacData.value || []) {
+            // Owner role definition ID ends with 8e351b47-a8a7-40c6-ab56-9e1a14e37b09
+            if (ra.properties?.roleDefinitionId?.endsWith("8e351b47-a8a7-40c6-ab56-9e1a14e37b09")) {
+              if (ra.properties?.principalType === "ServicePrincipal") {
                 findings.push({
                   cloud_account_id,
                   service: "azure_ad",
                   severity: "high",
-                  title: `Over-privileged ${isOwner ? "Owner" : "Contributor"} role assigned directly at subscription scope`,
-                  description: `${principalType} "${principalId}" has direct ${isOwner ? "Owner" : "Contributor"} rights at the subscription level, bypassing least-privilege principles.`,
-                  resource_id: rbac.id,
+                  title: `Service principal assigned Owner role at subscription scope`,
+                  description: `Service principal '${ra.properties?.principalId}' is directly assigned the Owner role at root subscription level (${subId}).`,
+                  resource_id: ra.id,
                   resource_type: "Microsoft.Authorization/roleAssignments",
                   remediation_steps: [
-                    "Audit the roles assigned to this principal.",
-                    "Remove subscription scope privileges and assign roles at specific resource groups."
+                    "Open Azure IAM at subscription level.",
+                    "Remove Owner role assignment for the service principal.",
+                    "Grant least-privilege roles at resource group scope."
                   ],
                   risk_score_contribution: 15,
                   impact_assessment: "High risk. Compromise of this principal grants full control over all subscription assets.",
@@ -309,13 +345,11 @@ serve(async (req) => {
         }
       } catch (azureErr) {
         console.error("Azure live scanning failed:", azureErr);
-        isMock = true;
+        throw new Error(`Azure live scan execution failed: ${azureErr instanceof Error ? azureErr.message : String(azureErr)}`);
       }
-    }
-
-    // 4. Generate mock findings if scanning live failed or mock credentials used
-    if (isMock || findings.length === 0) {
-      console.log("Generating mock findings for Azure account connection demonstration");
+    } else {
+      // Generate mock findings ONLY when explicitly in demo mode (dummy credentials)
+      console.log("Generating mock findings for explicit Azure demo mode connection");
       findings.push(
         {
           cloud_account_id,

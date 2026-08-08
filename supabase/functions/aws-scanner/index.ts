@@ -645,32 +645,6 @@ async function scanEC2PublicIPs(
     }
   }
 
-  // Fallback demo finding if no live EC2 instances returned or in demo mode
-  if (findings.length === 0) {
-    findings.push({
-      aws_account_id: awsAccountId,
-      scan_job_id: scanJobId,
-      service: "ec2",
-      severity: "medium",
-      title: 'EC2 instance "i-0a1b2c3d4e5f6g7h8" has a public IP address assigned',
-      description: 'EC2 instance "i-0a1b2c3d4e5f6g7h8" (web-prod-01) in us-east-1 has public IP address 54.210.12.34 assigned. Attaching a public IP directly exposes the virtual machine to internet-wide automated scanning and potential attack vectors, independent of security group firewall rule state.',
-      resource_id: "i-0a1b2c3d4e5f6g7h8",
-      resource_type: "AWS::EC2::Instance",
-      remediation_steps: [
-        'Go to EC2 Console → Instances → Select "web-prod-01" (i-0a1b2c3d4e5f6g7h8)',
-        "Review if direct public access is strictly required for this workload",
-        "Disassociate Elastic IP / auto-assigned public IP if not needed",
-        "Place instance behind an Application Load Balancer or NAT Gateway for internet traffic",
-        "Use AWS Systems Manager (SSM) Session Manager for administrative access instead of direct SSH/RDP",
-      ],
-      risk_score_contribution: 5,
-      impact_assessment: "Removing public IP will block direct inbound connections to 54.210.12.34. Ensure alternative access routes (SSM, VPN, or ALB) are configured.",
-      execution_tag: "REQUIRES_REVIEW",
-      rollback_guidance: "Re-assign a public IP / Elastic IP to instance i-0a1b2c3d4e5f6g7h8 network interface.",
-      compliance_tags: ["ISO27001-A.13.1.1", "SOC2-CC6.6", "CIS-AWS-5.2"],
-    });
-  }
-
   return findings;
 }
 
@@ -728,33 +702,6 @@ async function scanRDSInstances(
     } catch (err) {
       console.log(`Failed to scan RDS instances in ${region}:`, err);
     }
-  }
-
-  // Fallback demo finding if no live RDS instances returned or in demo mode
-  if (findings.length === 0) {
-    findings.push({
-      aws_account_id: awsAccountId,
-      scan_job_id: scanJobId,
-      service: "rds",
-      severity: "critical",
-      title: 'RDS database instance "db-prod-main" is publicly accessible',
-      description: 'RDS DB instance "db-prod-main" in us-east-1 has PubliclyAccessible flag set to true. Publicly accessible databases allow direct DNS resolution and connection attempts from anywhere on the internet. Database instances should reside in private subnets and be accessible only via internal VPC endpoints, VPN, or application tier security groups.',
-      resource_id: "db-prod-main",
-      resource_type: "AWS::RDS::DBInstance",
-      remediation_steps: [
-        'Go to RDS Console → Databases → Select "db-prod-main"',
-        "Click 'Modify'",
-        "Scroll to Connectivity section → Additional configuration",
-        "Set 'Publicly accessible' to 'No'",
-        "Choose 'Apply immediately' or schedule during next maintenance window",
-        "Ensure application servers connect via private VPC subnet endpoints",
-      ],
-      risk_score_contribution: 20,
-      impact_assessment: "Setting PubliclyAccessible to No prevents external IP addresses outside the VPC from establishing DB connections. Internal application servers inside the VPC will remain unaffected.",
-      execution_tag: "SAFE_AUTOMATABLE",
-      rollback_guidance: "Modify RDS instance and set PubliclyAccessible back to Yes if emergency external access is required.",
-      compliance_tags: ["ISO27001-A.13.1.3", "SOC2-CC6.6", "PCI-DSS-1.3", "DPDP-S8", "GDPR-Art32"],
-    });
   }
 
   return findings;

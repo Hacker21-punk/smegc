@@ -425,13 +425,11 @@ serve(async (req) => {
         }
       } catch (gcpErr) {
         console.error("GCP live scanning failed:", gcpErr);
-        isMock = true;
+        throw new Error(`GCP live scan execution failed: ${gcpErr instanceof Error ? gcpErr.message : String(gcpErr)}`);
       }
-    }
-
-    // 5. Generate mock findings if scanning live failed or mock credentials used
-    if (isMock || findings.length === 0) {
-      console.log("Generating mock findings for GCP account connection demonstration");
+    } else {
+      // Generate mock findings ONLY when explicitly in demo mode (dummy credentials)
+      console.log("Generating mock findings for explicit GCP demo mode connection");
       findings.push(
         {
           cloud_account_id,
