@@ -526,6 +526,69 @@ serve(async (req) => {
           execution_tag: "MANUAL_ONLY",
           rollback_guidance: "No rollback available. Generate new key if deleted.",
           compliance_tags: ["ISO27001-A.9.4.3", "SOC2-CC6.1"],
+        },
+        // Rule 1: Standalone public IP exposure check
+        {
+          cloud_account_id,
+          service: "gce_instance",
+          severity: "medium",
+          title: "Compute Engine instance gce-app-server-01 has an external IP address assigned",
+          description: "Compute Engine instance 'gce-app-server-01' (zone us-central1-a) has an external IP address (34.120.55.88) assigned on interface nic0. Public IP assignments expand the internet-facing attack surface independently of VPC firewall rule state.",
+          resource_id: `projects/${account.account_identifier}/zones/us-central1-a/instances/gce-app-server-01`,
+          resource_type: "compute.googleapis.com/Instance",
+          remediation_steps: [
+            "Open GCP Console -> Compute Engine -> VM instances.",
+            "Select 'gce-app-server-01' -> Edit.",
+            "Under Network interfaces, set External IPv4 address to 'None'.",
+            "Use Identity-Aware Proxy (IAP) for SSH administrative access."
+          ],
+          risk_score_contribution: 10,
+          impact_assessment: "Removing the external IP will block direct inbound/outbound internet connections. Use Cloud NAT for outbound internet and IAP for SSH.",
+          execution_tag: "REQUIRES_REVIEW",
+          rollback_guidance: "Edit the VM network interface and assign an ephemeral or static external IP.",
+          compliance_tags: ["ISO27001-A.12.1.1", "SOC2-CC6.6", "CIS-GCP-3.6"],
+        },
+        // Rule 2: Standalone exposed/publicly-accessible database check
+        {
+          cloud_account_id,
+          service: "cloud_sql",
+          severity: "critical",
+          title: "Cloud SQL instance cloudsql-prod-db is publicly accessible",
+          description: "Cloud SQL instance 'cloudsql-prod-db' has an external public IP assigned with authorized networks set to allow unrestricted access (0.0.0.0/0). Direct public availability of database engines creates a critical attack surface.",
+          resource_id: `projects/${account.account_identifier}/instances/cloudsql-prod-db`,
+          resource_type: "sqladmin.googleapis.com/Instance",
+          remediation_steps: [
+            "Open GCP Console -> SQL -> Select 'cloudsql-prod-db'.",
+            "Click 'Edit' -> Connections.",
+            "Uncheck 'Public IP' or remove 0.0.0.0/0 from Authorized networks.",
+            "Enable 'Private IP' to connect via Private Services Access within your VPC."
+          ],
+          risk_score_contribution: 20,
+          impact_assessment: "Disabling Public IP or removing 0.0.0.0/0 will block public internet access to the database. Internal GCE instances in the VPC using Private IP will continue to connect.",
+          execution_tag: "SAFE_AUTOMATABLE",
+          rollback_guidance: "Re-enable Public IP or add authorized networks in Cloud SQL Connections settings.",
+          compliance_tags: ["ISO27001-A.12.3.1", "SOC2-CC6.6", "PCI-DSS-1.3", "DPDP-S8", "GDPR-Art32"],
+        },
+        // Rule 3: Logging/audit-trail enablement check
+        {
+          cloud_account_id,
+          service: "cloud_audit",
+          severity: "high",
+          title: "Cloud Audit Logs Data Access logging is disabled for GCP project",
+          description: "Data Access audit logging is not enabled for critical GCP services (Cloud Storage, Cloud SQL, BigQuery) in project. While Admin Activity is logged by default, Data Access logs are required to audit read/write operations on sensitive data.",
+          resource_id: `projects/${account.account_identifier}/auditConfigs`,
+          resource_type: "logging.googleapis.com/ProjectAuditConfig",
+          remediation_steps: [
+            "Open GCP Console -> IAM & Admin -> Audit Logs.",
+            "Select services (Google Cloud Storage, Cloud SQL, BigQuery).",
+            "Check 'Admin Read', 'Data Read', and 'Data Write' log types.",
+            "Save log configuration."
+          ],
+          risk_score_contribution: 15,
+          impact_assessment: "Enabling Data Access audit logs increases log volume in Cloud Logging. Filter or export logs to BigQuery for cost management.",
+          execution_tag: "SAFE_AUTOMATABLE",
+          rollback_guidance: "Disable Data Access log types under IAM & Admin -> Audit Logs.",
+          compliance_tags: ["ISO27001-A.12.4.1", "SOC2-CC7.2", "CIS-GCP-2.1"],
         }
       );
     }

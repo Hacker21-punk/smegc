@@ -410,6 +410,67 @@ serve(async (req) => {
           execution_tag: "MANUAL_ONLY",
           rollback_guidance: "No rollback available. Record key rotation completion.",
           compliance_tags: ["ISO27001-A.9.4.3", "SOC2-CC6.1"],
+        },
+        // Rule 1: Standalone public IP exposure check
+        {
+          cloud_account_id,
+          service: "virtual_machine",
+          severity: "medium",
+          title: "Virtual Machine vm-prod-web-01 has a public IP address assigned",
+          description: "Azure VM 'vm-prod-web-01' (20.120.45.67) has a public IP address resource associated with its network interface. Direct public IP assignment exposes the VM to external network probing and potential ingress risks if NSG rules change.",
+          resource_id: `/subscriptions/${account.account_identifier}/resourceGroups/rg-prod/providers/Microsoft.Compute/virtualMachines/vm-prod-web-01`,
+          resource_type: "Microsoft.Compute/virtualMachines",
+          remediation_steps: [
+            "Navigate to VM 'vm-prod-web-01' -> Networking in Azure Portal.",
+            "Select Network Interface -> IP configurations.",
+            "Disassociate the Public IP address resource.",
+            "Configure Azure Bastion for secure administrative SSH/RDP access."
+          ],
+          risk_score_contribution: 10,
+          impact_assessment: "Disassociating public IP will disable direct inbound RDP/SSH/HTTP access from internet. Use Azure Bastion for remote management.",
+          execution_tag: "REQUIRES_REVIEW",
+          rollback_guidance: "Re-associate the Public IP address to the Network Interface IP configuration.",
+          compliance_tags: ["ISO27001-A.12.1.1", "SOC2-CC6.6", "CIS-Azure-6.1"],
+        },
+        // Rule 2: Standalone exposed/publicly-accessible database check
+        {
+          cloud_account_id,
+          service: "azure_sql",
+          severity: "critical",
+          title: "Azure SQL Server sql-prod-db-server has public network access enabled",
+          description: "Azure SQL Server 'sql-prod-db-server' has public network access enabled ('Enabled'). Enabling public network endpoints on database servers exposes data stores to internet-wide connectivity attempts. Access should be restricted to Private Endpoints or VNet service endpoints.",
+          resource_id: `/subscriptions/${account.account_identifier}/resourceGroups/rg-prod/providers/Microsoft.Sql/servers/sql-prod-db-server`,
+          resource_type: "Microsoft.Sql/servers",
+          remediation_steps: [
+            "Go to Azure Portal -> SQL servers -> sql-prod-db-server -> Networking.",
+            "Under Public network access, select 'Disabled'.",
+            "Create a Private Endpoint connection to grant secure access to application subnets only."
+          ],
+          risk_score_contribution: 20,
+          impact_assessment: "Disabling public network access will block direct external DB client access. Applications in Azure VNets connecting via Private Endpoints are unaffected.",
+          execution_tag: "SAFE_AUTOMATABLE",
+          rollback_guidance: "Set Public network access back to 'Enabled' in the SQL Server Networking blade.",
+          compliance_tags: ["ISO27001-A.12.3.1", "SOC2-CC6.6", "PCI-DSS-1.3", "DPDP-S8", "GDPR-Art32"],
+        },
+        // Rule 3: Logging/audit-trail enablement check
+        {
+          cloud_account_id,
+          service: "monitor",
+          severity: "high",
+          title: "Azure Activity Log diagnostic logging is not configured to a Log Analytics workspace",
+          description: "Subscription Activity Logs are not exported to an Azure Monitor Log Analytics workspace or Storage Account. Without centralized log archiving and alert rules, unauthorized administrative actions and privilege escalation events go undetected.",
+          resource_id: `/subscriptions/${account.account_identifier}/providers/Microsoft.Insights/diagnosticSettings/default-activity-log`,
+          resource_type: "Microsoft.Insights/diagnosticSettings",
+          remediation_steps: [
+            "Open Azure Portal -> Monitor -> Activity Log -> Export Activity Logs.",
+            "Add diagnostic setting to route Administrative, Security, and Alert logs to a Log Analytics workspace.",
+            "Set log retention period to at least 90 days."
+          ],
+          risk_score_contribution: 15,
+          impact_assessment: "Exporting logs creates minimal Log Analytics ingestion cost but provides essential security visibility.",
+          execution_tag: "SAFE_AUTOMATABLE",
+          rollback_guidance: "Delete or disable the Diagnostic Setting configuration.",
+          compliance_tags: ["ISO27001-A.12.4.1", "SOC2-CC7.2", "CIS-Azure-5.1"],
         }
       );
     }
